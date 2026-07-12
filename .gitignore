@@ -1,0 +1,23 @@
+# macOS
+.DS_Store
+
+# Logs
+*.log
+
+# Environment files
+.env
+.env.*
+
+# Dependencies
+**/node_modules
+
+# Expo
+**/.expo
+
+# Build outputs
+**/dist
+**/build
+
+# IDE
+.vscode/
+.idea/
