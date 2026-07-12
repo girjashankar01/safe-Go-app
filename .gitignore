@@ -1,22 +1,29 @@
-# macOS
-.DS_Store
-
-# Logs
-*.log
-
-# Environment files
-.env
-.env.*
-
 # Dependencies
 **/node_modules
 
-# Expo
-**/.expo
+# Environment
+**/.env
+**/.env.*
 
 # Build outputs
 **/dist
 **/build
+
+# Expo
+**/.expo
+**/.expo-shared
+
+# Metro
+**/.metro-health-check*
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# macOS
+.DS_Store
 
 # IDE
 .vscode/
