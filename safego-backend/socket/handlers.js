@@ -77,6 +77,18 @@ export default function setupSocket(io) {
       io.to(`trip-${tripId}`).emit('checkin:confirmed', { tripId });
     });
 
+    // ── Phase 2.7: manual SOS verification ───────────────────────────────────
+    // Payload: { timestamp, latitude, longitude }
+    // Log only — no DB write, no broadcast, no external notifications.
+    socket.on('sos:manual', (data) => {
+      console.log('=========================');
+      console.log('MANUAL SOS RECEIVED');
+      console.log('Latitude: ', data.latitude  ?? 'null');
+      console.log('Longitude:', data.longitude ?? 'null');
+      console.log('Timestamp:', data.timestamp);
+      console.log('=========================');
+    });
+
     // SOS fired client-side via socket (in addition to the REST /sos/trigger path)
     socket.on('sos:broadcast', (sosData) => {
       io.to('police-room').emit('sos:alert', sosData);
