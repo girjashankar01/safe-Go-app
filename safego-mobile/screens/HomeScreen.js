@@ -9,6 +9,7 @@ import {
   StyleSheet,
   Alert,
 } from 'react-native';
+import * as Location from 'expo-location';
 import { getMe } from '../lib/api';
 import { removeToken } from '../services/storage';
 
@@ -61,12 +62,101 @@ function ActionButton({ label, onPress, variant = 'default', disabled = false })
   );
 }
 
+// ─── Location Permission Card ────────────────────────────────────────────────
+// Displays current permission status and a button to request it.
+// Never accesses the user's actual position.
+function LocationPermissionCard({ status, onRequest, requesting }) {
+  const isGranted = status === 'granted';
+  const isDenied = status === 'denied';
+  const isUndetermined = status === 'undetermined';
+
+  return (
+    <View style={styles.permCard}>
+      <View style={styles.permHeader}>
+        <View
+          style={[
+            styles.permDot,
+            isGranted && styles.permDotGranted,
+            isDenied && styles.permDotDenied,
+            isUndetermined && styles.permDotUndetermined,
+          ]}
+        />
+        <Text style={styles.permTitle}>Location Permission</Text>
+      </View>
+
+      {/* Status badge */}
+      <View
+        style={[
+          styles.permBadge,
+          isGranted && styles.permBadgeGranted,
+          isDenied && styles.permBadgeDenied,
+          isUndetermined && styles.permBadgeUndetermined,
+        ]}
+      >
+        <Text
+          style={[
+            styles.permBadgeText,
+            isGranted && styles.permBadgeTextGranted,
+            isDenied && styles.permBadgeTextDenied,
+            isUndetermined && styles.permBadgeTextUndetermined,
+          ]}
+        >
+          {isGranted && '✓ Granted'}
+          {isDenied && '✗ Denied'}
+          {isUndetermined && '— Not yet requested'}
+          {!status && '— Checking…'}
+        </Text>
+      </View>
+
+      {/* Contextual message */}
+      {isDenied && (
+        <Text style={styles.permDeniedMsg}>
+          Location access was denied. To enable it, go to{' '}
+          <Text style={styles.permDeniedMsgBold}>Settings → SafeGo → Location</Text>
+          {' '}and set it to "While Using the App".
+        </Text>
+      )}
+      {isGranted && (
+        <Text style={styles.permGrantedMsg}>
+          Location access is ready. Trip tracking will use it when you start a trip.
+        </Text>
+      )}
+
+      {/* Only show the button when not yet granted or when undetermined */}
+      {!isGranted && (
+        <TouchableOpacity
+          style={[
+            styles.permButton,
+            isDenied && styles.permButtonDisabled,
+          ]}
+          onPress={onRequest}
+          disabled={isDenied || requesting}
+          activeOpacity={0.75}
+        >
+          {requesting
+            ? <ActivityIndicator size="small" color="#fff" />
+            : (
+              <Text style={styles.permButtonText}>
+                {isDenied ? 'Open Settings to Enable' : 'Grant Location Permission'}
+              </Text>
+            )
+          }
+        </TouchableOpacity>
+      )}
+    </View>
+  );
+}
+
 // ─── Home Screen ──────────────────────────────────────────────────────────────
 export default function HomeScreen({ navigation }) {
 
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+
+  // Location permission state — 'undetermined' | 'granted' | 'denied'
+  const [locationStatus, setLocationStatus] = useState(null);
+  const [requestingLocation, setRequestingLocation] = useState(false);
 
   useEffect(() => {
     getMe()
@@ -83,6 +173,26 @@ export default function HomeScreen({ navigation }) {
       })
       .finally(() => setLoading(false));
   }, []);
+
+  // Check existing location permission status on mount (no prompt shown).
+  useEffect(() => {
+    Location.getForegroundPermissionsAsync()
+      .then(({ status }) => setLocationStatus(status))
+      .catch(() => setLocationStatus('undetermined'));
+  }, []);
+
+  const handleRequestLocation = async () => {
+    setRequestingLocation(true);
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      setLocationStatus(status);
+    } catch {
+      // Unexpected error — treat as undetermined so the button stays visible.
+      setLocationStatus('undetermined');
+    } finally {
+      setRequestingLocation(false);
+    }
+  };
 
   const handleLogout = async () => {
     await removeToken();
@@ -135,6 +245,13 @@ export default function HomeScreen({ navigation }) {
 
         {/* Status card */}
         <StatusCard />
+
+        {/* Location permission */}
+        <LocationPermissionCard
+          status={locationStatus}
+          onRequest={handleRequestLocation}
+          requesting={requestingLocation}
+        />
 
         {/* Quick actions */}
         <Text style={styles.sectionTitle}>Quick Actions</Text>
@@ -349,5 +466,91 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: '#e5e7eb',
     marginVertical: 16,
+  },
+
+  // Location permission card
+  permCard: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 24,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    shadowColor: '#000',
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 1,
+  },
+  permHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  permDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#d1d5db',
+    marginRight: 8,
+  },
+  permDotGranted: { backgroundColor: '#16a34a' },
+  permDotDenied:  { backgroundColor: '#dc2626' },
+  permDotUndetermined: { backgroundColor: '#f59e0b' },
+  permTitle: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#6b7280',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  permBadge: {
+    alignSelf: 'flex-start',
+    borderRadius: 6,
+    paddingVertical: 3,
+    paddingHorizontal: 8,
+    marginBottom: 10,
+    backgroundColor: '#f3f4f6',
+  },
+  permBadgeGranted:       { backgroundColor: '#dcfce7' },
+  permBadgeDenied:        { backgroundColor: '#fee2e2' },
+  permBadgeUndetermined:  { backgroundColor: '#fef3c7' },
+  permBadgeText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#374151',
+  },
+  permBadgeTextGranted:       { color: '#15803d' },
+  permBadgeTextDenied:        { color: '#b91c1c' },
+  permBadgeTextUndetermined:  { color: '#92400e' },
+  permDeniedMsg: {
+    fontSize: 13,
+    color: '#6b7280',
+    lineHeight: 19,
+    marginBottom: 12,
+  },
+  permDeniedMsgBold: {
+    fontWeight: '600',
+    color: '#374151',
+  },
+  permGrantedMsg: {
+    fontSize: 13,
+    color: '#6b7280',
+    lineHeight: 19,
+  },
+  permButton: {
+    marginTop: 12,
+    backgroundColor: '#16a34a',
+    borderRadius: 8,
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  permButtonDisabled: {
+    backgroundColor: '#9ca3af',
+  },
+  permButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
   },
 });
