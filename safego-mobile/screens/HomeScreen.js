@@ -309,6 +309,13 @@ export default function HomeScreen({ navigation }) {
         {/* Quick actions */}
         <Text style={styles.sectionTitle}>Quick Actions</Text>
 
+        {/* SOS — first and most prominent */}
+        <ActionButton
+          label="SOS"
+          variant="destructive"
+          onPress={() => navigation.navigate('SOS')}
+        />
+
         <ActionButton
           label="Start Trip"
           variant="primary"
@@ -329,6 +336,11 @@ export default function HomeScreen({ navigation }) {
         <ActionButton
           label="Live Tracking"
           onPress={() => navigation.navigate('LiveTracking')}
+        />
+
+        <ActionButton
+          label="Map"
+          onPress={() => navigation.navigate('Map')}
         />
 
         <ActionButton

@@ -9,6 +9,8 @@ import HomeScreen from './screens/HomeScreen';
 import EmergencyContactsScreen from './screens/EmergencyContactsScreen';
 import CurrentLocationScreen from './screens/CurrentLocationScreen';
 import LiveTrackingScreen from './screens/LiveTrackingScreen';
+import SOSScreen from './screens/SOSScreen';
+import MapScreen from './screens/MapScreen';
 
 import { getToken, removeToken } from './services/storage';
 import { getMe, setUnauthenticatedHandler } from './lib/api';
@@ -74,6 +76,8 @@ export default function App() {
         <Stack.Screen name="EmergencyContacts" component={EmergencyContactsScreen} />
         <Stack.Screen name="CurrentLocation" component={CurrentLocationScreen} />
         <Stack.Screen name="LiveTracking" component={LiveTrackingScreen} />
+        <Stack.Screen name="SOS" component={SOSScreen} />
+        <Stack.Screen name="Map" component={MapScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

@@ -11,6 +11,7 @@ import {
   View,
 } from 'react-native';
 import * as Location from 'expo-location';
+import { getSocket } from '../lib/socket';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -145,6 +146,22 @@ export default function LiveTrackingScreen({ navigation }) {
           setLocation(loc);
           setUpdateCount((n) => n + 1);
           setInitialising(false);
+
+          // Emit location:update to the backend via the shared socket singleton.
+          // Skip silently if the socket is not connected — never crash or queue.
+          const socket = getSocket();
+          if (socket.connected) {
+            const payload = {
+              latitude:  loc.coords.latitude,
+              longitude: loc.coords.longitude,
+              accuracy:  loc.coords.accuracy ?? null,
+              timestamp: new Date(loc.timestamp).toISOString(),
+            };
+            socket.emit('location:update', payload);
+            console.log('[LiveTracking] Emitted location:update', payload);
+          } else {
+            console.log('[LiveTracking] Socket not connected — skipped emit');
+          }
         },
       );
       subscriptionRef.current = sub;
@@ -309,7 +326,7 @@ export default function LiveTrackingScreen({ navigation }) {
 
         <Text style={styles.disclaimer}>
           Updates every {UPDATE_INTERVAL_MS / 1000} seconds using foreground location only.
-          {'\n'}No data is sent to any server.
+          {"\n"}Location is transmitted to the backend via Socket.io.
         </Text>
       </ScrollView>
     </SafeAreaView>
