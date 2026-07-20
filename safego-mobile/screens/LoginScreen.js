@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { login } from '../lib/api';
 import { saveToken } from '../services/storage';
+import { connectSocket } from '../lib/socket';
 
 export default function LoginScreen({ navigation }) {
   const [email, setEmail] = useState('');
@@ -31,6 +32,7 @@ export default function LoginScreen({ navigation }) {
     try {
       const { token } = await login(email.trim(), password);
       await saveToken(token);
+      connectSocket(); // establish socket connection right after login
       navigation.reset({ index: 0, routes: [{ name: 'Home' }] });
     } catch (e) {
   console.log("LOGIN ERROR:");

@@ -12,20 +12,32 @@ import {
 import * as Location from 'expo-location';
 import { getMe } from '../lib/api';
 import { removeToken } from '../services/storage';
+import { connectSocket, disconnectSocket, getSocket } from '../lib/socket';
 
 // ─── Coming Soon alert ───────────────────────────────────────────────────────
 const comingSoon = (feature) =>
   Alert.alert('Coming Soon', `${feature} will be available in a future update.`);
 
 // ─── Status Card ─────────────────────────────────────────────────────────────
-function StatusCard() {
+// Receives live socketStatus prop so it re-renders on every status change.
+function StatusCard({ socketStatus }) {
+  const isConnected    = socketStatus === 'connected';
+  const isConnecting   = socketStatus === 'connecting';
+  const isDisconnected = socketStatus === 'disconnected' || socketStatus === 'error';
+
+  let dotStyle  = styles.statusDotGrey;
+  let label     = '— Connecting…';
+  if (isConnected)    { dotStyle = styles.statusDotGreen;  label = '🟢 Connected'; }
+  if (isConnecting)   { dotStyle = styles.statusDotAmber;  label = '🟡 Connecting…'; }
+  if (isDisconnected) { dotStyle = styles.statusDotRed;    label = '🔴 Disconnected'; }
+
   return (
     <View style={styles.statusCard}>
       <View style={styles.statusRow}>
-        <View style={styles.statusDot} />
-        <Text style={styles.statusLabel}>System Status</Text>
+        <View style={[styles.statusDot, dotStyle]} />
+        <Text style={styles.statusLabel}>Socket</Text>
       </View>
-      <Text style={styles.statusValue}>All systems operational</Text>
+      <Text style={styles.statusValue}>{label}</Text>
       <Text style={styles.statusSub}>GPS · Emergency contacts · Alerts</Text>
     </View>
   );
@@ -158,6 +170,11 @@ export default function HomeScreen({ navigation }) {
   const [locationStatus, setLocationStatus] = useState(null);
   const [requestingLocation, setRequestingLocation] = useState(false);
 
+  // Socket connection status — 'connecting' | 'connected' | 'disconnected' | 'error'
+  const [socketStatus, setSocketStatus] = useState(
+    getSocket().connected ? 'connected' : 'connecting'
+  );
+
   useEffect(() => {
     getMe()
       .then((data) => setUser(data))
@@ -172,6 +189,41 @@ export default function HomeScreen({ navigation }) {
         // 401: interceptor navigates to Login — stay silent here.
       })
       .finally(() => setLoading(false));
+  }, []);
+
+  // Connect socket here to cover the auto-login path (App.js calls getMe() then
+  // navigates directly to Home without going through LoginScreen).
+  // connectSocket() is a no-op if the socket is already connected.
+  useEffect(() => {
+    connectSocket();
+  }, []);
+
+  // Subscribe to socket lifecycle events and keep socketStatus in sync.
+  // Listeners are registered with named functions so they can be cleanly removed.
+  useEffect(() => {
+    const socket = getSocket();
+
+    const onConnect      = () => setSocketStatus('connected');
+    const onDisconnect   = () => setSocketStatus('disconnected');
+    const onConnectError = () => setSocketStatus('error');
+    const onReconnecting = () => setSocketStatus('connecting');
+
+    socket.on('connect',       onConnect);
+    socket.on('disconnect',    onDisconnect);
+    socket.on('connect_error', onConnectError);
+    socket.io.on('reconnect_attempt', onReconnecting);
+    socket.io.on('reconnect',         onConnect);
+
+    // Sync immediately in case the socket state changed before listeners were attached.
+    setSocketStatus(socket.connected ? 'connected' : 'connecting');
+
+    return () => {
+      socket.off('connect',       onConnect);
+      socket.off('disconnect',    onDisconnect);
+      socket.off('connect_error', onConnectError);
+      socket.io.off('reconnect_attempt', onReconnecting);
+      socket.io.off('reconnect',         onConnect);
+    };
   }, []);
 
   // Check existing location permission status on mount (no prompt shown).
@@ -195,6 +247,7 @@ export default function HomeScreen({ navigation }) {
   };
 
   const handleLogout = async () => {
+    disconnectSocket(); // sever socket before clearing credentials
     await removeToken();
     navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
   };
@@ -243,8 +296,8 @@ export default function HomeScreen({ navigation }) {
           )}
         </View>
 
-        {/* Status card */}
-        <StatusCard />
+        {/* Status card — live socket status */}
+        <StatusCard socketStatus={socketStatus} />
 
         {/* Location permission */}
         <LocationPermissionCard
@@ -398,9 +451,12 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#16a34a',
     marginRight: 8,
   },
+  statusDotGreen: { backgroundColor: '#16a34a' },
+  statusDotAmber: { backgroundColor: '#f59e0b' },
+  statusDotRed:   { backgroundColor: '#dc2626' },
+  statusDotGrey:  { backgroundColor: '#d1d5db' },
   statusLabel: {
     fontSize: 12,
     fontWeight: '600',
