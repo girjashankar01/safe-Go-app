@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import {
   SafeAreaView,
+  ScrollView,
   View,
   Text,
   TextInput,
@@ -10,18 +11,29 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-import { login } from '../lib/api';
+import { register } from '../lib/api';
 import { saveToken } from '../services/storage';
 
-export default function LoginScreen({ navigation }) {
+function validate({ name, email, phone, password }) {
+  if (!name.trim()) return 'Full name is required.';
+  if (!email.trim() || !email.includes('@')) return 'A valid email address is required.';
+  if (!phone.trim()) return 'Phone number is required.';
+  if (!password.trim()) return 'Password is required.';
+  return null;
+}
+
+export default function RegisterScreen({ navigation }) {
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const handleLogin = async () => {
-    if (!email.trim() || !password.trim()) {
-      setError('Email and password are required.');
+  const handleRegister = async () => {
+    const validationError = validate({ name, email, phone, password });
+    if (validationError) {
+      setError(validationError);
       return;
     }
 
@@ -29,11 +41,17 @@ export default function LoginScreen({ navigation }) {
     setLoading(true);
 
     try {
-      const { token } = await login(email.trim(), password);
+      // Backend returns {token, user} on register — log in immediately.
+      const { token } = await register({
+        name: name.trim(),
+        email: email.trim(),
+        phone: phone.trim(),
+        password,
+      });
       await saveToken(token);
       navigation.reset({ index: 0, routes: [{ name: 'Home' }] });
     } catch (e) {
-      const message = e.response?.data?.error ?? 'Login failed. Check your connection and try again.';
+      const message = e.response?.data?.error ?? 'Registration failed. Check your connection and try again.';
       setError(message);
     } finally {
       setLoading(false);
@@ -46,11 +64,21 @@ export default function LoginScreen({ navigation }) {
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={styles.flex}
       >
-        <View style={styles.inner}>
-          <Text style={styles.title}>SafeGo</Text>
-          <Text style={styles.subtitle}>Sign in to your account</Text>
+        <ScrollView
+          contentContainerStyle={styles.inner}
+          keyboardShouldPersistTaps="handled"
+        >
+          <Text style={styles.title}>Create Account</Text>
 
           {error ? <Text style={styles.error}>{error}</Text> : null}
+
+          <TextInput
+            style={styles.input}
+            placeholder="Full Name"
+            textContentType="name"
+            value={name}
+            onChangeText={setName}
+          />
 
           <TextInput
             style={styles.input}
@@ -64,27 +92,36 @@ export default function LoginScreen({ navigation }) {
 
           <TextInput
             style={styles.input}
+            placeholder="Phone"
+            keyboardType="phone-pad"
+            textContentType="telephoneNumber"
+            value={phone}
+            onChangeText={setPhone}
+          />
+
+          <TextInput
+            style={styles.input}
             placeholder="Password"
             secureTextEntry
-            textContentType="password"
+            textContentType="newPassword"
             value={password}
             onChangeText={setPassword}
           />
 
           <TouchableOpacity
             style={[styles.button, loading && styles.buttonDisabled]}
-            onPress={handleLogin}
+            onPress={handleRegister}
             disabled={loading}
           >
             {loading
               ? <ActivityIndicator color="#fff" />
-              : <Text style={styles.buttonText}>Login</Text>}
+              : <Text style={styles.buttonText}>Register</Text>}
           </TouchableOpacity>
 
-          <TouchableOpacity onPress={() => navigation.navigate('Register')}>
-            <Text style={styles.link}>Don't have an account? Register</Text>
+          <TouchableOpacity onPress={() => navigation.goBack()}>
+            <Text style={styles.link}>Already have an account? Login</Text>
           </TouchableOpacity>
-        </View>
+        </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -93,9 +130,8 @@ export default function LoginScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
   flex: { flex: 1 },
-  inner: { flex: 1, justifyContent: 'center', paddingHorizontal: 24 },
-  title: { fontSize: 34, fontWeight: 'bold', textAlign: 'center', marginBottom: 8 },
-  subtitle: { fontSize: 16, color: '#6b7280', textAlign: 'center', marginBottom: 32 },
+  inner: { flexGrow: 1, justifyContent: 'center', paddingHorizontal: 24, paddingVertical: 32 },
+  title: { fontSize: 28, fontWeight: 'bold', textAlign: 'center', marginBottom: 24 },
   error: { color: '#dc2626', marginBottom: 12, textAlign: 'center', fontSize: 14 },
   input: {
     borderWidth: 1,
