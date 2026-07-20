@@ -48,4 +48,18 @@ export const login = (email, password) =>
 export const getMe = () =>
   api.get('/auth/me').then((res) => res.data);
 
+// ─── Emergency Contacts ───────────────────────────────────────────────────────
+
+export const getContacts = () =>
+  api.get('/auth/contacts').then((res) => res.data);
+
+export const createContact = (data) =>
+  api.post('/auth/contacts', data).then((res) => res.data);
+
+export const updateContact = (id, data) =>
+  api.put(`/auth/contacts/${id}`, data).then((res) => res.data);
+
+export const deleteContact = (id) =>
+  api.delete(`/auth/contacts/${id}`).then((res) => res.data);
+
 export default api;

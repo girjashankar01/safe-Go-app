@@ -265,7 +265,7 @@ export default function HomeScreen({ navigation }) {
 
         <ActionButton
           label="Emergency Contacts"
-          onPress={() => comingSoon('Emergency Contacts')}
+          onPress={() => navigation.navigate('EmergencyContacts')}
         />
 
         <ActionButton
