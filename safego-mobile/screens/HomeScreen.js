@@ -269,6 +269,11 @@ export default function HomeScreen({ navigation }) {
         />
 
         <ActionButton
+          label="Current Location"
+          onPress={() => navigation.navigate('CurrentLocation')}
+        />
+
+        <ActionButton
           label="Settings"
           onPress={() => comingSoon('Settings')}
         />
