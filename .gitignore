@@ -4,6 +4,8 @@
 # Environment
 **/.env
 **/.env.*
+.env
+
 
 # Build outputs
 **/dist
