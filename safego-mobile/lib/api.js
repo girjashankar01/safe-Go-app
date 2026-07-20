@@ -26,10 +26,15 @@ api.interceptors.request.use(async (config) => {
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
-    if (error.response?.status === 401) {
+    const status = error.response?.status;
+    const url = error.config?.url;
+
+    // Don't logout if the login request itself failed
+    if (status === 401 && url !== "/auth/login") {
       await removeToken();
       _onUnauthenticated?.();
     }
+
     return Promise.reject(error);
   }
 );

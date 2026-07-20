@@ -33,9 +33,18 @@ export default function LoginScreen({ navigation }) {
       await saveToken(token);
       navigation.reset({ index: 0, routes: [{ name: 'Home' }] });
     } catch (e) {
-      const message = e.response?.data?.error ?? 'Login failed. Check your connection and try again.';
-      setError(message);
-    } finally {
+  console.log("LOGIN ERROR:");
+  console.log(e);
+  console.log(e.response);
+  console.log(e.response?.data);
+
+  const message =
+    e.response?.data?.error ??
+    e.message ??
+    "Unknown error";
+
+  setError(message);
+}finally {
       setLoading(false);
     }
   };
