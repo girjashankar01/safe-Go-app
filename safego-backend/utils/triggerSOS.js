@@ -14,6 +14,7 @@ export async function triggerSOS({ tripId, userId, lat, lng, triggerType, audioC
     .single();
 
   if (tripErr || !trip) throw new Error('Trip not found');
+  if (trip.user_id !== userId) throw new Error('Forbidden');
 
   // Danger zone check — is this position inside any known high-risk radius?
   const { data: zones } = await db.from('danger_zones').select('lat,lng,radius_meters');

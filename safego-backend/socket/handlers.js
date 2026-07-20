@@ -18,9 +18,13 @@ export default function setupSocket(io) {
     console.log('Client connected:', socket.id);
 
     socket.on('trip:join', ({ tripId, role }) => {
-      socket.join(`trip-${tripId}`);
-      if (role === 'police') socket.join('police-room');
-      console.log(`Socket ${socket.id} joined trip-${tripId} as ${role}`);
+      if (role === 'police') {
+        socket.join('police-room');
+        console.log(`Socket ${socket.id} joined police-room`);
+      } else {
+        socket.join(`trip-${tripId}`);
+        console.log(`Socket ${socket.id} joined trip-${tripId} as ${role}`);
+      }
     });
 
     socket.on('location:update', async (data) => {
