@@ -274,6 +274,11 @@ export default function HomeScreen({ navigation }) {
         />
 
         <ActionButton
+          label="Live Tracking"
+          onPress={() => navigation.navigate('LiveTracking')}
+        />
+
+        <ActionButton
           label="Settings"
           onPress={() => comingSoon('Settings')}
         />
