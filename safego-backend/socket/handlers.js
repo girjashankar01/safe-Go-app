@@ -28,6 +28,21 @@ export default function setupSocket(io) {
     });
 
     socket.on('location:update', async (data) => {
+      // ── Phase 2.5: foreground tracking verification ───────────────────────
+      // Payload shape: { latitude, longitude, accuracy, timestamp }
+      // No tripId — log only, no DB write, no broadcast.
+      if (data.latitude != null && data.longitude != null && !data.tripId) {
+        console.log('=========================');
+        console.log('LOCATION UPDATE RECEIVED');
+        console.log('Latitude: ', data.latitude);
+        console.log('Longitude:', data.longitude);
+        console.log('Accuracy: ', data.accuracy ?? '—');
+        console.log('Timestamp:', data.timestamp);
+        console.log('=========================');
+        return; // stop here — do not proceed to trip logic
+      }
+
+      // ── Existing trip-based location handling (Phase 3+) ──────────────────
       const { tripId, userId, lat, lng, speed, accuracy, timestamp } = data;
       if (!tripId || lat == null || lng == null) return;
 

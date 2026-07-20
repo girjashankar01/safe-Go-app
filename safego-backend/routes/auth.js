@@ -84,6 +84,15 @@ r.post('/contacts', requireAuth, async (req, res) => {
   if (!name || !phone || !email)
     return res.status(400).json({ error: 'Name, phone, and email required' });
 
+  // Enforce maximum of 3 contacts per user.
+  const { count, error: countErr } = await db
+    .from('emergency_contacts')
+    .select('id', { count: 'exact', head: true })
+    .eq('user_id', req.user.userId);
+  if (countErr) return res.status(400).json({ error: countErr.message });
+  if (count >= 3)
+    return res.status(400).json({ error: 'Maximum of 3 emergency contacts allowed' });
+
   const { data, error } = await db
     .from('emergency_contacts')
     .insert({ user_id: req.user.userId, name, phone, email })
@@ -92,6 +101,25 @@ r.post('/contacts', requireAuth, async (req, res) => {
 
   if (error) return res.status(400).json({ error: error.message });
   res.status(201).json(data);
+});
+
+// PUT /auth/contacts/:id
+r.put('/contacts/:id', requireAuth, async (req, res) => {
+  const { name, phone, email } = req.body;
+  if (!name || !phone || !email)
+    return res.status(400).json({ error: 'Name, phone, and email required' });
+
+  const { data, error, count } = await db
+    .from('emergency_contacts')
+    .update({ name, phone, email })
+    .eq('id', req.params.id)
+    .eq('user_id', req.user.userId) // ownership check
+    .select()
+    .single();
+
+  if (error) return res.status(400).json({ error: error.message });
+  if (!data) return res.status(404).json({ error: 'Contact not found' });
+  res.json(data);
 });
 
 // DELETE /auth/contacts/:id
