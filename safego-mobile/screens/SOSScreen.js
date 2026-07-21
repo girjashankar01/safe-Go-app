@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -21,6 +21,23 @@ export default function SOSScreen({ navigation }) {
   const [errorMsg, setErrorMsg] = useState('');
   const [working, setWorking] = useState(false);
 
+  const [isSosCountdownActive, setIsSosCountdownActive] = useState(false);
+  const [countdown, setCountdown] = useState(5);
+
+  useEffect(() => {
+    let timer;
+    if (isSosCountdownActive && countdown > 0) {
+      timer = setTimeout(() => {
+        setCountdown((c) => c - 1);
+      }, 1000);
+    } else if (isSosCountdownActive && countdown === 0) {
+      setIsSosCountdownActive(false);
+      setCountdown(5);
+      sendSOS();
+    }
+    return () => clearTimeout(timer);
+  }, [isSosCountdownActive, countdown]);
+
   // ── Get latest location (best-effort, never blocks SOS) ───────────────────
   const getLatestLocation = async () => {
     try {
@@ -41,7 +58,7 @@ export default function SOSScreen({ navigation }) {
   };
 
   const handlePress = () => {
-    if (working) return;
+    if (working || isSosCountdownActive) return;
 
     if (!hasActiveTrip()) {
       setErrorMsg('Start a trip before sending an SOS.');
@@ -49,22 +66,10 @@ export default function SOSScreen({ navigation }) {
       return;
     }
 
-    // Reset any previous result first so the user can re-send.
     setSent(false);
     setErrorMsg('');
-
-    Alert.alert(
-      'Emergency SOS',
-      'Are you sure you want to send an emergency alert?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Send SOS',
-          style: 'destructive',
-          onPress: sendSOS,
-        },
-      ],
-    );
+    setCountdown(5);
+    setIsSosCountdownActive(true);
   };
 
   const sendSOS = async () => {
@@ -184,7 +189,7 @@ export default function SOSScreen({ navigation }) {
           style={[styles.sosBtn, working && styles.sosBtnDisabled]}
           onPress={handlePress}
           activeOpacity={0.85}
-          disabled={working}
+          disabled={working || isSosCountdownActive}
         >
           {working ? (
             <ActivityIndicator color="#fff" />
@@ -197,6 +202,27 @@ export default function SOSScreen({ navigation }) {
           A confirmation will appear before the signal is sent.
         </Text>
       </ScrollView>
+
+      {/* Countdown Overlay */}
+      {isSosCountdownActive ? (
+        <View style={styles.overlay}>
+          <Text style={styles.overlayWarning}>⚠️</Text>
+          <Text style={styles.overlayTitle}>Emergency SOS</Text>
+          <Text style={styles.overlaySubtitle}>Sending alert in</Text>
+          <Text style={styles.countdownNumber}>{countdown}</Text>
+          
+          <TouchableOpacity 
+            style={styles.cancelBtn} 
+            onPress={() => {
+              setIsSosCountdownActive(false);
+              setCountdown(5);
+            }}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.cancelBtnText}>Cancel</Text>
+          </TouchableOpacity>
+        </View>
+      ) : null}
     </SafeAreaView>
   );
 }
@@ -347,6 +373,49 @@ const styles = StyleSheet.create({
     color: '#9ca3af',
     textAlign: 'center',
     lineHeight: 17,
+  },
+
+  // Countdown Overlay
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.75)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 999,
+  },
+  overlayWarning: {
+    fontSize: 64,
+    marginBottom: 16,
+  },
+  overlayTitle: {
+    fontSize: 28,
+    fontWeight: '800',
+    color: '#fff',
+    marginBottom: 8,
+  },
+  overlaySubtitle: {
+    fontSize: 18,
+    color: '#e5e7eb',
+    marginBottom: 32,
+  },
+  countdownNumber: {
+    fontSize: 72,
+    fontWeight: '900',
+    color: '#ef4444',
+    marginBottom: 48,
+  },
+  cancelBtn: {
+    borderWidth: 2,
+    borderColor: '#fff',
+    borderRadius: 30,
+    paddingVertical: 14,
+    paddingHorizontal: 40,
+  },
+  cancelBtnText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: '700',
+    letterSpacing: 1,
   },
 });
 
