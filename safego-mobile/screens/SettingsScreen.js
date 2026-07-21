@@ -19,17 +19,17 @@ import { disconnectSocket } from '../lib/socket';
 import { clearTrip } from '../lib/tripState';
 
 // A simple reusable selector component since we don't have a native picker installed
-function SegmentedControl({ options, selectedValue, onValueChange }) {
+function SegmentedControl({ options, selectedValue, onValueChange, disabled = false }) {
   return (
-    <View style={styles.segmentContainer}>
+    <View style={[styles.segmentContainer, disabled && { opacity: 0.6 }]}>
       {options.map((opt) => {
         const isSelected = selectedValue === opt.value;
         return (
           <TouchableOpacity
             key={opt.value.toString()}
             style={[styles.segmentBtn, isSelected && styles.segmentBtnActive]}
-            onPress={() => onValueChange(opt.value)}
-            activeOpacity={0.7}
+            onPress={() => !disabled && onValueChange(opt.value)}
+            activeOpacity={disabled ? 1 : 0.7}
           >
             <Text style={[styles.segmentText, isSelected && styles.segmentTextActive]}>
               {opt.label}
@@ -184,6 +184,20 @@ export default function SettingsScreen({ navigation }) {
               value={settings.recordAudio}
               onValueChange={(val) => updateSetting('recordAudio', val)}
               trackColor={{ false: '#d1d5db', true: '#16a34a' }}
+            />
+          </View>
+          <View style={styles.divider} />
+          <View style={styles.stackRow}>
+            <Text style={styles.label}>Recording Duration</Text>
+            <SegmentedControl
+              options={[
+                { label: '5s', value: 5 },
+                { label: '15s', value: 15 },
+                { label: '30s', value: 30 },
+              ]}
+              selectedValue={settings.audioRecordingDuration ?? 15}
+              onValueChange={(val) => updateSetting('audioRecordingDuration', val)}
+              disabled={!settings.recordAudio}
             />
           </View>
         </View>

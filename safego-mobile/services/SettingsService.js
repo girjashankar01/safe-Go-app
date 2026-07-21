@@ -6,6 +6,7 @@ export const DEFAULT_SETTINGS = {
   sosCountdown: 5,
   sosCooldown: 60,
   recordAudio: true,
+  audioRecordingDuration: 15,
   periodicCheckIn: 0,
   highAccuracyTracking: true,
 };

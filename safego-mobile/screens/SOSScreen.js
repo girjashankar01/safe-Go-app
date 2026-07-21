@@ -15,6 +15,7 @@ import * as Location from 'expo-location';
 import { triggerSOS, getActiveTrip } from '../lib/api';
 import { getTrip, hasActiveTrip, clearTrip, setTrip } from '../lib/tripState';
 import { getSettings } from '../services/SettingsService';
+import { recordAndUpload } from '../services/AudioService';
 
 // ─── Screen ───────────────────────────────────────────────────────────────────
 
@@ -160,7 +161,12 @@ export default function SOSScreen({ navigation }) {
       };
 
       if (settings?.recordAudio) {
-        console.log('[SOS] Audio recording is enabled in settings. (Feature pending)');
+        console.log('[SOS] Audio recording enabled. Capturing audio...');
+        const durationSeconds = settings.audioRecordingDuration ?? 15;
+        const audioClipUrl = await recordAndUpload({ tripId: trip.tripId, durationSeconds });
+        if (audioClipUrl) {
+          payload.audioClipUrl = audioClipUrl;
+        }
       }
 
       console.log('[SOS] Sending SOS...');
