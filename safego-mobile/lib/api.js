@@ -87,4 +87,12 @@ export const getActiveTrip = () =>
 export const endTrip = (tripId) =>
   api.post(`/trips/${tripId}/end`).then((res) => res.data);
 
+/**
+ * Trigger an SOS for an active trip.
+ * @param {{ tripId: string, lat: number, lng: number, triggerType: string }} body
+ * @returns {{ success: true, sosId: string, priority: string }}
+ */
+export const triggerSOS = (body) =>
+  api.post('/sos/trigger', body).then((res) => res.data);
+
 export default api;

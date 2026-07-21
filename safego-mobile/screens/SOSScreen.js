@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import {
+  ActivityIndicator,
   Alert,
   SafeAreaView,
   ScrollView,
@@ -9,13 +10,16 @@ import {
   View,
 } from 'react-native';
 import * as Location from 'expo-location';
-import { getSocket } from '../lib/socket';
+
+import { triggerSOS, getActiveTrip } from '../lib/api';
+import { getTrip, hasActiveTrip, clearTrip, setTrip } from '../lib/tripState';
 
 // ─── Screen ───────────────────────────────────────────────────────────────────
 
 export default function SOSScreen({ navigation }) {
   const [sent, setSent] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  const [working, setWorking] = useState(false);
 
   // ── Get latest location (best-effort, never blocks SOS) ───────────────────
   const getLatestLocation = async () => {
@@ -36,33 +40,15 @@ export default function SOSScreen({ navigation }) {
     }
   };
 
-  // ── Emit sos:manual ────────────────────────────────────────────────────────
-  const emitSOS = async () => {
-    const socket = getSocket();
+  const handlePress = () => {
+    if (working) return;
 
-    if (!socket.connected) {
-      setErrorMsg('Unable to send SOS.\nNo socket connection.');
+    if (!hasActiveTrip()) {
+      setErrorMsg('Start a trip before sending an SOS.');
       setSent(false);
       return;
     }
 
-    const { latitude, longitude } = await getLatestLocation();
-
-    const payload = {
-      timestamp: new Date().toISOString(),
-      latitude,
-      longitude,
-    };
-
-    socket.emit('sos:manual', payload);
-    console.log('[SOS] Manual SOS emitted', payload);
-
-    setErrorMsg('');
-    setSent(true);
-  };
-
-  // ── Confirmation dialog ────────────────────────────────────────────────────
-  const handlePress = () => {
     // Reset any previous result first so the user can re-send.
     setSent(false);
     setErrorMsg('');
@@ -75,10 +61,80 @@ export default function SOSScreen({ navigation }) {
         {
           text: 'Send SOS',
           style: 'destructive',
-          onPress: emitSOS,
+          onPress: sendSOS,
         },
       ],
     );
+  };
+
+  const sendSOS = async () => {
+    if (working) return;
+    setWorking(true);
+    setSent(false);
+    setErrorMsg('');
+
+    const trip = getTrip();
+    if (!trip || !trip.tripId) {
+      setErrorMsg('Start a trip before sending an SOS.');
+      setWorking(false);
+      return;
+    }
+
+    try {
+      const { latitude, longitude } = await getLatestLocation();
+
+      const payload = {
+        tripId: trip.tripId,
+        lat: latitude,
+        lng: longitude,
+        triggerType: 'manual',
+      };
+
+      console.log('[SOS] Sending SOS...');
+      await triggerSOS(payload);
+      console.log(`[SOS] Response received tripId=${trip.tripId} status=success`);
+
+      setSent(true);
+      setErrorMsg('');
+    } catch (e) {
+      const status = e.response?.status;
+      const serverMsg = e.response?.data?.error || '';
+
+      if (status === 401) {
+        setErrorMsg('Please log in again.');
+      } else if (status === 404) {
+        setErrorMsg('Trip not found. Refreshing status...');
+        try {
+          const result = await getActiveTrip();
+          if (result.hasActiveTrip) {
+            const currentTrip = getTrip();
+            await setTrip({
+              tripId: result.trip.id,
+              trackingToken: result.trip.trackingToken,
+              startedAt: result.trip.startedAt,
+              userId: currentTrip.userId,
+            });
+            setErrorMsg('Trip state refreshed. Please try again.');
+          } else {
+            await clearTrip();
+            setErrorMsg('Trip already ended. Start a trip before sending an SOS.');
+          }
+        } catch (refreshErr) {
+          setErrorMsg('Trip not found. Unable to refresh status.');
+        }
+      } else if (status === 409) {
+        setErrorMsg(serverMsg || 'Conflict updating SOS.');
+      } else if (status >= 500) {
+        setErrorMsg('Server error.\n\nPlease try again.');
+      } else if (!status) {
+        setErrorMsg('Unable to contact server.');
+      } else {
+        setErrorMsg(serverMsg || 'Failed to trigger SOS.');
+      }
+      setSent(false);
+    } finally {
+      setWorking(false);
+    }
   };
 
   return (
@@ -112,7 +168,7 @@ export default function SOSScreen({ navigation }) {
         {/* Success banner */}
         {sent && !errorMsg ? (
           <View style={styles.successBanner}>
-            <Text style={styles.successText}>✓  SOS signal sent.</Text>
+            <Text style={styles.successText}>SOS sent successfully.{'\n\n'}Your emergency contacts have been notified.</Text>
           </View>
         ) : null}
 
@@ -125,11 +181,16 @@ export default function SOSScreen({ navigation }) {
 
         {/* SOS button */}
         <TouchableOpacity
-          style={styles.sosBtn}
+          style={[styles.sosBtn, working && styles.sosBtnDisabled]}
           onPress={handlePress}
           activeOpacity={0.85}
+          disabled={working}
         >
-          <Text style={styles.sosBtnText}>SEND SOS</Text>
+          {working ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={styles.sosBtnText}>SEND SOS</Text>
+          )}
         </TouchableOpacity>
 
         <Text style={styles.disclaimer}>
@@ -234,6 +295,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '700',
     color: '#15803d',
+    textAlign: 'center',
   },
 
   // Error banner
@@ -269,6 +331,9 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 6 },
     elevation: 6,
   },
+  sosBtnDisabled: {
+    opacity: 0.6,
+  },
   sosBtnText: {
     color: '#fff',
     fontSize: 22,
@@ -284,3 +349,4 @@ const styles = StyleSheet.create({
     lineHeight: 17,
   },
 });
+
