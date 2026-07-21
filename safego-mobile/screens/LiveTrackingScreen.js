@@ -123,7 +123,6 @@ export default function LiveTrackingScreen({ navigation }) {
   // Subscription ref — stored outside state so cleanup can always reach it.
   const subscriptionRef = useRef(null);
 
-  // ── Start watcher ────────────────────────────────────────────────────────────
   const startWatcher = async () => {
     setError('');
 
@@ -136,35 +135,25 @@ export default function LiveTrackingScreen({ navigation }) {
     }
 
     try {
-      const sub = await Location.watchPositionAsync(
-        {
-          accuracy: Location.Accuracy.High,
-          timeInterval: UPDATE_INTERVAL_MS,
-          distanceInterval: 0, // fire by time, not movement
-        },
-        (loc) => {
+      const poll = async () => {
+        try {
+          const loc = await Location.getCurrentPositionAsync({
+            accuracy: Location.Accuracy.High,
+          });
           setLocation(loc);
           setUpdateCount((n) => n + 1);
           setInitialising(false);
+          // Local diagnostics only. Trip tracking is handled by TripScreen.
+        } catch (e) {
+          console.warn('[LiveTracking] poll error:', e);
+        }
+      };
 
-          // Emit location:update to the backend via the shared socket singleton.
-          // Skip silently if the socket is not connected — never crash or queue.
-          const socket = getSocket();
-          if (socket.connected) {
-            const payload = {
-              latitude:  loc.coords.latitude,
-              longitude: loc.coords.longitude,
-              accuracy:  loc.coords.accuracy ?? null,
-              timestamp: new Date(loc.timestamp).toISOString(),
-            };
-            socket.emit('location:update', payload);
-            console.log('[LiveTracking] Emitted location:update', payload);
-          } else {
-            console.log('[LiveTracking] Socket not connected — skipped emit');
-          }
-        },
-      );
-      subscriptionRef.current = sub;
+      // Initial fix
+      await poll();
+      
+      const interval = setInterval(poll, UPDATE_INTERVAL_MS);
+      subscriptionRef.current = { remove: () => clearInterval(interval) };
       setIsTracking(true);
     } catch (e) {
       setError(parseLocationError(e));

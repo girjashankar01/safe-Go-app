@@ -53,45 +53,28 @@ export default function MapScreen({ navigation }) {
       }
 
       try {
-        const sub = await Location.watchPositionAsync(
-          {
-            accuracy:         Location.Accuracy.High,
-            timeInterval:     UPDATE_INTERVAL_MS,
-            distanceInterval: 0,
-          },
-          (loc) => {
-            if (!mounted) return;
+        const loc = await Location.getCurrentPositionAsync({
+          accuracy: Location.Accuracy.High,
+        });
+        
+        if (!mounted) return;
 
-            const next = {
-              latitude:  loc.coords.latitude,
-              longitude: loc.coords.longitude,
-            };
+        const initial = {
+          latitude:  loc.coords.latitude,
+          longitude: loc.coords.longitude,
+        };
 
-            setCoords(next);
-            setInitialising(false);
+        setCoords(initial);
+        setInitialising(false);
 
-            // Centre the camera ONLY on the first fix.
-            // After that the user owns the camera — never fight them.
-            if (!centredOnce.current) {
-              centredOnce.current = true;
-              // Also update initialRegion ref so the MapView has the right
-              // starting position if it ever re-mounts.
-              initialRegionRef.current = {
-                ...next,
-                latitudeDelta:  DELTA,
-                longitudeDelta: DELTA,
-              };
-              mapRef.current?.animateToRegion(initialRegionRef.current, 400);
-            }
-            // Subsequent fixes: only the Marker coordinate prop changes.
-          },
-        );
-
-        if (mounted) {
-          subscriptionRef.current = sub;
-        } else {
-          // Component unmounted before the subscription resolved — clean up immediately.
-          sub.remove();
+        if (!centredOnce.current) {
+          centredOnce.current = true;
+          initialRegionRef.current = {
+            ...initial,
+            latitudeDelta:  DELTA,
+            longitudeDelta: DELTA,
+          };
+          mapRef.current?.animateToRegion(initialRegionRef.current, 400);
         }
       } catch {
         if (mounted) setInitialising(false);
@@ -102,8 +85,6 @@ export default function MapScreen({ navigation }) {
 
     return () => {
       mounted = false;
-      subscriptionRef.current?.remove();
-      subscriptionRef.current = null;
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -153,19 +134,21 @@ export default function MapScreen({ navigation }) {
           ref={mapRef}
           style={styles.map}
           initialRegion={initialRegionRef.current}
-          showsUserLocation={false}   // we draw our own marker
+          showsUserLocation={true}
           showsMyLocationButton={false}
           showsCompass={false}
           toolbarEnabled={false}
           moveOnMarkerPress={false}
+          onUserLocationChange={(e) => {
+            const loc = e.nativeEvent.coordinate;
+            if (loc) {
+              setCoords({
+                latitude: loc.latitude,
+                longitude: loc.longitude,
+              });
+            }
+          }}
         >
-          {coords ? (
-            <Marker
-              coordinate={coords}
-              title="You are here"
-              pinColor="#16a34a"
-            />
-          ) : null}
         </MapView>
 
         {/* Acquiring overlay — shown until first fix */}

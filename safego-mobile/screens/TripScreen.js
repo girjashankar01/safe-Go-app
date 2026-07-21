@@ -82,10 +82,15 @@ export default function TripScreen({ navigation }) {
     init();
   }, []);
 
+  const isStartingWatcher = useRef(false);
+
   // ── GPS Tracking Watcher ─────────────────────────────────────────────────────
   useEffect(() => {
+    let mounted = true;
+
     if (!trip || !trip.tripId) {
       if (watcherRef.current) {
+        console.log('[TripTracking] watcher stopped');
         watcherRef.current.remove();
         watcherRef.current = null;
       }
@@ -93,18 +98,19 @@ export default function TripScreen({ navigation }) {
       return;
     }
 
-    if (watcherRef.current) return;
-
-    let mounted = true;
+    if (watcherRef.current || isStartingWatcher.current) return;
 
     const startWatcher = async () => {
+      isStartingWatcher.current = true;
       try {
         const { status } = await Location.getForegroundPermissionsAsync();
         if (status !== 'granted') {
           if (mounted) setError('Location permission revoked. Tracking stopped.');
+          isStartingWatcher.current = false;
           return;
         }
 
+        console.log('[TripTracking] watcher started');
         const sub = await Location.watchPositionAsync(
           {
             accuracy: Location.Accuracy.High,
@@ -145,7 +151,7 @@ export default function TripScreen({ navigation }) {
                 timestamp
               };
               socket.emit('location:update', payload);
-              console.log('[TripTracking] location:update emitted', payload);
+              console.log('[TripTracking] emitting location');
             }
           }
         );
@@ -153,12 +159,15 @@ export default function TripScreen({ navigation }) {
         if (mounted) {
           watcherRef.current = sub;
         } else {
+          console.log('[TripTracking] watcher stopped (unmounted during init)');
           sub.remove();
         }
       } catch (err) {
         if (mounted) {
           setError('Failed to start GPS tracking: ' + err.message);
         }
+      } finally {
+        isStartingWatcher.current = false;
       }
     };
 
@@ -167,6 +176,7 @@ export default function TripScreen({ navigation }) {
     return () => {
       mounted = false;
       if (watcherRef.current) {
+        console.log('[TripTracking] watcher stopped');
         watcherRef.current.remove();
         watcherRef.current = null;
       }
