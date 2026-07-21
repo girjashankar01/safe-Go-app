@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  Animated,
   SafeAreaView,
   ScrollView,
   StyleSheet,
@@ -23,6 +24,42 @@ export default function SOSScreen({ navigation }) {
 
   const [isSosCountdownActive, setIsSosCountdownActive] = useState(false);
   const [countdown, setCountdown] = useState(5);
+
+  const overlayFade = React.useRef(new Animated.Value(0)).current;
+  const cardScale = React.useRef(new Animated.Value(0.9)).current;
+  const numberScale = React.useRef(new Animated.Value(1)).current;
+
+  // Animate overlay in
+  useEffect(() => {
+    if (isSosCountdownActive) {
+      overlayFade.setValue(0);
+      cardScale.setValue(0.9);
+      Animated.parallel([
+        Animated.timing(overlayFade, {
+          toValue: 1,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+        Animated.timing(cardScale, {
+          toValue: 1,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+  }, [isSosCountdownActive]);
+
+  // Animate number change
+  useEffect(() => {
+    if (isSosCountdownActive) {
+      numberScale.setValue(0.7);
+      Animated.timing(numberScale, {
+        toValue: 1,
+        duration: 200,
+        useNativeDriver: true,
+      }).start();
+    }
+  }, [countdown, isSosCountdownActive]);
 
   useEffect(() => {
     let timer;
@@ -205,23 +242,32 @@ export default function SOSScreen({ navigation }) {
 
       {/* Countdown Overlay */}
       {isSosCountdownActive ? (
-        <View style={styles.overlay}>
-          <Text style={styles.overlayWarning}>⚠️</Text>
-          <Text style={styles.overlayTitle}>Emergency SOS</Text>
-          <Text style={styles.overlaySubtitle}>Sending alert in</Text>
-          <Text style={styles.countdownNumber}>{countdown}</Text>
-          
-          <TouchableOpacity 
-            style={styles.cancelBtn} 
-            onPress={() => {
-              setIsSosCountdownActive(false);
-              setCountdown(5);
-            }}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.cancelBtnText}>Cancel</Text>
-          </TouchableOpacity>
-        </View>
+        <Animated.View style={[styles.overlay, { opacity: overlayFade }]}>
+          <Animated.View style={[styles.countdownCard, { transform: [{ scale: cardScale }] }]}>
+            <Text style={styles.overlayWarning}>⚠️</Text>
+            <Text style={styles.overlayTitle}>Emergency SOS</Text>
+            <Text style={styles.overlaySubtitle}>Sending emergency alert in</Text>
+            
+            <Animated.Text style={[styles.countdownNumber, { transform: [{ scale: numberScale }] }]}>
+              {countdown}
+            </Animated.Text>
+            
+            <Text style={styles.overlayDisclaimer}>
+              Emergency contacts will be notified{'\n'}unless you cancel.
+            </Text>
+            
+            <TouchableOpacity 
+              style={styles.cancelBtn} 
+              onPress={() => {
+                setIsSosCountdownActive(false);
+                setCountdown(5);
+              }}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.cancelBtnText}>Cancel SOS</Text>
+            </TouchableOpacity>
+          </Animated.View>
+        </Animated.View>
       ) : null}
     </SafeAreaView>
   );
@@ -378,44 +424,69 @@ const styles = StyleSheet.create({
   // Countdown Overlay
   overlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.75)',
+    backgroundColor: 'rgba(0,0,0,0.6)',
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 999,
+    paddingHorizontal: 24,
+  },
+  countdownCard: {
+    width: '100%',
+    backgroundColor: '#fff',
+    borderRadius: 20,
+    padding: 28,
+    alignItems: 'center',
   },
   overlayWarning: {
-    fontSize: 64,
-    marginBottom: 16,
+    fontSize: 48,
+    marginBottom: 12,
   },
   overlayTitle: {
     fontSize: 28,
     fontWeight: '800',
-    color: '#fff',
+    color: '#111827',
     marginBottom: 8,
+    textAlign: 'center',
   },
   overlaySubtitle: {
-    fontSize: 18,
-    color: '#e5e7eb',
-    marginBottom: 32,
+    fontSize: 16,
+    color: '#6b7280',
+    marginBottom: 20,
+    textAlign: 'center',
   },
   countdownNumber: {
     fontSize: 72,
     fontWeight: '900',
-    color: '#ef4444',
-    marginBottom: 48,
+    color: '#dc2626',
+    marginBottom: 24,
+    textAlign: 'center',
+  },
+  overlayDisclaimer: {
+    fontSize: 14,
+    color: '#4b5563',
+    textAlign: 'center',
+    lineHeight: 20,
+    marginBottom: 32,
   },
   cancelBtn: {
-    borderWidth: 2,
-    borderColor: '#fff',
-    borderRadius: 30,
-    paddingVertical: 14,
-    paddingHorizontal: 40,
+    width: '100%',
+    height: 54,
+    backgroundColor: '#fff',
+    borderWidth: 1.5,
+    borderColor: '#e5e7eb',
+    borderRadius: 27,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 1,
   },
   cancelBtnText: {
-    color: '#fff',
+    color: '#111827',
     fontSize: 18,
     fontWeight: '700',
-    letterSpacing: 1,
   },
 });
 
