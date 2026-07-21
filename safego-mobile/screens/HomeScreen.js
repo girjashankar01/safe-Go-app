@@ -366,7 +366,7 @@ export default function HomeScreen({ navigation }) {
 
         <ActionButton
           label="Settings"
-          onPress={() => comingSoon('Settings')}
+          onPress={() => navigation.navigate('Settings')}
         />
 
         {/* Divider */}

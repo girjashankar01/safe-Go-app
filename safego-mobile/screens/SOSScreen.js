@@ -14,6 +14,7 @@ import * as Location from 'expo-location';
 
 import { triggerSOS, getActiveTrip } from '../lib/api';
 import { getTrip, hasActiveTrip, clearTrip, setTrip } from '../lib/tripState';
+import { getSettings } from '../services/SettingsService';
 
 // ─── Screen ───────────────────────────────────────────────────────────────────
 
@@ -25,6 +26,12 @@ export default function SOSScreen({ navigation }) {
 
   const [isSosCountdownActive, setIsSosCountdownActive] = useState(false);
   const [countdown, setCountdown] = useState(5);
+  const [settings, setSettings] = useState(null);
+
+  // Load settings on mount
+  useEffect(() => {
+    getSettings().then(setSettings);
+  }, []);
 
   const overlayFade = React.useRef(new Animated.Value(0)).current;
   const cardScale = React.useRef(new Animated.Value(0.9)).current;
@@ -64,17 +71,19 @@ export default function SOSScreen({ navigation }) {
 
   useEffect(() => {
     let timer;
+    const initialCountdown = settings?.sosCountdown ?? 5;
+    
     if (isSosCountdownActive && countdown > 0) {
       timer = setTimeout(() => {
         setCountdown((c) => c - 1);
       }, 1000);
     } else if (isSosCountdownActive && countdown === 0) {
       setIsSosCountdownActive(false);
-      setCountdown(5);
+      setCountdown(initialCountdown); // Reset for next time
       sendSOS();
     }
     return () => clearTimeout(timer);
-  }, [isSosCountdownActive, countdown]);
+  }, [isSosCountdownActive, countdown, settings]);
 
   useEffect(() => {
     let timer;
@@ -116,8 +125,15 @@ export default function SOSScreen({ navigation }) {
 
     setSent(false);
     setErrorMsg('');
-    setCountdown(5);
-    setIsSosCountdownActive(true);
+    
+    const configuredCountdown = settings?.sosCountdown ?? 5;
+    if (configuredCountdown > 0) {
+      setCountdown(configuredCountdown);
+      setIsSosCountdownActive(true);
+    } else {
+      // Instant SOS
+      sendSOS();
+    }
   };
 
   const sendSOS = async () => {
@@ -143,13 +159,17 @@ export default function SOSScreen({ navigation }) {
         triggerType: 'manual',
       };
 
+      if (settings?.recordAudio) {
+        console.log('[SOS] Audio recording is enabled in settings. (Feature pending)');
+      }
+
       console.log('[SOS] Sending SOS...');
       await triggerSOS(payload);
       console.log(`[SOS] Response received tripId=${trip.tripId} status=success`);
 
       setSent(true);
       setErrorMsg('');
-      setCooldownRemaining(60);
+      setCooldownRemaining(settings?.sosCooldown ?? 60);
     } catch (e) {
       const status = e.response?.status;
       const serverMsg = e.response?.data?.error || '';
@@ -274,7 +294,7 @@ export default function SOSScreen({ navigation }) {
               style={styles.cancelBtn} 
               onPress={() => {
                 setIsSosCountdownActive(false);
-                setCountdown(5);
+                setCountdown(settings?.sosCountdown ?? 5);
               }}
               activeOpacity={0.8}
             >
