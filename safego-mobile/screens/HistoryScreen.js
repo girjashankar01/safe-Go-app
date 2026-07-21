@@ -90,7 +90,11 @@ export default function HistoryScreen({ navigation }) {
     }
 
     return (
-      <View style={styles.card}>
+      <TouchableOpacity 
+        style={styles.card}
+        activeOpacity={0.7}
+        onPress={() => navigation.navigate('TripDetails', { tripId: item.id })}
+      >
         <View style={styles.cardHeader}>
           <Text style={styles.dateText}>{formatTripDate(item.startedAt)}</Text>
           <View style={[styles.badge, badgeStyle]}>
@@ -120,7 +124,7 @@ export default function HistoryScreen({ navigation }) {
             </Text>
           </View>
         </View>
-      </View>
+      </TouchableOpacity>
     );
   };
 

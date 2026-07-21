@@ -102,4 +102,12 @@ export const triggerSOS = (body) =>
 export const getTrips = () =>
   api.get('/trips').then((res) => res.data);
 
+/**
+ * Fetch detailed information for a specific trip.
+ * @param {string} id
+ * @returns {Promise<Object>} Trip details
+ */
+export const getTrip = (id) =>
+  api.get(`/trips/${id}`).then((res) => res.data);
+
 export default api;

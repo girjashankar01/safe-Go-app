@@ -13,6 +13,7 @@ import SOSScreen from './screens/SOSScreen';
 import MapScreen from './screens/MapScreen';
 import TripScreen from './screens/TripScreen';
 import HistoryScreen from './screens/HistoryScreen';
+import TripDetailsScreen from './screens/TripDetailsScreen';
 
 import { getToken, removeToken } from './services/storage';
 import { getMe, setUnauthenticatedHandler } from './lib/api';
@@ -82,6 +83,7 @@ export default function App() {
         <Stack.Screen name="Map" component={MapScreen} />
         <Stack.Screen name="Trip" component={TripScreen} />
         <Stack.Screen name="History" component={HistoryScreen} />
+        <Stack.Screen name="TripDetails" component={TripDetailsScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );
