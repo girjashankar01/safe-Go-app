@@ -11,7 +11,8 @@ import {
 } from 'react-native';
 import * as Location from 'expo-location';
 
-import { startTrip, endTrip, getActiveTrip } from '../lib/api';
+import { startTrip, endTrip, getActiveTrip, getMe } from '../lib/api';
+import { getSocket } from '../lib/socket';
 import {
   setTrip,
   clearTrip,
@@ -29,8 +30,11 @@ export default function TripScreen({ navigation }) {
   const [working, setWorking]   = useState(false);  // start / end in flight
   const [error,   setError]     = useState('');
 
+  const [trackingStats, setTrackingStats] = useState(null);
+
   // Guard: prevent duplicate taps from firing concurrent requests.
   const workingRef = useRef(false);
+  const watcherRef = useRef(null);
 
   // ── Mount: restore local state then sync with backend ───────────────────────
   useEffect(() => {
@@ -44,10 +48,18 @@ export default function TripScreen({ navigation }) {
 
         if (result.hasActiveTrip) {
           // Backend has an open trip — always trust it.
+          const currentTrip = getTrip();
+          let uid = currentTrip.userId;
+          if (!uid) {
+            const me = await getMe();
+            uid = me.id;
+          }
+
           await setTrip({
             tripId:        result.trip.id,
             trackingToken: result.trip.trackingToken,
             startedAt:     result.trip.startedAt,
+            userId:        uid,
           });
           setTripLocal(getTrip());
         } else {
@@ -69,6 +81,97 @@ export default function TripScreen({ navigation }) {
     };
     init();
   }, []);
+
+  // ── GPS Tracking Watcher ─────────────────────────────────────────────────────
+  useEffect(() => {
+    if (!trip || !trip.tripId) {
+      if (watcherRef.current) {
+        watcherRef.current.remove();
+        watcherRef.current = null;
+      }
+      setTrackingStats(null);
+      return;
+    }
+
+    if (watcherRef.current) return;
+
+    let mounted = true;
+
+    const startWatcher = async () => {
+      try {
+        const { status } = await Location.getForegroundPermissionsAsync();
+        if (status !== 'granted') {
+          if (mounted) setError('Location permission revoked. Tracking stopped.');
+          return;
+        }
+
+        const sub = await Location.watchPositionAsync(
+          {
+            accuracy: Location.Accuracy.High,
+            timeInterval: 3000,
+            distanceInterval: 0,
+          },
+          (loc) => {
+            if (!mounted) return;
+
+            const lat = loc.coords.latitude;
+            const lng = loc.coords.longitude;
+            const accuracy = loc.coords.accuracy;
+            let speed = loc.coords.speed;
+            
+            if (speed == null || speed === -1) {
+              speed = null;
+            }
+            
+            const timestamp = loc.timestamp ? new Date(loc.timestamp).toISOString() : new Date().toISOString();
+
+            setTrackingStats({
+              lat,
+              lng,
+              accuracy,
+              speed,
+              timestamp
+            });
+
+            const socket = getSocket();
+            if (socket && socket.connected) {
+              const payload = {
+                tripId: trip.tripId,
+                userId: trip.userId,
+                lat,
+                lng,
+                accuracy,
+                speed,
+                timestamp
+              };
+              socket.emit('location:update', payload);
+              console.log('[TripTracking] location:update emitted', payload);
+            }
+          }
+        );
+
+        if (mounted) {
+          watcherRef.current = sub;
+        } else {
+          sub.remove();
+        }
+      } catch (err) {
+        if (mounted) {
+          setError('Failed to start GPS tracking: ' + err.message);
+        }
+      }
+    };
+
+    startWatcher();
+
+    return () => {
+      mounted = false;
+      if (watcherRef.current) {
+        watcherRef.current.remove();
+        watcherRef.current = null;
+      }
+    };
+  }, [trip]);
 
   // ── Start Trip ───────────────────────────────────────────────────────────────
   const handleStartTrip = async () => {
@@ -100,10 +203,12 @@ export default function TripScreen({ navigation }) {
 
       // POST /trips/start
       const response = await startTrip({ originLat, originLng });
+      const me = await getMe();
 
       await setTrip({
         tripId:        response.tripId,
         trackingToken: response.trackingToken,
+        userId:        me.id,
       });
       setTripLocal(getTrip());
 
@@ -113,12 +218,18 @@ export default function TripScreen({ navigation }) {
 
       if (status === 409 && e.response?.data?.existingTripId) {
         // Backend already has an open trip — recover it silently.
-        await setTrip({
-          tripId:        e.response.data.existingTripId,
-          trackingToken: null,
-        });
-        setTripLocal(getTrip());
-        setError('A previous trip was recovered. You can end it now.');
+        try {
+          const me = await getMe();
+          await setTrip({
+            tripId:        e.response.data.existingTripId,
+            trackingToken: null,
+            userId:        me.id
+          });
+          setTripLocal(getTrip());
+          setError('A previous trip was recovered. You can end it now.');
+        } catch (fetchErr) {
+          setError('Failed to recover trip details.');
+        }
       } else if (status === 400) {
         setError(serverMsg || 'Invalid request. Please try again.');
       } else if (status >= 500) {
@@ -187,7 +298,6 @@ export default function TripScreen({ navigation }) {
       setWorking(false);
     }
   };
-
 
   // ── Render ────────────────────────────────────────────────────────────────────
 
@@ -278,6 +388,23 @@ export default function TripScreen({ navigation }) {
                 small
               />
             </View>
+            
+            {/* Diagnostics Card */}
+            {trackingStats && (
+              <View style={styles.infoCard}>
+                <Row label="Tracking Status" value="Active" />
+                <View style={styles.rowDivider} />
+                <Row label="Latitude" value={trackingStats.lat} mono />
+                <View style={styles.rowDivider} />
+                <Row label="Longitude" value={trackingStats.lng} mono />
+                <View style={styles.rowDivider} />
+                <Row label="Accuracy" value={trackingStats.accuracy ? `${trackingStats.accuracy.toFixed(1)} m` : '—'} mono />
+                <View style={styles.rowDivider} />
+                <Row label="Speed" value={trackingStats.speed != null ? `${trackingStats.speed.toFixed(1)} m/s` : '—'} mono />
+                <View style={styles.rowDivider} />
+                <Row label="Last Update" value={formatDate(trackingStats.timestamp)} />
+              </View>
+            )}
 
             {error ? (
               <View style={styles.errorBanner}>
@@ -560,3 +687,4 @@ const styles = StyleSheet.create({
     letterSpacing: 0.3,
   },
 });
+
