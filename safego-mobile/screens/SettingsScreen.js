@@ -13,8 +13,9 @@ import {
 import * as Location from 'expo-location';
 
 import { getSettings, saveSettings } from '../services/SettingsService';
-import { getMe, removeToken } from '../lib/api';
-import { getSocket } from '../lib/socket';
+import { getMe } from '../lib/api';
+import { removeToken } from '../services/storage';
+import { disconnectSocket } from '../lib/socket';
 import { clearTrip } from '../lib/tripState';
 
 // A simple reusable selector component since we don't have a native picker installed
@@ -91,8 +92,7 @@ export default function SettingsScreen({ navigation }) {
   const handleLogout = async () => {
     try {
       // 1. Disconnect Socket
-      const socket = getSocket();
-      if (socket) socket.disconnect();
+      disconnectSocket();
       
       // 2. Clear Auth
       await removeToken();
