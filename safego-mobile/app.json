@@ -29,7 +29,8 @@
         {
           "locationWhenInUsePermission": "SafeGo needs your location to track trips and alert your emergency contacts."
         }
-      ]
+      ],
+      "expo-audio"
     ]
   }
 }

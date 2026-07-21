@@ -1,4 +1,4 @@
-import { Audio } from 'expo-av';
+import { AudioModule, requestRecordingPermissionsAsync, setAudioModeAsync, RecordingPresets } from 'expo-audio';
 import * as FileSystem from 'expo-file-system';
 import { supabase } from '../lib/supabase';
 
@@ -34,32 +34,31 @@ export async function recordAndUpload({ tripId, durationSeconds }) {
 
   try {
     // 1. Request Permission
-    const { status } = await Audio.requestPermissionsAsync();
+    const { status } = await requestRecordingPermissionsAsync();
     if (status !== 'granted') {
       console.log('[AudioService] Microphone permission not granted');
       return undefined;
     }
 
     // 2. Setup Audio Mode
-    await Audio.setAudioModeAsync({
-      allowsRecordingIOS: true,
-      playsInSilentModeIOS: true,
+    await setAudioModeAsync({
+      allowsRecording: true,
+      playsInSilentMode: true,
     });
 
     // 3. Start Recording
     console.log('[AudioService] Starting recording...');
-    const { recording: newRecording } = await Audio.Recording.createAsync(
-      Audio.RecordingOptionsPresets.HIGH_QUALITY
-    );
-    recording = newRecording;
+    recording = new AudioModule.AudioRecorder(RecordingPresets.HIGH_QUALITY);
+    await recording.prepareToRecordAsync();
+    recording.record();
 
     // 4. Wait for duration
     await new Promise((resolve) => setTimeout(resolve, durationSeconds * 1000));
 
     // 5. Stop Recording
     console.log('[AudioService] Stopping recording...');
-    await recording.stopAndUnloadAsync();
-    localUri = recording.getURI();
+    await recording.stop();
+    localUri = recording.uri;
 
     if (!localUri) {
       console.warn('[AudioService] No local URI obtained');
@@ -107,11 +106,8 @@ export async function recordAndUpload({ tripId, durationSeconds }) {
   } finally {
     // Cleanup
     try {
-      if (recording) {
-        const status = await recording.getStatusAsync();
-        if (status.isRecording) {
-          await recording.stopAndUnloadAsync();
-        }
+      if (recording && recording.isRecording) {
+        await recording.stop();
       }
       if (localUri) {
         await FileSystem.deleteAsync(localUri, { idempotent: true });
