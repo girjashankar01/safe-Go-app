@@ -21,6 +21,7 @@ export default function SOSScreen({ navigation }) {
   const [sent, setSent] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [working, setWorking] = useState(false);
+  const [cooldownRemaining, setCooldownRemaining] = useState(0);
 
   const [isSosCountdownActive, setIsSosCountdownActive] = useState(false);
   const [countdown, setCountdown] = useState(5);
@@ -75,6 +76,16 @@ export default function SOSScreen({ navigation }) {
     return () => clearTimeout(timer);
   }, [isSosCountdownActive, countdown]);
 
+  useEffect(() => {
+    let timer;
+    if (cooldownRemaining > 0) {
+      timer = setTimeout(() => {
+        setCooldownRemaining((c) => c - 1);
+      }, 1000);
+    }
+    return () => clearTimeout(timer);
+  }, [cooldownRemaining]);
+
   // ── Get latest location (best-effort, never blocks SOS) ───────────────────
   const getLatestLocation = async () => {
     try {
@@ -95,7 +106,7 @@ export default function SOSScreen({ navigation }) {
   };
 
   const handlePress = () => {
-    if (working || isSosCountdownActive) return;
+    if (working || isSosCountdownActive || cooldownRemaining > 0) return;
 
     if (!hasActiveTrip()) {
       setErrorMsg('Start a trip before sending an SOS.');
@@ -138,6 +149,7 @@ export default function SOSScreen({ navigation }) {
 
       setSent(true);
       setErrorMsg('');
+      setCooldownRemaining(60);
     } catch (e) {
       const status = e.response?.status;
       const serverMsg = e.response?.data?.error || '';
@@ -223,15 +235,17 @@ export default function SOSScreen({ navigation }) {
 
         {/* SOS button */}
         <TouchableOpacity
-          style={[styles.sosBtn, working && styles.sosBtnDisabled]}
+          style={[styles.sosBtn, (working || cooldownRemaining > 0) && styles.sosBtnDisabled]}
           onPress={handlePress}
           activeOpacity={0.85}
-          disabled={working || isSosCountdownActive}
+          disabled={working || isSosCountdownActive || cooldownRemaining > 0}
         >
           {working ? (
             <ActivityIndicator color="#fff" />
           ) : (
-            <Text style={styles.sosBtnText}>SEND SOS</Text>
+            <Text style={styles.sosBtnText}>
+              {cooldownRemaining > 0 ? `WAIT ${cooldownRemaining}s` : 'SEND SOS'}
+            </Text>
           )}
         </TouchableOpacity>
 
