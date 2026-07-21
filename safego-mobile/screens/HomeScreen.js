@@ -13,6 +13,7 @@ import * as Location from 'expo-location';
 import { getMe } from '../lib/api';
 import { removeToken } from '../services/storage';
 import { connectSocket, disconnectSocket, getSocket } from '../lib/socket';
+import { hasActiveTrip, clearTrip } from '../lib/tripState';
 
 // ─── Coming Soon alert ───────────────────────────────────────────────────────
 const comingSoon = (feature) =>
@@ -246,10 +247,26 @@ export default function HomeScreen({ navigation }) {
     }
   };
 
-  const handleLogout = async () => {
-    disconnectSocket(); // sever socket before clearing credentials
+  const performLogout = async () => {
+    disconnectSocket();
+    await clearTrip();    // clear local cache — backend trip stays active
     await removeToken();
     navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
+  };
+
+  const handleLogout = () => {
+    if (hasActiveTrip()) {
+      Alert.alert(
+        'Trip Still Active',
+        'A trip is currently active.\n\nLogging out will disconnect this device but will NOT end your trip on the server.\n\nContinue?',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Logout', style: 'destructive', onPress: performLogout },
+        ],
+      );
+    } else {
+      performLogout();
+    }
   };
 
   // ── Loading ────────────────────────────────────────────────────────────────
@@ -319,8 +336,7 @@ export default function HomeScreen({ navigation }) {
         <ActionButton
           label="Start Trip"
           variant="primary"
-          disabled
-          onPress={() => comingSoon('Start Trip')}
+          onPress={() => navigation.navigate('Trip')}
         />
 
         <ActionButton

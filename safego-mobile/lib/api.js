@@ -62,4 +62,29 @@ export const updateContact = (id, data) =>
 export const deleteContact = (id) =>
   api.delete(`/auth/contacts/${id}`).then((res) => res.data);
 
+// ─── Trips ────────────────────────────────────────────────────────────────────
+
+/**
+ * Start a new trip.
+ * @param {{ originLat, originLng, destinationLat?, destinationLng?, destinationName? }} body
+ * @returns {{ tripId, trackingToken, routePolyline }}
+ */
+export const startTrip = (body) =>
+  api.post('/trips/start', body).then((res) => res.data);
+
+/**
+ * Fetch the current user's active trip from the server.
+ * @returns {{ hasActiveTrip: boolean, trip?: { id, trackingToken, startedAt, status } }}
+ */
+export const getActiveTrip = () =>
+  api.get('/trips/active').then((res) => res.data);
+
+/**
+ * End an active trip.
+ * @param {string} tripId
+ * @returns {{ success: true }}
+ */
+export const endTrip = (tripId) =>
+  api.post(`/trips/${tripId}/end`).then((res) => res.data);
+
 export default api;

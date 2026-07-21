@@ -11,6 +11,7 @@ import CurrentLocationScreen from './screens/CurrentLocationScreen';
 import LiveTrackingScreen from './screens/LiveTrackingScreen';
 import SOSScreen from './screens/SOSScreen';
 import MapScreen from './screens/MapScreen';
+import TripScreen from './screens/TripScreen';
 
 import { getToken, removeToken } from './services/storage';
 import { getMe, setUnauthenticatedHandler } from './lib/api';
@@ -78,6 +79,7 @@ export default function App() {
         <Stack.Screen name="LiveTracking" component={LiveTrackingScreen} />
         <Stack.Screen name="SOS" component={SOSScreen} />
         <Stack.Screen name="Map" component={MapScreen} />
+        <Stack.Screen name="Trip" component={TripScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

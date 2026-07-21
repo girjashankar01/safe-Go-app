@@ -1,0 +1,562 @@
+import React, { useEffect, useRef, useState } from 'react';
+import {
+  ActivityIndicator,
+  Alert,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import * as Location from 'expo-location';
+
+import { startTrip, endTrip, getActiveTrip } from '../lib/api';
+import {
+  setTrip,
+  clearTrip,
+  getTrip,
+  hasActiveTrip,
+  restoreTrip,
+} from '../lib/tripState';
+
+// ─── Screen ───────────────────────────────────────────────────────────────────
+
+export default function TripScreen({ navigation }) {
+  // Local mirror of tripState — drives all UI.
+  const [trip,    setTripLocal] = useState(null);   // null = no active trip
+  const [loading, setLoading]   = useState(true);   // initial sync
+  const [working, setWorking]   = useState(false);  // start / end in flight
+  const [error,   setError]     = useState('');
+
+  // Guard: prevent duplicate taps from firing concurrent requests.
+  const workingRef = useRef(false);
+
+  // ── Mount: restore local state then sync with backend ───────────────────────
+  useEffect(() => {
+    const init = async () => {
+      // 1. Restore whatever we last persisted locally.
+      await restoreTrip();
+
+      // 2. Ask the backend what it actually knows — source of truth.
+      try {
+        const result = await getActiveTrip(); // GET /trips/active
+
+        if (result.hasActiveTrip) {
+          // Backend has an open trip — always trust it.
+          await setTrip({
+            tripId:        result.trip.id,
+            trackingToken: result.trip.trackingToken,
+            startedAt:     result.trip.startedAt,
+          });
+          setTripLocal(getTrip());
+        } else {
+          // Backend has no open trip — clear any stale local state.
+          if (hasActiveTrip()) {
+            await clearTrip();
+          }
+          setTripLocal(null);
+        }
+      } catch {
+        // Network unavailable — fall back to local state so the user can still
+        // see a previously started trip. They will re-sync on next open.
+        if (hasActiveTrip()) {
+          setTripLocal(getTrip());
+        }
+      }
+
+      setLoading(false);
+    };
+    init();
+  }, []);
+
+  // ── Start Trip ───────────────────────────────────────────────────────────────
+  const handleStartTrip = async () => {
+    if (workingRef.current) return;   // prevent double-tap
+    workingRef.current = true;
+    setError('');
+    setWorking(true);
+
+    try {
+      // One-shot location read — not a watcher, no streaming.
+      const { status } = await Location.getForegroundPermissionsAsync();
+
+      if (status !== 'granted') {
+        setError('Location permission is required to start a trip.\nGrant it from the Home screen.');
+        return;
+      }
+
+      let originLat, originLng;
+      try {
+        const loc = await Location.getCurrentPositionAsync({
+          accuracy: Location.Accuracy.Balanced,
+        });
+        originLat = loc.coords.latitude;
+        originLng = loc.coords.longitude;
+      } catch {
+        setError('Unable to get your current location.\nPlease try again in a moment.');
+        return;
+      }
+
+      // POST /trips/start
+      const response = await startTrip({ originLat, originLng });
+
+      await setTrip({
+        tripId:        response.tripId,
+        trackingToken: response.trackingToken,
+      });
+      setTripLocal(getTrip());
+
+    } catch (e) {
+      const status = e.response?.status;
+      const serverMsg = e.response?.data?.error || '';
+
+      if (status === 409 && e.response?.data?.existingTripId) {
+        // Backend already has an open trip — recover it silently.
+        await setTrip({
+          tripId:        e.response.data.existingTripId,
+          trackingToken: null,
+        });
+        setTripLocal(getTrip());
+        setError('A previous trip was recovered. You can end it now.');
+      } else if (status === 400) {
+        setError(serverMsg || 'Invalid request. Please try again.');
+      } else if (status >= 500) {
+        setError('Unexpected server error. Please try again later.');
+      } else if (!status) {
+        setError('Unable to contact server.\nCheck your network connection.');
+      } else {
+        setError(serverMsg || 'Failed to start trip.');
+      }
+    } finally {
+      workingRef.current = false;
+      setWorking(false);
+    }
+  };
+
+  // ── End Trip ─────────────────────────────────────────────────────────────────
+  const handleEndTrip = () => {
+    if (workingRef.current) return;   // prevent double-tap
+    const current = getTrip();
+    if (!current.tripId) return;
+
+    Alert.alert(
+      'End Trip',
+      'Are you sure you want to end this trip?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'End Trip',
+          style: 'destructive',
+          onPress: () => confirmEndTrip(current.tripId),
+        },
+      ],
+    );
+  };
+
+  const confirmEndTrip = async (tripId) => {
+    if (workingRef.current) return;
+    workingRef.current = true;
+    setError('');
+    setWorking(true);
+
+    try {
+      await endTrip(tripId);  // POST /trips/:id/end
+      // Only clear local state AFTER the backend confirms success.
+      await clearTrip();
+      setTripLocal(null);
+    } catch (e) {
+      // Keep trip active — do not clear state on failure.
+      const status = e.response?.status;
+      const serverMsg = e.response?.data?.error || '';
+
+      if (status === 404) {
+        // Trip already ended on the server — clear local state to match.
+        await clearTrip();
+        setTripLocal(null);
+        setError('This trip had already ended on the server. Local state cleared.');
+      } else if (status >= 500) {
+        setError('Unexpected server error. Trip kept active — try again.');
+      } else if (!status) {
+        setError('Unable to contact server.\nTrip kept active — check your network.');
+      } else {
+        setError(serverMsg || 'Failed to end trip.');
+      }
+    } finally {
+      workingRef.current = false;
+      setWorking(false);
+    }
+  };
+
+
+  // ── Render ────────────────────────────────────────────────────────────────────
+
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.header}>
+          <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()} activeOpacity={0.7}>
+            <Text style={styles.backBtnText}>← Back</Text>
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Trip</Text>
+          <View style={styles.headerSpacer} />
+        </View>
+        <View style={styles.centered}>
+          <ActivityIndicator size="large" color="#16a34a" />
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  return (
+    <SafeAreaView style={styles.container}>
+      {/* Header */}
+      <View style={styles.header}>
+        <TouchableOpacity
+          style={styles.backBtn}
+          onPress={() => navigation.goBack()}
+          activeOpacity={0.7}
+        >
+          <Text style={styles.backBtnText}>← Back</Text>
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Trip</Text>
+        <View style={styles.headerSpacer} />
+      </View>
+
+      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+
+        {/* ── IDLE STATE ─────────────────────────────────────────────────────── */}
+        {!trip ? (
+          <>
+            <View style={styles.idleCard}>
+              <Text style={styles.idleIcon}>🗺️</Text>
+              <Text style={styles.idleTitle}>No Active Trip</Text>
+              <Text style={styles.idleBody}>
+                Start a trip to begin recording your journey.{'\n'}
+                Your emergency contacts will be notified.
+              </Text>
+            </View>
+
+            {error ? (
+              <View style={styles.errorBanner}>
+                <Text style={styles.errorText}>{error}</Text>
+              </View>
+            ) : null}
+
+            <TouchableOpacity
+              style={[styles.primaryBtn, working && styles.primaryBtnDisabled]}
+              onPress={handleStartTrip}
+              activeOpacity={0.85}
+              disabled={working}
+            >
+              {working ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text style={styles.primaryBtnText}>Start Trip</Text>
+              )}
+            </TouchableOpacity>
+          </>
+        ) : (
+          /* ── ACTIVE TRIP STATE ─────────────────────────────────────────────── */
+          <>
+            {/* Status badge */}
+            <View style={styles.activeBadge}>
+              <View style={styles.activeDot} />
+              <Text style={styles.activeBadgeText}>Trip Active</Text>
+            </View>
+
+            {/* Trip info card */}
+            <View style={styles.infoCard}>
+              <Row label="Trip ID" value={trip.tripId} mono />
+              <View style={styles.rowDivider} />
+              <Row label="Started At" value={formatDate(trip.startedAt)} />
+              <View style={styles.rowDivider} />
+              <Row
+                label="Tracking Token"
+                value={trip.trackingToken ? `${trip.trackingToken.slice(0, 20)}…` : '—'}
+                mono
+                small
+              />
+            </View>
+
+            {error ? (
+              <View style={styles.errorBanner}>
+                <Text style={styles.errorText}>{error}</Text>
+              </View>
+            ) : null}
+
+            {/* End Trip button */}
+            <TouchableOpacity
+              style={[styles.endBtn, working && styles.endBtnDisabled]}
+              onPress={handleEndTrip}
+              activeOpacity={0.85}
+              disabled={working}
+            >
+              {working ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text style={styles.endBtnText}>End Trip</Text>
+              )}
+            </TouchableOpacity>
+          </>
+        )}
+      </ScrollView>
+    </SafeAreaView>
+  );
+}
+
+// ─── Sub-components ───────────────────────────────────────────────────────────
+
+function Row({ label, value, mono = false, small = false }) {
+  return (
+    <View style={styles.row}>
+      <Text style={styles.rowLabel}>{label}</Text>
+      <Text
+        style={[styles.rowValue, mono && styles.rowValueMono, small && styles.rowValueSmall]}
+        numberOfLines={2}
+        selectable
+      >
+        {value || '—'}
+      </Text>
+    </View>
+  );
+}
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function formatDate(iso) {
+  if (!iso) return '—';
+  try {
+    return new Date(iso).toLocaleString('en-IN', {
+      day:    '2-digit',
+      month:  'short',
+      year:   'numeric',
+      hour:   '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+    });
+  } catch {
+    return iso;
+  }
+}
+
+// ─── Styles ───────────────────────────────────────────────────────────────────
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#f9fafb',
+  },
+
+  // Header
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e7eb',
+  },
+  backBtn: {
+    paddingVertical: 4,
+    paddingRight: 12,
+  },
+  backBtnText: {
+    fontSize: 15,
+    color: '#16a34a',
+    fontWeight: '600',
+  },
+  headerTitle: {
+    flex: 1,
+    textAlign: 'center',
+    fontSize: 17,
+    fontWeight: '700',
+    color: '#111827',
+  },
+  headerSpacer: {
+    width: 60,
+  },
+
+  // Scroll
+  scroll: {
+    paddingHorizontal: 20,
+    paddingTop: 28,
+    paddingBottom: 48,
+  },
+
+  // Loading / centered
+  centered: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  // Idle card
+  idleCard: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 28,
+    alignItems: 'center',
+    marginBottom: 24,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    shadowColor: '#000',
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 1,
+  },
+  idleIcon: {
+    fontSize: 44,
+    marginBottom: 14,
+  },
+  idleTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#111827',
+    marginBottom: 10,
+  },
+  idleBody: {
+    fontSize: 14,
+    color: '#6b7280',
+    textAlign: 'center',
+    lineHeight: 21,
+  },
+
+  // Active badge
+  activeBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'center',
+    backgroundColor: '#f0fdf4',
+    borderRadius: 20,
+    paddingVertical: 6,
+    paddingHorizontal: 16,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: '#bbf7d0',
+  },
+  activeDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#16a34a',
+    marginRight: 8,
+  },
+  activeBadgeText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#15803d',
+    letterSpacing: 0.3,
+  },
+
+  // Info card
+  infoCard: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    marginBottom: 24,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 1,
+  },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    paddingHorizontal: 16,
+    paddingVertical: 13,
+  },
+  rowLabel: {
+    width: 110,
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#9ca3af',
+    textTransform: 'uppercase',
+    letterSpacing: 0.4,
+    paddingTop: 2,
+  },
+  rowValue: {
+    flex: 1,
+    fontSize: 15,
+    color: '#111827',
+    fontWeight: '500',
+  },
+  rowValueMono: {
+    fontFamily: 'Courier',
+    fontSize: 13,
+    color: '#374151',
+  },
+  rowValueSmall: {
+    fontSize: 12,
+    color: '#6b7280',
+  },
+  rowDivider: {
+    height: 1,
+    backgroundColor: '#f3f4f6',
+    marginHorizontal: 16,
+  },
+
+  // Error banner
+  errorBanner: {
+    backgroundColor: '#fff1f2',
+    borderRadius: 10,
+    padding: 13,
+    marginBottom: 18,
+    borderWidth: 1,
+    borderColor: '#fecdd3',
+  },
+  errorText: {
+    fontSize: 14,
+    color: '#be123c',
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+
+  // Start Trip button
+  primaryBtn: {
+    backgroundColor: '#16a34a',
+    borderRadius: 14,
+    paddingVertical: 17,
+    alignItems: 'center',
+    shadowColor: '#16a34a',
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 5 },
+    elevation: 4,
+  },
+  primaryBtnDisabled: {
+    opacity: 0.6,
+  },
+  primaryBtnText: {
+    color: '#fff',
+    fontSize: 17,
+    fontWeight: '800',
+    letterSpacing: 0.3,
+  },
+
+  // End Trip button
+  endBtn: {
+    backgroundColor: '#dc2626',
+    borderRadius: 14,
+    paddingVertical: 17,
+    alignItems: 'center',
+    shadowColor: '#dc2626',
+    shadowOpacity: 0.25,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 5 },
+    elevation: 4,
+  },
+  endBtnDisabled: {
+    opacity: 0.6,
+  },
+  endBtnText: {
+    color: '#fff',
+    fontSize: 17,
+    fontWeight: '800',
+    letterSpacing: 0.3,
+  },
+});
