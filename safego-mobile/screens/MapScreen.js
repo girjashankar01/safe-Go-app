@@ -26,6 +26,16 @@ export default function MapScreen({ navigation }) {
 
   const mapRef          = useRef(null);
   const subscriptionRef = useRef(null);
+  // True after the camera has been centred on the first GPS fix.
+  // All subsequent GPS updates move only the Marker — not the camera.
+  const centredOnce     = useRef(false);
+  // Computed once on mount; never changes so MapView's initialRegion is stable.
+  const initialRegionRef = useRef({
+    latitude:       12.9716,
+    longitude:      77.5946,
+    latitudeDelta:  DELTA,
+    longitudeDelta: DELTA,
+  });
 
   // ── Start watcher ───────────────────────────────────────────────────────────
   useEffect(() => {
@@ -60,15 +70,20 @@ export default function MapScreen({ navigation }) {
             setCoords(next);
             setInitialising(false);
 
-            // Smoothly pan the camera to follow the marker.
-            mapRef.current?.animateToRegion(
-              {
+            // Centre the camera ONLY on the first fix.
+            // After that the user owns the camera — never fight them.
+            if (!centredOnce.current) {
+              centredOnce.current = true;
+              // Also update initialRegion ref so the MapView has the right
+              // starting position if it ever re-mounts.
+              initialRegionRef.current = {
                 ...next,
                 latitudeDelta:  DELTA,
                 longitudeDelta: DELTA,
-              },
-              400, // animation duration (ms)
-            );
+              };
+              mapRef.current?.animateToRegion(initialRegionRef.current, 400);
+            }
+            // Subsequent fixes: only the Marker coordinate prop changes.
           },
         );
 
@@ -117,10 +132,6 @@ export default function MapScreen({ navigation }) {
   }
 
   // ── Main render ─────────────────────────────────────────────────────────────
-  const initialRegion = coords
-    ? { ...coords, latitudeDelta: DELTA, longitudeDelta: DELTA }
-    : { latitude: 12.9716, longitude: 77.5946, latitudeDelta: DELTA, longitudeDelta: DELTA }; // fallback centre
-
   return (
     <SafeAreaView style={styles.container}>
       {/* Header */}
@@ -141,7 +152,7 @@ export default function MapScreen({ navigation }) {
         <MapView
           ref={mapRef}
           style={styles.map}
-          initialRegion={initialRegion}
+          initialRegion={initialRegionRef.current}
           showsUserLocation={false}   // we draw our own marker
           showsMyLocationButton={false}
           showsCompass={false}
