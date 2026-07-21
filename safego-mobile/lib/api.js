@@ -95,4 +95,11 @@ export const endTrip = (tripId) =>
 export const triggerSOS = (body) =>
   api.post('/sos/trigger', body).then((res) => res.data);
 
+/**
+ * Fetch trip history for the authenticated user.
+ * @returns {Promise<Array>} List of trips
+ */
+export const getTrips = () =>
+  api.get('/trips').then((res) => res.data);
+
 export default api;

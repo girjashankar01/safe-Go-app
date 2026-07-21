@@ -340,6 +340,11 @@ export default function HomeScreen({ navigation }) {
         />
 
         <ActionButton
+          label="Trip History"
+          onPress={() => navigation.navigate('History')}
+        />
+
+        <ActionButton
           label="Emergency Contacts"
           onPress={() => navigation.navigate('EmergencyContacts')}
         />
