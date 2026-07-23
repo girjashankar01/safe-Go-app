@@ -3,6 +3,7 @@ import multer from 'multer';
 import { requireAuth } from '../middleware/auth.js';
 import { triggerSOS } from '../utils/triggerSOS.js';
 import supabase from '../config/supabase.js';
+import { buildAudioStoragePath } from '../utils/storagePath.js';
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -77,13 +78,17 @@ r.post('/audio', requireAuth, (req, res, next) => {
 
     try {
     console.log('[SOS Audio] Upload started');
-    const timestamp = Date.now();
-    const filename = `sos/${req.user.userId}/${tripId}/${timestamp}.m4a`;
+    const filename = buildAudioStoragePath({ 
+      userId: req.user.userId, 
+      type: 'sos', 
+      extension: 'm4a' 
+    });
 
     const { data, error } = await supabase.storage
       .from('audio-clips')
       .upload(filename, req.file.buffer, {
-        contentType: 'audio/m4a',
+        contentType: req.file.mimetype,
+        cacheControl: '3600',
         upsert: false,
       });
 
