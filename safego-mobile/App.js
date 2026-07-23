@@ -16,6 +16,7 @@ import HistoryScreen from './screens/HistoryScreen';
 import TripDetailsScreen from './screens/TripDetailsScreen';
 import SettingsScreen from './screens/SettingsScreen';
 import FakeCallScreen from './screens/FakeCallScreen';
+import EmergencyAlarmSettingsScreen from './screens/EmergencyAlarmSettingsScreen';
 
 import { getToken, removeToken } from './services/storage';
 import { getMe, setUnauthenticatedHandler } from './lib/api';
@@ -23,6 +24,7 @@ import { getMe, setUnauthenticatedHandler } from './lib/api';
 import CheckInModal from './components/CheckInModal';
 import PinModal from './components/PinModal';
 import FakeCallModal from './components/FakeCallModal';
+import EmergencyAlarmModal from './components/EmergencyAlarmModal';
 
 const Stack = createNativeStackNavigator();
 
@@ -92,10 +94,12 @@ export default function App() {
         <Stack.Screen name="TripDetails" component={TripDetailsScreen} />
         <Stack.Screen name="Settings" component={SettingsScreen} />
         <Stack.Screen name="FakeCall" component={FakeCallScreen} />
+        <Stack.Screen name="EmergencyAlarmSettings" component={EmergencyAlarmSettingsScreen} />
       </Stack.Navigator>
       <CheckInModal />
       <PinModal />
       <FakeCallModal />
+      <EmergencyAlarmModal />
     </NavigationContainer>
   );
 }

@@ -1,7 +1,6 @@
 import { DeviceEventEmitter } from 'react-native';
 import { getSettings } from './SettingsService';
-import { triggerSOS } from '../lib/api';
-import * as Location from 'expo-location';
+import SOSService from './SOSService';
 
 export const EVENT_CHECKIN_PROMPT = 'CheckInService:ShowPrompt';
 export const EVENT_CHECKIN_HIDE = 'CheckInService:HidePrompt';
@@ -102,24 +101,7 @@ class CheckInService {
     if (action === 'sos') {
       this.stop(true);
       try {
-        let lat = 0;
-        let lng = 0;
-        try {
-          const loc = await Location.getLastKnownPositionAsync();
-          if (loc) {
-            lat = loc.coords.latitude;
-            lng = loc.coords.longitude;
-          }
-        } catch (e) {
-          console.warn('[CheckInService] Could not get location for SOS', e);
-        }
-
-        await triggerSOS({
-          tripId: this.tripId,
-          lat,
-          lng,
-          triggerType: 'missed_checkin',
-        });
+        SOSService.startSOS('missed_checkin');
       } catch (e) {
         console.error('[CheckInService] Failed to trigger SOS', e);
       }

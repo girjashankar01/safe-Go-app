@@ -363,6 +363,15 @@ export default function SettingsScreen({ navigation }) {
           )}
         </View>
 
+        {/* ── Emergency Alarm ────────────────────────────────────── */}
+        <Text style={styles.sectionTitle}>Emergency Alarm</Text>
+        <View style={styles.card}>
+          <TouchableOpacity style={styles.row} onPress={() => navigation.navigate('EmergencyAlarmSettings')}>
+            <Text style={styles.label}>Alarm Configuration</Text>
+            <Text style={styles.subText}>→</Text>
+          </TouchableOpacity>
+        </View>
+
         {/* ── Fake Call ──────────────────────────────────────────── */}
         <Text style={styles.sectionTitle}>Preventive Safety</Text>
         <View style={styles.card}>

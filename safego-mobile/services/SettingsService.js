@@ -20,6 +20,15 @@ export const DEFAULT_SETTINGS = {
   fakeCallRingtone: true,
   fakeCallVibration: true,
   fakeCallAutoEnd: 0,
+  // Emergency Alarm
+  emergencyAlarmEnabled: false,
+  emergencyAlarmTrigger: 'after_upload',
+  emergencyAlarmSound: true,
+  emergencyAlarmVibration: true,
+  emergencyAlarmScreenFlash: false,
+  emergencyAlarmFlashlight: false,
+  emergencyAlarmDuration: 0,
+  customEmergencyNumber: '',
 };
 
 /**
