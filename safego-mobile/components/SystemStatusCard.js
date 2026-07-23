@@ -3,25 +3,9 @@ import { View, Text, StyleSheet, DeviceEventEmitter } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import * as Location from 'expo-location';
 import * as Battery from 'expo-battery';
-
-function getRelativeTime(timestampStr) {
-  if (!timestampStr) return 'Unknown';
-  const diffMs = Date.now() - new Date(timestampStr).getTime();
-  const diffSec = Math.floor(diffMs / 1000);
-  
-  if (diffSec < 5) return 'Now';
-  if (diffSec < 60) return `${diffSec} sec ago`;
-  const diffMin = Math.floor(diffSec / 60);
-  if (diffMin < 60) return `${diffMin} min ago`;
-  const diffHour = Math.floor(diffMin / 60);
-  return `${diffHour} hr ago`;
-}
-
 export default function SystemStatusCard({ socketStatus }) {
   const [locationStatus, setLocationStatus] = useState('Checking...');
   const [batteryLevel, setBatteryLevel] = useState(null);
-  const [lastUpdate, setLastUpdate] = useState(null);
-  const [relativeTime, setRelativeTime] = useState('Never');
 
   // Initial fetch and listener for Location
   useEffect(() => {
@@ -38,12 +22,8 @@ export default function SystemStatusCard({ socketStatus }) {
         const servicesEnabled = await Location.hasServicesEnabledAsync();
         if (mounted) setLocationStatus(servicesEnabled ? 'On' : 'Off');
 
-        // Fetch last known location as a fallback if no live trip is running
-        const lastKnown = await Location.getLastKnownPositionAsync();
-        if (lastKnown && mounted) {
-          const ts = lastKnown.timestamp ? new Date(lastKnown.timestamp).toISOString() : new Date().toISOString();
-          setLastUpdate((prev) => prev || ts);
-        }
+        // Fetch current location to get a fresh timestamp on mount
+        await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
       } catch (e) {
         if (mounted) setLocationStatus('Error');
       }
@@ -51,13 +31,8 @@ export default function SystemStatusCard({ socketStatus }) {
 
     checkLocation();
 
-    const sub = DeviceEventEmitter.addListener('LocationUpdated', (timestamp) => {
-      setLastUpdate(timestamp);
-    });
-
     return () => {
       mounted = false;
-      sub.remove();
     };
   }, []);
 
@@ -86,20 +61,6 @@ export default function SystemStatusCard({ socketStatus }) {
       if (batterySub) batterySub.remove();
     };
   }, []);
-
-  // Ticker for relative time
-  useEffect(() => {
-    if (!lastUpdate) return;
-    
-    // Update immediately when lastUpdate changes
-    setRelativeTime(getRelativeTime(lastUpdate));
-
-    const interval = setInterval(() => {
-      setRelativeTime(getRelativeTime(lastUpdate));
-    }, 1000); // tick every second so "3 sec ago" updates correctly
-
-    return () => clearInterval(interval);
-  }, [lastUpdate]);
 
   // Overall status logic
   const isSocketConnected = socketStatus === 'connected';
@@ -173,17 +134,6 @@ export default function SystemStatusCard({ socketStatus }) {
         </View>
         <Text style={[styles.value, { color: batteryColor }]}>
           {batteryLevel !== null ? `${batteryLevel}% • ${batteryLabel}` : 'Unknown'}
-        </Text>
-      </View>
-
-      {/* Last Update */}
-      <View style={styles.row}>
-        <View style={styles.left}>
-          <Feather name="clock" size={20} color="#6b7280" style={styles.icon} />
-          <Text style={styles.label}>Last Update</Text>
-        </View>
-        <Text style={styles.valueNeutral}>
-          {relativeTime}
         </Text>
       </View>
     </View>

@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
+  DeviceEventEmitter,
   SafeAreaView,
   ScrollView,
   StyleSheet,
@@ -9,6 +10,7 @@ import {
   View,
 } from 'react-native';
 import * as Location from 'expo-location';
+import MapView, { Marker } from 'react-native-maps';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -80,6 +82,7 @@ export default function CurrentLocationScreen({ navigation }) {
         accuracy: Location.Accuracy.High,
       });
       setLocation(result);
+      DeviceEventEmitter.emit('LocationUpdated', result.timestamp ? new Date(result.timestamp).toISOString() : new Date().toISOString());
     } catch (e) {
       setError(parseLocationError(e));
     } finally {

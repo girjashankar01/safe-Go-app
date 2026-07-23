@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Animated,
+  DeviceEventEmitter,
   Easing,
   SafeAreaView,
   ScrollView,
@@ -141,6 +142,7 @@ export default function LiveTrackingScreen({ navigation }) {
             accuracy: Location.Accuracy.High,
           });
           setLocation(loc);
+          DeviceEventEmitter.emit('LocationUpdated', loc.timestamp ? new Date(loc.timestamp).toISOString() : new Date().toISOString());
           setUpdateCount((n) => n + 1);
           setInitialising(false);
           // Local diagnostics only. Trip tracking is handled by TripScreen.
