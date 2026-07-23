@@ -20,13 +20,12 @@ import { recordAndUpload } from '../services/AudioService';
 // ─── Screen ───────────────────────────────────────────────────────────────────
 
 export default function SOSScreen({ navigation }) {
-  const [sent, setSent] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
-  const [working, setWorking] = useState(false);
   const [cooldownRemaining, setCooldownRemaining] = useState(0);
 
-  const [isSosCountdownActive, setIsSosCountdownActive] = useState(false);
+  const [sosState, setSosState] = useState('idle'); // 'idle' | 'countdown' | 'recording' | 'uploading' | 'sending' | 'success' | 'cooldown'
   const [countdown, setCountdown] = useState(5);
+  const [recordingTimeLeft, setRecordingTimeLeft] = useState(0);
   const [settings, setSettings] = useState(null);
 
   // Load settings on mount
@@ -40,7 +39,7 @@ export default function SOSScreen({ navigation }) {
 
   // Animate overlay in
   useEffect(() => {
-    if (isSosCountdownActive) {
+    if (sosState !== 'idle' && sosState !== 'success' && sosState !== 'cooldown') {
       overlayFade.setValue(0);
       cardScale.setValue(0.9);
       Animated.parallel([
@@ -56,11 +55,11 @@ export default function SOSScreen({ navigation }) {
         }),
       ]).start();
     }
-  }, [isSosCountdownActive]);
+  }, [sosState]);
 
   // Animate number change
   useEffect(() => {
-    if (isSosCountdownActive) {
+    if (sosState === 'countdown') {
       numberScale.setValue(0.7);
       Animated.timing(numberScale, {
         toValue: 1,
@@ -68,33 +67,45 @@ export default function SOSScreen({ navigation }) {
         useNativeDriver: true,
       }).start();
     }
-  }, [countdown, isSosCountdownActive]);
+  }, [countdown, sosState]);
 
   useEffect(() => {
     let timer;
     const initialCountdown = settings?.sosCountdown ?? 5;
     
-    if (isSosCountdownActive && countdown > 0) {
+    if (sosState === 'countdown' && countdown > 0) {
       timer = setTimeout(() => {
         setCountdown((c) => c - 1);
       }, 1000);
-    } else if (isSosCountdownActive && countdown === 0) {
-      setIsSosCountdownActive(false);
+    } else if (sosState === 'countdown' && countdown === 0) {
+      setSosState('idle'); // We transition inside sendSOS
       setCountdown(initialCountdown); // Reset for next time
       sendSOS();
     }
     return () => clearTimeout(timer);
-  }, [isSosCountdownActive, countdown, settings]);
+  }, [sosState, countdown, settings]);
 
   useEffect(() => {
     let timer;
-    if (cooldownRemaining > 0) {
+    if (sosState === 'recording' && recordingTimeLeft > 0) {
       timer = setTimeout(() => {
-        setCooldownRemaining((c) => c - 1);
+        setRecordingTimeLeft((c) => c - 1);
       }, 1000);
     }
     return () => clearTimeout(timer);
-  }, [cooldownRemaining]);
+  }, [sosState, recordingTimeLeft]);
+
+  useEffect(() => {
+    let timer;
+    if (sosState === 'cooldown' && cooldownRemaining > 0) {
+      timer = setTimeout(() => {
+        setCooldownRemaining((c) => c - 1);
+      }, 1000);
+    } else if (sosState === 'cooldown' && cooldownRemaining === 0) {
+      setSosState('idle');
+    }
+    return () => clearTimeout(timer);
+  }, [sosState, cooldownRemaining]);
 
   // ── Get latest location (best-effort, never blocks SOS) ───────────────────
   const getLatestLocation = async () => {
@@ -116,21 +127,19 @@ export default function SOSScreen({ navigation }) {
   };
 
   const handlePress = () => {
-    if (working || isSosCountdownActive || cooldownRemaining > 0) return;
+    if (sosState !== 'idle') return;
 
     if (!hasActiveTrip()) {
       setErrorMsg('Start a trip before sending an SOS.');
-      setSent(false);
       return;
     }
 
-    setSent(false);
     setErrorMsg('');
     
     const configuredCountdown = settings?.sosCountdown ?? 5;
     if (configuredCountdown > 0) {
       setCountdown(configuredCountdown);
-      setIsSosCountdownActive(true);
+      setSosState('countdown');
     } else {
       // Instant SOS
       sendSOS();
@@ -138,15 +147,13 @@ export default function SOSScreen({ navigation }) {
   };
 
   const sendSOS = async () => {
-    if (working) return;
-    setWorking(true);
-    setSent(false);
+    if (sosState === 'sending' || sosState === 'recording' || sosState === 'uploading') return;
     setErrorMsg('');
 
     const trip = getTrip();
     if (!trip || !trip.tripId) {
       setErrorMsg('Start a trip before sending an SOS.');
-      setWorking(false);
+      setSosState('idle');
       return;
     }
 
@@ -161,21 +168,31 @@ export default function SOSScreen({ navigation }) {
       };
 
       if (settings?.recordAudio) {
+        setSosState('recording');
         console.log('[SOS] Audio recording enabled. Capturing audio...');
         const durationSeconds = settings.audioRecordingDuration ?? 15;
-        const audioClipUrl = await recordAndUpload({ tripId: trip.tripId, durationSeconds });
+        setRecordingTimeLeft(durationSeconds);
+        const audioClipUrl = await recordAndUpload({ 
+          tripId: trip.tripId, 
+          durationSeconds,
+          onRecordingComplete: () => setSosState('uploading') 
+        });
         if (audioClipUrl) {
           payload.audioClipUrl = audioClipUrl;
         }
       }
 
+      setSosState('sending');
       console.log('[SOS] Sending SOS...');
       await triggerSOS(payload);
       console.log(`[SOS] Response received tripId=${trip.tripId} status=success`);
 
-      setSent(true);
+      setSosState('success');
       setErrorMsg('');
-      setCooldownRemaining(settings?.sosCooldown ?? 60);
+      setTimeout(() => {
+        setCooldownRemaining(settings?.sosCooldown ?? 60);
+        setSosState('cooldown');
+      }, 2000);
     } catch (e) {
       const status = e.response?.status;
       const serverMsg = e.response?.data?.error || '';
@@ -211,9 +228,7 @@ export default function SOSScreen({ navigation }) {
       } else {
         setErrorMsg(serverMsg || 'Failed to trigger SOS.');
       }
-      setSent(false);
-    } finally {
-      setWorking(false);
+      setSosState('idle');
     }
   };
 
@@ -246,7 +261,7 @@ export default function SOSScreen({ navigation }) {
         </View>
 
         {/* Success banner */}
-        {sent && !errorMsg ? (
+        {(sosState === 'success' || sosState === 'cooldown') && !errorMsg ? (
           <View style={styles.successBanner}>
             <Text style={styles.successText}>SOS sent successfully.{'\n\n'}Your emergency contacts have been notified.</Text>
           </View>
@@ -261,12 +276,12 @@ export default function SOSScreen({ navigation }) {
 
         {/* SOS button */}
         <TouchableOpacity
-          style={[styles.sosBtn, (working || cooldownRemaining > 0) && styles.sosBtnDisabled]}
+          style={[styles.sosBtn, ((sosState === 'recording' || sosState === 'uploading' || sosState === 'sending') || cooldownRemaining > 0) && styles.sosBtnDisabled]}
           onPress={handlePress}
           activeOpacity={0.85}
-          disabled={working || isSosCountdownActive || cooldownRemaining > 0}
+          disabled={sosState !== 'idle' || cooldownRemaining > 0}
         >
-          {working ? (
+          {(sosState === 'recording' || sosState === 'uploading' || sosState === 'sending') ? (
             <ActivityIndicator color="#fff" />
           ) : (
             <Text style={styles.sosBtnText}>
@@ -281,34 +296,58 @@ export default function SOSScreen({ navigation }) {
       </ScrollView>
 
       {/* Countdown Overlay */}
-      {isSosCountdownActive ? (
+      {sosState === 'countdown' || sosState === 'recording' || sosState === 'uploading' || sosState === 'sending' || sosState === 'success' ? (
         <Animated.View style={[styles.overlay, { opacity: overlayFade }]}>
           <Animated.View style={[styles.countdownCard, { transform: [{ scale: cardScale }] }]}>
-            <Text style={styles.overlayWarning}>⚠️</Text>
-            <Text style={styles.overlayTitle}>Emergency SOS</Text>
-            <Text style={styles.overlaySubtitle}>Sending emergency alert in</Text>
-            
-            <Animated.Text style={[styles.countdownNumber, { transform: [{ scale: numberScale }] }]}>
-              {countdown}
-            </Animated.Text>
-            
-            <Text style={styles.overlayDisclaimer}>
-              Emergency contacts will be notified{'\n'}unless you cancel.
+            <Text style={styles.overlayWarning}>
+              {sosState === 'success' ? '✅' : '⚠️'}
+            </Text>
+            <Text style={styles.overlayTitle}>
+              {sosState === 'success' ? 'SOS Sent ✓' : 'Emergency SOS'}
+            </Text>
+            <Text style={styles.overlaySubtitle}>
+              {sosState === 'countdown' ? 'Sending emergency alert in' : 
+               sosState === 'recording' ? 'Recording Audio...' : 
+               sosState === 'uploading' ? 'Uploading Audio...' : 
+               sosState === 'sending' ? 'Sending SOS...' : ''}
             </Text>
             
-            <TouchableOpacity 
-              style={styles.cancelBtn} 
-              onPress={() => {
-                setIsSosCountdownActive(false);
-                setCountdown(settings?.sosCountdown ?? 5);
-              }}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.cancelBtnText}>Cancel SOS</Text>
-            </TouchableOpacity>
+            {sosState === 'countdown' && (
+              <Animated.Text style={[styles.countdownNumber, { transform: [{ scale: numberScale }] }]}>
+                {countdown}
+              </Animated.Text>
+            )}
+
+            {sosState === 'recording' && (
+              <Text style={styles.countdownNumber}>{recordingTimeLeft}</Text>
+            )}
+
+            {(sosState === 'uploading' || sosState === 'sending') && (
+              <ActivityIndicator size="large" color="#dc2626" style={{ marginVertical: 20 }} />
+            )}
+            
+            {sosState === 'countdown' && (
+              <>
+                <Text style={styles.overlayDisclaimer}>
+                  Emergency contacts will be notified{'\n'}unless you cancel.
+                </Text>
+                
+                <TouchableOpacity 
+                  style={styles.cancelBtn} 
+                  onPress={() => {
+                    setSosState('idle');
+                    setCountdown(settings?.sosCountdown ?? 5);
+                  }}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.cancelBtnText}>Cancel SOS</Text>
+                </TouchableOpacity>
+              </>
+            )}
           </Animated.View>
         </Animated.View>
       ) : null}
+
     </SafeAreaView>
   );
 }
