@@ -16,30 +16,7 @@ import { connectSocket, getSocket } from '../lib/socket';
 const comingSoon = (feature) =>
   Alert.alert('Coming Soon', `${feature} will be available in a future update.`);
 
-// ─── Status Card ─────────────────────────────────────────────────────────────
-// Receives live socketStatus prop so it re-renders on every status change.
-function StatusCard({ socketStatus }) {
-  const isConnected    = socketStatus === 'connected';
-  const isConnecting   = socketStatus === 'connecting';
-  const isDisconnected = socketStatus === 'disconnected' || socketStatus === 'error';
-
-  let dotStyle  = styles.statusDotGrey;
-  let label     = '— Connecting…';
-  if (isConnected)    { dotStyle = styles.statusDotGreen;  label = '🟢 Connected'; }
-  if (isConnecting)   { dotStyle = styles.statusDotAmber;  label = '🟡 Connecting…'; }
-  if (isDisconnected) { dotStyle = styles.statusDotRed;    label = '🔴 Disconnected'; }
-
-  return (
-    <View style={styles.statusCard}>
-      <View style={styles.statusRow}>
-        <View style={[styles.statusDot, dotStyle]} />
-        <Text style={styles.statusLabel}>Socket</Text>
-      </View>
-      <Text style={styles.statusValue}>{label}</Text>
-      <Text style={styles.statusSub}>GPS · Emergency contacts · Alerts</Text>
-    </View>
-  );
-}
+import SystemStatusCard from '../components/SystemStatusCard';
 
 // ─── Action Button ────────────────────────────────────────────────────────────
 function ActionButton({ label, onPress, variant = 'default', disabled = false }) {
@@ -179,8 +156,8 @@ export default function HomeScreen({ navigation }) {
           )}
         </View>
 
-        {/* Status card — live socket status */}
-        <StatusCard socketStatus={socketStatus} />
+        {/* Status card — live system status */}
+        <SystemStatusCard socketStatus={socketStatus} />
 
         {/* Quick actions */}
         <Text style={styles.sectionTitle}>Quick Actions</Text>
@@ -313,52 +290,7 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
 
-  // Status card
-  statusCard: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 28,
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-    shadowColor: '#000',
-    shadowOpacity: 0.04,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 1,
-  },
-  statusRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 6,
-  },
-  statusDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    marginRight: 8,
-  },
-  statusDotGreen: { backgroundColor: '#16a34a' },
-  statusDotAmber: { backgroundColor: '#f59e0b' },
-  statusDotRed:   { backgroundColor: '#dc2626' },
-  statusDotGrey:  { backgroundColor: '#d1d5db' },
-  statusLabel: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#6b7280',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  statusValue: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#111827',
-    marginBottom: 4,
-  },
-  statusSub: {
-    fontSize: 13,
-    color: '#9ca3af',
-  },
+
 
   // Section title
   sectionTitle: {

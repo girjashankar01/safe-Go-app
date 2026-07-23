@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  DeviceEventEmitter,
   SafeAreaView,
   ScrollView,
   StyleSheet,
@@ -135,6 +136,8 @@ export default function TripScreen({ navigation }) {
             }
             
             const timestamp = loc.timestamp ? new Date(loc.timestamp).toISOString() : new Date().toISOString();
+            
+            DeviceEventEmitter.emit('LocationUpdated', timestamp);
 
             setTrackingStats({
               lat,
