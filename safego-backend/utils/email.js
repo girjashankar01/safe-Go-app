@@ -29,7 +29,7 @@ export async function sendSOSEmail({
       ${audioClipUrl ? `
       <p>🎤 Audio Recording</p>
       <p><a href="${audioClipUrl}">Listen Recording</a></p>
-      <p>${audioClipUrl}</p>
+      <p><a href="${audioClipUrl}" style="color:#666;font-size:12px;">${audioClipUrl.split('/').pop()}</a></p>
       ` : ''}
       <p style="color:#666;font-size:12px;">This is an automated alert from SafeGo. Do not reply to this email.</p>
     </div>
