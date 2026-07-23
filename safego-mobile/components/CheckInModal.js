@@ -12,6 +12,7 @@ import CheckInService, {
   EVENT_CHECKIN_PROMPT,
   EVENT_CHECKIN_HIDE,
 } from '../services/CheckInService';
+import PinService from '../services/PinService';
 
 export default function CheckInModal() {
   const [visible, setVisible] = useState(false);
@@ -48,8 +49,13 @@ export default function CheckInModal() {
     };
   }, []);
 
-  const handleConfirm = () => {
-    CheckInService.onConfirmed();
+  const handleConfirm = async () => {
+    // Hide the CheckIn UI temporarily if needed, or leave it behind the PinModal
+    // Let's just request pin validation directly. PinModal will appear on top.
+    const isValid = await PinService.requestPinValidation();
+    if (isValid) {
+      CheckInService.onConfirmed();
+    }
   };
 
   if (!visible) return null;
