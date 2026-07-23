@@ -1,7 +1,7 @@
 import { getSettings } from './SettingsService';
 import { triggerSOS as apiTriggerSOS, uploadSOSAudio } from '../lib/api';
 import { getTrip, hasActiveTrip } from '../lib/tripState';
-import { recordAudio } from './AudioService';
+import AudioRecordingService from './AudioRecordingService';
 import * as Location from 'expo-location';
 import EmergencyAlarmService from './EmergencyAlarmService';
 
@@ -164,7 +164,7 @@ class SOSService {
           this.notify();
         }, 1000);
         
-        const localUri = await recordAudio({ 
+        const localUri = await AudioRecordingService.recordAudio({ 
           durationSeconds,
           onRecordingComplete: () => {
             if (this.recordingTimer) clearInterval(this.recordingTimer);

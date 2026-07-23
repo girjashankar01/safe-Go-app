@@ -18,6 +18,7 @@ import { removeToken } from '../services/storage';
 import { disconnectSocket } from '../lib/socket';
 import { clearTrip } from '../lib/tripState';
 import PinService from '../services/PinService';
+import AudioPlaybackService from '../services/AudioPlaybackService';
 import { Modal, TextInput, ActivityIndicator } from 'react-native';
 
 // A simple reusable selector component since we don't have a native picker installed
@@ -109,8 +110,11 @@ export default function SettingsScreen({ navigation }) {
       
       // 3. Clear Active Trip
       await clearTrip();
+      
+      // 4. Cleanup Audio
+      AudioPlaybackService.stopAll();
 
-      // 4. Reset Navigation to Login
+      // 5. Reset Navigation to Login
       navigation.reset({
         index: 0,
         routes: [{ name: 'Login' }],

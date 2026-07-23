@@ -1,6 +1,5 @@
 import { Vibration } from 'react-native';
-// Note: expo-av would be used here for ringtone, but leaving stubs as requested for V1.
-
+import AudioPlaybackService, { PlaybackPriority } from './AudioPlaybackService';
 export type FakeCallState = 'Idle' | 'Scheduled' | 'Incoming' | 'Active' | 'Ended';
 
 export interface FakeCallConfig {
@@ -134,11 +133,17 @@ class FakeCallService {
       if (this.config?.vibrationEnabled) {
         Vibration.vibrate([1000, 2000], true);
       }
-      // Ringtone stub (would play audio here)
+      if (this.config?.ringtoneEnabled) {
+        AudioPlaybackService.play('ringtone', PlaybackPriority.MEDIUM, { 
+          isLooping: true, 
+          playsInSilentMode: false 
+        });
+      }
     } 
     else if (newState === 'Active') {
       // Stop Ringtone & Vibration
       Vibration.cancel();
+      AudioPlaybackService.stop();
       
       this.activeCallStartTs = Date.now();
       
@@ -165,6 +170,7 @@ class FakeCallService {
       this.targetTimestamp = null;
       this.activeCallStartTs = null;
       Vibration.cancel();
+      AudioPlaybackService.stop();
     }
 
     this.notify();

@@ -1,6 +1,6 @@
 import { Vibration } from 'react-native';
-// Note: expo-av would be used here for audio effect.
 import { getSettings } from './SettingsService';
+import AudioPlaybackService, { PlaybackPriority } from './AudioPlaybackService';
 
 export type EmergencyAlarmState = 'Idle' | 'Preparing' | 'Playing' | 'Stopping';
 
@@ -75,7 +75,10 @@ class EmergencyAlarmService {
       
       // 1. Audio Effect
       if (settings.emergencyAlarmSound) {
-        // playAudioLoop();
+        AudioPlaybackService.play('alarm', PlaybackPriority.HIGH, { 
+          isLooping: true, 
+          playsInSilentMode: true 
+        });
       }
       
       // 2. Vibration Effect
@@ -101,7 +104,7 @@ class EmergencyAlarmService {
       
       // Cleanup all effects
       Vibration.cancel();
-      // stopAudioLoop();
+      AudioPlaybackService.stop();
       // stopFlashlight();
     }
 
