@@ -12,10 +12,10 @@ import {
 } from 'react-native';
 import * as Location from 'expo-location';
 
-import { triggerSOS, getActiveTrip } from '../lib/api';
+import { triggerSOS, getActiveTrip, uploadSOSAudio } from '../lib/api';
 import { getTrip, hasActiveTrip, clearTrip, setTrip } from '../lib/tripState';
 import { getSettings } from '../services/SettingsService';
-import { recordAndUpload } from '../services/AudioService';
+import { recordAudio } from '../services/AudioService';
 
 // ─── Screen ───────────────────────────────────────────────────────────────────
 
@@ -169,21 +169,41 @@ export default function SOSScreen({ navigation }) {
 
       if (settings?.recordAudio) {
         setSosState('recording');
-        console.log('[SOS] Audio recording enabled. Capturing audio...');
+        console.log('[SOS] Recording...');
         const durationSeconds = settings.audioRecordingDuration ?? 15;
         setRecordingTimeLeft(durationSeconds);
-        const audioClipUrl = await recordAndUpload({ 
-          tripId: trip.tripId, 
+        
+        const localUri = await recordAudio({ 
           durationSeconds,
           onRecordingComplete: () => setSosState('uploading') 
         });
-        if (audioClipUrl) {
-          payload.audioClipUrl = audioClipUrl;
+
+        if (localUri) {
+          try {
+            console.log('[SOS] Uploading to backend...');
+            const formData = new FormData();
+            formData.append('audio', {
+              uri: localUri,
+              name: 'sos.m4a',
+              type: 'audio/m4a',
+            });
+            formData.append('tripId', trip.tripId);
+            
+            const uploadRes = await uploadSOSAudio(formData);
+            if (uploadRes && uploadRes.success && uploadRes.publicUrl) {
+              console.log('[SOS] Backend upload complete');
+              payload.audioClipUrl = uploadRes.publicUrl;
+            } else {
+              console.warn('[SOS] Backend upload failed or returned no public URL');
+            }
+          } catch (uploadError) {
+            console.error('[SOS] Backend upload failed:', uploadError.message);
+          }
         }
       }
 
       setSosState('sending');
-      console.log('[SOS] Sending SOS...');
+      console.log('[SOS] Triggering SOS...');
       await triggerSOS(payload);
       console.log(`[SOS] Response received tripId=${trip.tripId} status=success`);
 

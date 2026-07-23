@@ -89,11 +89,23 @@ export const endTrip = (tripId) =>
 
 /**
  * Trigger an SOS for an active trip.
- * @param {{ tripId: string, lat: number, lng: number, triggerType: string }} body
+ * @param {{ tripId: string, lat: number, lng: number, triggerType: string, audioClipUrl?: string }} body
  * @returns {{ success: true, sosId: string, priority: string }}
  */
 export const triggerSOS = (body) =>
   api.post('/sos/trigger', body).then((res) => res.data);
+
+/**
+ * Upload SOS audio recording.
+ * @param {FormData} formData
+ * @returns {{ success: true, path: string, publicUrl: string }}
+ */
+export const uploadSOSAudio = (formData) =>
+  api.post('/sos/audio', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  }).then((res) => res.data);
 
 /**
  * Fetch trip history for the authenticated user.
