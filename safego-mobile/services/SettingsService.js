@@ -14,6 +14,12 @@ export const DEFAULT_SETTINGS = {
   requirePinForSOSCancel: false,
   emergencyPinHash: null,
   highAccuracyTracking: true,
+  // Fake Call
+  fakeCallerName: 'Unknown',
+  fakeCallDelay: 10,
+  fakeCallRingtone: true,
+  fakeCallVibration: true,
+  fakeCallAutoEnd: 0,
 };
 
 /**

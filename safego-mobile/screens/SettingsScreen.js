@@ -363,6 +363,15 @@ export default function SettingsScreen({ navigation }) {
           )}
         </View>
 
+        {/* ── Fake Call ──────────────────────────────────────────── */}
+        <Text style={styles.sectionTitle}>Preventive Safety</Text>
+        <View style={styles.card}>
+          <TouchableOpacity style={styles.row} onPress={() => navigation.navigate('FakeCall')}>
+            <Text style={styles.label}>Fake Call Settings</Text>
+            <Text style={styles.subText}>→</Text>
+          </TouchableOpacity>
+        </View>
+
         {/* ── Account ────────────────────────────────────────────── */}
         <Text style={styles.sectionTitle}>Account</Text>
         <View style={styles.card}>

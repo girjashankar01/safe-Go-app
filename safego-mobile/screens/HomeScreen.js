@@ -11,6 +11,8 @@ import {
 } from 'react-native';
 import { getMe } from '../lib/api';
 import { connectSocket, getSocket } from '../lib/socket';
+import { getSettings } from '../services/SettingsService';
+import FakeCallService from '../services/FakeCallService';
 
 // ─── Coming Soon alert ───────────────────────────────────────────────────────
 const comingSoon = (feature) =>
@@ -60,6 +62,13 @@ export default function HomeScreen({ navigation }) {
   const [socketStatus, setSocketStatus] = useState(
     getSocket().connected ? 'connected' : 'connecting'
   );
+  const [fakeCallState, setFakeCallState] = useState({ status: 'Idle', remainingDelay: 0 });
+
+  // ─── 1. Subscribe to FakeCallService
+  useEffect(() => {
+    const unsub = FakeCallService.subscribe((s) => setFakeCallState(s));
+    return unsub;
+  }, []);
 
   useEffect(() => {
     getMe()
@@ -161,6 +170,33 @@ export default function HomeScreen({ navigation }) {
 
         {/* Quick actions */}
         <Text style={styles.sectionTitle}>Quick Actions</Text>
+
+        {/* Fake Call Action (dynamic based on state) */}
+        {fakeCallState.status === 'Scheduled' ? (
+          <View style={styles.scheduledCallCard}>
+            <View>
+              <Text style={styles.scheduledCallTitle}>Fake Call Scheduled</Text>
+              <Text style={styles.scheduledCallSubtitle}>{fakeCallState.remainingDelay}s remaining</Text>
+            </View>
+            <TouchableOpacity style={styles.cancelCallBtn} onPress={() => FakeCallService.cancel()}>
+              <Text style={styles.cancelCallBtnText}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <ActionButton
+            label="Trigger Fake Call"
+            onPress={async () => {
+              const settings = await getSettings();
+              FakeCallService.start({
+                callerName: settings.fakeCallerName,
+                delay: settings.fakeCallDelay,
+                ringtoneEnabled: settings.fakeCallRingtone,
+                vibrationEnabled: settings.fakeCallVibration,
+                autoEndDuration: settings.fakeCallAutoEnd,
+              });
+            }}
+          />
+        )}
 
         {/* SOS — first and most prominent */}
         <ActionButton
@@ -349,5 +385,38 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: '#e5e7eb',
     marginVertical: 16,
+  },
+  scheduledCallCard: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+  },
+  scheduledCallTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#111827',
+  },
+  scheduledCallSubtitle: {
+    fontSize: 13,
+    color: '#16a34a',
+    marginTop: 2,
+    fontWeight: '600',
+  },
+  cancelCallBtn: {
+    backgroundColor: '#fee2e2',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+  },
+  cancelCallBtnText: {
+    color: '#dc2626',
+    fontWeight: '600',
+    fontSize: 13,
   },
 });
