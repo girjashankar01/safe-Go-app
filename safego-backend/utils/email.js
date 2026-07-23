@@ -26,7 +26,11 @@ export async function sendSOSEmail({
             <td style="padding:8px;border:1px solid #ddd;">${nearestStation.name} — ${nearestStation.phone || 'N/A'}</td></tr>` : ''}
       </table>
       <p><a href="${trackingLink}" style="background:${priorityColor};color:white;padding:10px 20px;text-decoration:none;border-radius:4px;display:inline-block;margin-top:12px;">Live Tracking Link</a></p>
-      ${audioClipUrl ? `<p><a href="${audioClipUrl}">🔊 Audio Recording (15 seconds)</a></p>` : ''}
+      ${audioClipUrl ? `
+      <p>🎤 Audio Recording</p>
+      <p><a href="${audioClipUrl}">Listen Recording</a></p>
+      <p>${audioClipUrl}</p>
+      ` : ''}
       <p style="color:#666;font-size:12px;">This is an automated alert from SafeGo. Do not reply to this email.</p>
     </div>
   `;
