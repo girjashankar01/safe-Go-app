@@ -20,6 +20,7 @@ import EmergencyAlarmSettingsScreen from './screens/EmergencyAlarmSettingsScreen
 
 import { getToken, removeToken } from './services/storage';
 import { getMe, setUnauthenticatedHandler } from './lib/api';
+import { restoreTrip } from './lib/tripState';
 
 import CheckInModal from './components/CheckInModal';
 import PinModal from './components/PinModal';
@@ -53,6 +54,7 @@ export default function App() {
   useEffect(() => {
     const bootstrap = async () => {
       const token = await getToken();
+      await restoreTrip();
 
       if (!token) {
         setInitialRoute('Login');

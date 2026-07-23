@@ -79,7 +79,9 @@ class SOSService {
   public async startSOS(triggerType: string = 'manual') {
     if (this.status !== 'idle' && this.status !== 'error') return;
     
+    console.log('[SOSService] startSOS called. hasActiveTrip:', hasActiveTrip());
     if (!hasActiveTrip()) {
+      console.log('[SOSService] Error: No active trip in hasActiveTrip()');
       this.errorMsg = 'Start a trip before sending an SOS.';
       this.status = 'error';
       this.notify();
@@ -134,7 +136,9 @@ class SOSService {
     this.notify();
     
     const trip = getTrip();
+    console.log('[SOSService] executeSOS. trip:', trip);
     if (!trip || !trip.tripId) {
+      console.log('[SOSService] Error: Missing tripId in executeSOS');
       this.errorMsg = 'Start a trip before sending an SOS.';
       this.status = 'error';
       this.notify();
