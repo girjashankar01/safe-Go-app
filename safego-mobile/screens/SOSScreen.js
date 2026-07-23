@@ -22,6 +22,7 @@ import PinService from '../services/PinService';
 
 export default function SOSScreen({ navigation }) {
   const [errorMsg, setErrorMsg] = useState('');
+  const [isCountdownPaused, setIsCountdownPaused] = useState(false);
   const [cooldownRemaining, setCooldownRemaining] = useState(0);
 
   const [sosState, setSosState] = useState('idle'); // 'idle' | 'countdown' | 'recording' | 'uploading' | 'sending' | 'success' | 'cooldown'
@@ -74,17 +75,17 @@ export default function SOSScreen({ navigation }) {
     let timer;
     const initialCountdown = settings?.sosCountdown ?? 5;
     
-    if (sosState === 'countdown' && countdown > 0) {
+    if (sosState === 'countdown' && countdown > 0 && !isCountdownPaused) {
       timer = setTimeout(() => {
         setCountdown((c) => c - 1);
       }, 1000);
-    } else if (sosState === 'countdown' && countdown === 0) {
+    } else if (sosState === 'countdown' && countdown === 0 && !isCountdownPaused) {
       setSosState('idle'); // We transition inside sendSOS
       setCountdown(initialCountdown); // Reset for next time
       sendSOS();
     }
     return () => clearTimeout(timer);
-  }, [sosState, countdown, settings]);
+  }, [sosState, countdown, settings, isCountdownPaused]);
 
   useEffect(() => {
     let timer;
@@ -356,12 +357,16 @@ export default function SOSScreen({ navigation }) {
                 <TouchableOpacity 
                   style={styles.cancelBtn} 
                   onPress={async () => {
-                    // Temporarily block UI interaction while Pin modal is shown
-                    const validated = await PinService.requestPinValidation();
+                    // Pause countdown while PIN is entered
+                    setIsCountdownPaused(true);
+                    // Pass 3 seconds (3000ms) to allow the user to type before resuming
+                    const validated = await PinService.requestPinValidation(3000);
                     if (validated) {
                       setSosState('idle');
                       setCountdown(settings?.sosCountdown ?? 5);
+                      Alert.alert('SOS Cancelled', 'The emergency alert has been cancelled.');
                     }
+                    setIsCountdownPaused(false);
                   }}
                   activeOpacity={0.8}
                 >

@@ -6,6 +6,7 @@ import { getSettings, saveSettings } from './SettingsService';
  * Emitted when the PinService wants to prompt the user for their PIN.
  */
 export const EVENT_REQUEST_PIN = 'PinService:RequestPin';
+export const EVENT_HIDE_PIN = 'PinService:HidePin';
 
 class PinService {
   /**
@@ -76,8 +77,9 @@ class PinService {
   /**
    * Triggers a global UI prompt to validate the PIN.
    * Resolves true if validated (or if protection is disabled), false otherwise.
+   * @param timeoutMs {number} Optional timeout in milliseconds before automatically cancelling
    */
-  async requestPinValidation(): Promise<boolean> {
+  async requestPinValidation(timeoutMs?: number): Promise<boolean> {
     const isEnabled = await this.isProtectionEnabled();
     const hasPinSet = await this.hasPin();
 
@@ -87,13 +89,28 @@ class PinService {
     }
 
     return new Promise((resolve) => {
+      let timer: NodeJS.Timeout | null = null;
+      let isResolved = false;
+
+      const handleResult = (result: boolean) => {
+        if (isResolved) return;
+        isResolved = true;
+        if (timer) clearTimeout(timer);
+        resolve(result);
+      };
+
       // We pass the resolve function to the modal so it can resolve the promise
       // when the user succeeds or cancels.
       DeviceEventEmitter.emit(EVENT_REQUEST_PIN, {
-        onResult: (result: boolean) => {
-          resolve(result);
-        }
+        onResult: handleResult
       });
+
+      if (timeoutMs) {
+        timer = setTimeout(() => {
+          DeviceEventEmitter.emit(EVENT_HIDE_PIN);
+          handleResult(false);
+        }, timeoutMs);
+      }
     });
   }
 }

@@ -9,7 +9,7 @@ import {
   DeviceEventEmitter,
   ActivityIndicator,
 } from 'react-native';
-import PinService, { EVENT_REQUEST_PIN } from '../services/PinService';
+import PinService, { EVENT_REQUEST_PIN, EVENT_HIDE_PIN } from '../services/PinService';
 
 export default function PinModal() {
   const [visible, setVisible] = useState(false);
@@ -27,7 +27,17 @@ export default function PinModal() {
       setVisible(true);
     });
 
-    return () => sub.remove();
+    const hideSub = DeviceEventEmitter.addListener(EVENT_HIDE_PIN, () => {
+      setVisible(false);
+      setPin('');
+      setErrorMsg('');
+      setLoading(false);
+    });
+
+    return () => {
+      sub.remove();
+      hideSub.remove();
+    };
   }, []);
 
   const handleCancel = () => {
