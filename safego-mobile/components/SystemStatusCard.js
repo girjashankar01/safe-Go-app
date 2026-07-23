@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, DeviceEventEmitter } from 'react-native';
+import { Feather } from '@expo/vector-icons';
 import * as Location from 'expo-location';
 import * as Battery from 'expo-battery';
 
@@ -145,7 +146,7 @@ export default function SystemStatusCard({ socketStatus }) {
       {/* Socket */}
       <View style={styles.row}>
         <View style={styles.left}>
-          <Text style={styles.icon}>📡</Text>
+          <Feather name="wifi" size={20} color="#6b7280" style={styles.icon} />
           <Text style={styles.label}>Socket Connection</Text>
         </View>
         <Text style={[styles.value, { color: isSocketConnected ? '#16a34a' : '#dc2626' }]}>
@@ -156,7 +157,7 @@ export default function SystemStatusCard({ socketStatus }) {
       {/* Location */}
       <View style={styles.row}>
         <View style={styles.left}>
-          <Text style={styles.icon}>📍</Text>
+          <Feather name="map-pin" size={20} color="#6b7280" style={styles.icon} />
           <Text style={styles.label}>Location Services</Text>
         </View>
         <Text style={[styles.value, { color: isLocationOn ? '#16a34a' : '#dc2626' }]}>
@@ -167,7 +168,7 @@ export default function SystemStatusCard({ socketStatus }) {
       {/* Battery */}
       <View style={styles.row}>
         <View style={styles.left}>
-          <Text style={styles.icon}>🔋</Text>
+          <Feather name="battery" size={20} color="#6b7280" style={styles.icon} />
           <Text style={styles.label}>Battery</Text>
         </View>
         <Text style={[styles.value, { color: batteryColor }]}>
@@ -178,7 +179,7 @@ export default function SystemStatusCard({ socketStatus }) {
       {/* Last Update */}
       <View style={styles.row}>
         <View style={styles.left}>
-          <Text style={styles.icon}>🕒</Text>
+          <Feather name="clock" size={20} color="#6b7280" style={styles.icon} />
           <Text style={styles.label}>Last Update</Text>
         </View>
         <Text style={styles.valueNeutral}>
@@ -236,7 +237,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   icon: {
-    fontSize: 16,
     marginRight: 12,
     width: 24,
     textAlign: 'center',

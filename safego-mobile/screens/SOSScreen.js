@@ -10,6 +10,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { Feather } from '@expo/vector-icons';
 import * as Location from 'expo-location';
 
 import { triggerSOS, getActiveTrip, uploadSOSAudio } from '../lib/api';
@@ -275,7 +276,7 @@ export default function SOSScreen({ navigation }) {
       >
         {/* Warning card */}
         <View style={styles.warningCard}>
-          <Text style={styles.warningIcon}>⚠️</Text>
+          <Feather name="alert-triangle" size={32} color="#dc2626" style={{ marginBottom: 12 }} />
           <Text style={styles.warningTitle}>Emergency SOS</Text>
           <Text style={styles.warningBody}>
             Pressing this button will immediately send an emergency signal.
@@ -321,11 +322,15 @@ export default function SOSScreen({ navigation }) {
       {sosState === 'countdown' || sosState === 'recording' || sosState === 'uploading' || sosState === 'sending' || sosState === 'success' ? (
         <Animated.View style={[styles.overlay, { opacity: overlayFade }]}>
           <Animated.View style={[styles.countdownCard, { transform: [{ scale: cardScale }] }]}>
-            <Text style={styles.overlayWarning}>
-              {sosState === 'success' ? '✅' : '⚠️'}
-            </Text>
+            <View style={{ marginBottom: 16 }}>
+              {sosState === 'success' ? (
+                <Feather name="check-circle" size={48} color="#16a34a" />
+              ) : (
+                <Feather name="alert-triangle" size={48} color="#dc2626" />
+              )}
+            </View>
             <Text style={styles.overlayTitle}>
-              {sosState === 'success' ? 'SOS Sent ✓' : 'Emergency SOS'}
+              {sosState === 'success' ? 'SOS Sent' : 'Emergency SOS'}
             </Text>
             <Text style={styles.overlaySubtitle}>
               {sosState === 'countdown' ? 'Sending emergency alert in' : 

@@ -10,6 +10,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { Feather } from '@expo/vector-icons';
 import * as Location from 'expo-location';
 
 import { startTrip, endTrip, getActiveTrip, getMe } from '../lib/api';
@@ -361,7 +362,7 @@ export default function TripScreen({ navigation }) {
         {!trip ? (
           <>
             <View style={styles.idleCard}>
-              <Text style={styles.idleIcon}>🗺️</Text>
+              <Feather name="map" size={48} color="#9ca3af" style={{ marginBottom: 16 }} />
               <Text style={styles.idleTitle}>No Active Trip</Text>
               <Text style={styles.idleBody}>
                 Start a trip to begin recording your journey.{'\n'}

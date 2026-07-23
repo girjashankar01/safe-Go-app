@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { Feather } from '@expo/vector-icons';
 import { getTrips } from '../lib/api';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -144,8 +145,8 @@ export default function HistoryScreen({ navigation }) {
 
     return (
       <View style={styles.centerContainer}>
-        <Text style={styles.emptyIcon}>🗺️</Text>
-        <Text style={styles.emptyTitle}>No trips yet</Text>
+        <Feather name="map" size={48} color="#9ca3af" style={{ marginBottom: 16 }} />
+        <Text style={styles.emptyTitle}>No Trips Yet</Text>
         <Text style={styles.emptySubtitle}>Start your first trip to build your history.</Text>
       </View>
     );

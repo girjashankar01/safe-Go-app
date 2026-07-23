@@ -7,6 +7,7 @@ import {
   StyleSheet,
   DeviceEventEmitter,
 } from 'react-native';
+import { Feather } from '@expo/vector-icons';
 import CheckInService, {
   EVENT_CHECKIN_PROMPT,
   EVENT_CHECKIN_HIDE,
@@ -61,8 +62,8 @@ export default function CheckInModal() {
     <Modal transparent animationType="slide" visible={visible}>
       <View style={styles.overlay}>
         <View style={styles.card}>
-          <Text style={styles.icon}>🛡️</Text>
-          <Text style={styles.title}>Safety Check</Text>
+          <Feather name="shield" size={48} color="#16a34a" style={{ marginBottom: 16 }} />
+          <Text style={styles.title}>Safety Check-in</Text>
           <Text style={styles.body}>Just checking in. Are you safe?</Text>
           
           <Text style={styles.countdownLabel}>Respond within</Text>
