@@ -16,6 +16,7 @@ import { triggerSOS, getActiveTrip, uploadSOSAudio } from '../lib/api';
 import { getTrip, hasActiveTrip, clearTrip, setTrip } from '../lib/tripState';
 import { getSettings } from '../services/SettingsService';
 import { recordAudio } from '../services/AudioService';
+import PinService from '../services/PinService';
 
 // ─── Screen ───────────────────────────────────────────────────────────────────
 
@@ -354,9 +355,13 @@ export default function SOSScreen({ navigation }) {
                 
                 <TouchableOpacity 
                   style={styles.cancelBtn} 
-                  onPress={() => {
-                    setSosState('idle');
-                    setCountdown(settings?.sosCountdown ?? 5);
+                  onPress={async () => {
+                    // Temporarily block UI interaction while Pin modal is shown
+                    const validated = await PinService.requestPinValidation();
+                    if (validated) {
+                      setSosState('idle');
+                      setCountdown(settings?.sosCountdown ?? 5);
+                    }
                   }}
                   activeOpacity={0.8}
                 >

@@ -202,20 +202,60 @@ export default function SettingsScreen({ navigation }) {
           </View>
         </View>
 
-        {/* ── Trip ───────────────────────────────────────────────── */}
-        <Text style={styles.sectionTitle}>Trip</Text>
+        {/* ── Trip Safety ────────────────────────────────────────── */}
+        <Text style={styles.sectionTitle}>Trip Safety</Text>
         <View style={styles.card}>
+          <View style={styles.row}>
+            <Text style={styles.label}>Enable Periodic Check-ins</Text>
+            <Switch
+              value={settings.periodicCheckInsEnabled}
+              onValueChange={(val) => updateSetting('periodicCheckInsEnabled', val)}
+              trackColor={{ false: '#d1d5db', true: '#16a34a' }}
+            />
+          </View>
+          <View style={styles.divider} />
           <View style={styles.stackRow}>
-            <Text style={styles.label}>Periodic Check-ins</Text>
+            <Text style={styles.label}>Check-in Interval (minutes)</Text>
             <SegmentedControl
               options={[
-                { label: 'OFF', value: 0 },
-                { label: '15m', value: 15 },
-                { label: '30m', value: 30 },
-                { label: '60m', value: 60 },
+                { label: '15', value: 15 },
+                { label: '30', value: 30 },
+                { label: '60', value: 60 },
+                { label: '90', value: 90 },
+                { label: '120', value: 120 },
               ]}
-              selectedValue={settings.periodicCheckIn}
-              onValueChange={(val) => updateSetting('periodicCheckIn', val)}
+              selectedValue={settings.checkInIntervalMinutes ?? 15}
+              onValueChange={(val) => updateSetting('checkInIntervalMinutes', val)}
+              disabled={!settings.periodicCheckInsEnabled}
+            />
+          </View>
+          <View style={styles.divider} />
+          <View style={styles.stackRow}>
+            <Text style={styles.label}>Response Timeout (seconds)</Text>
+            <SegmentedControl
+              options={[
+                { label: '15', value: 15 },
+                { label: '30', value: 30 },
+                { label: '45', value: 45 },
+                { label: '60', value: 60 },
+              ]}
+              selectedValue={settings.checkInResponseTimeoutSeconds ?? 30}
+              onValueChange={(val) => updateSetting('checkInResponseTimeoutSeconds', val)}
+              disabled={!settings.periodicCheckInsEnabled}
+            />
+          </View>
+          <View style={styles.divider} />
+          <View style={styles.stackRow}>
+            <Text style={styles.label}>Missed Check-in Action</Text>
+            <SegmentedControl
+              options={[
+                { label: 'SOS', value: 'sos' },
+                { label: 'Warning', value: 'warning' },
+                { label: 'Guardians', value: 'guardians' },
+              ]}
+              selectedValue={settings.missedCheckInAction ?? 'sos'}
+              onValueChange={(val) => updateSetting('missedCheckInAction', val)}
+              disabled={!settings.periodicCheckInsEnabled}
             />
           </View>
           <View style={styles.divider} />
@@ -227,6 +267,37 @@ export default function SettingsScreen({ navigation }) {
               trackColor={{ false: '#d1d5db', true: '#16a34a' }}
             />
           </View>
+        </View>
+
+        {/* ── Emergency Security ─────────────────────────────────── */}
+        <Text style={styles.sectionTitle}>Emergency Security</Text>
+        <View style={styles.card}>
+          <View style={styles.row}>
+            <Text style={styles.label}>Require PIN To Cancel SOS</Text>
+            <Switch
+              value={settings.requirePinForSOSCancel}
+              onValueChange={(val) => updateSetting('requirePinForSOSCancel', val)}
+              trackColor={{ false: '#d1d5db', true: '#16a34a' }}
+            />
+          </View>
+          <View style={styles.divider} />
+          {settings.emergencyPinHash ? (
+            <>
+              <TouchableOpacity style={styles.row} onPress={() => {/* TODO: Change PIN Flow */}}>
+                <Text style={styles.label}>Change PIN</Text>
+                <Text style={styles.subText}>→</Text>
+              </TouchableOpacity>
+              <View style={styles.divider} />
+              <TouchableOpacity style={styles.row} onPress={() => {/* TODO: Remove PIN Flow */}}>
+                <Text style={styles.logoutText}>Remove PIN</Text>
+              </TouchableOpacity>
+            </>
+          ) : (
+            <TouchableOpacity style={styles.row} onPress={() => {/* TODO: Set PIN Flow */}}>
+              <Text style={styles.label}>Set PIN</Text>
+              <Text style={styles.subText}>→</Text>
+            </TouchableOpacity>
+          )}
         </View>
 
         {/* ── Account ────────────────────────────────────────────── */}

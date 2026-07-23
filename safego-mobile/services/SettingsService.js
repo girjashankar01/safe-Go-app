@@ -7,7 +7,12 @@ export const DEFAULT_SETTINGS = {
   sosCooldown: 60,
   recordAudio: true,
   audioRecordingDuration: 15,
-  periodicCheckIn: 0,
+  periodicCheckInsEnabled: false,
+  checkInIntervalMinutes: 15,
+  checkInResponseTimeoutSeconds: 30,
+  missedCheckInAction: 'sos',
+  requirePinForSOSCancel: false,
+  emergencyPinHash: null,
   highAccuracyTracking: true,
 };
 

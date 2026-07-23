@@ -19,6 +19,9 @@ import SettingsScreen from './screens/SettingsScreen';
 import { getToken, removeToken } from './services/storage';
 import { getMe, setUnauthenticatedHandler } from './lib/api';
 
+import CheckInModal from './components/CheckInModal';
+import PinModal from './components/PinModal';
+
 const Stack = createNativeStackNavigator();
 
 function LoadingScreen() {
@@ -87,6 +90,8 @@ export default function App() {
         <Stack.Screen name="TripDetails" component={TripDetailsScreen} />
         <Stack.Screen name="Settings" component={SettingsScreen} />
       </Stack.Navigator>
+      <CheckInModal />
+      <PinModal />
     </NavigationContainer>
   );
 }

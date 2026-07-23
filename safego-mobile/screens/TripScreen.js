@@ -20,6 +20,7 @@ import {
   hasActiveTrip,
   restoreTrip,
 } from '../lib/tripState';
+import CheckInService from '../services/CheckInService';
 
 // ─── Screen ───────────────────────────────────────────────────────────────────
 
@@ -62,18 +63,22 @@ export default function TripScreen({ navigation }) {
             userId:        uid,
           });
           setTripLocal(getTrip());
+          CheckInService.start(result.trip.id);
         } else {
           // Backend has no open trip — clear any stale local state.
           if (hasActiveTrip()) {
             await clearTrip();
           }
           setTripLocal(null);
+          CheckInService.stop();
         }
       } catch {
         // Network unavailable — fall back to local state so the user can still
         // see a previously started trip. They will re-sync on next open.
         if (hasActiveTrip()) {
-          setTripLocal(getTrip());
+          const t = getTrip();
+          setTripLocal(t);
+          CheckInService.start(t.tripId);
         }
       }
 
@@ -221,6 +226,7 @@ export default function TripScreen({ navigation }) {
         userId:        me.id,
       });
       setTripLocal(getTrip());
+      CheckInService.start(response.tripId);
 
     } catch (e) {
       const status = e.response?.status;
@@ -236,6 +242,7 @@ export default function TripScreen({ navigation }) {
             userId:        me.id
           });
           setTripLocal(getTrip());
+          CheckInService.start(e.response.data.existingTripId);
           setError('A previous trip was recovered. You can end it now.');
         } catch (fetchErr) {
           setError('Failed to recover trip details.');
@@ -286,6 +293,7 @@ export default function TripScreen({ navigation }) {
       // Only clear local state AFTER the backend confirms success.
       await clearTrip();
       setTripLocal(null);
+      CheckInService.stop();
     } catch (e) {
       // Keep trip active — do not clear state on failure.
       const status = e.response?.status;
@@ -295,6 +303,7 @@ export default function TripScreen({ navigation }) {
         // Trip already ended on the server — clear local state to match.
         await clearTrip();
         setTripLocal(null);
+        CheckInService.stop();
         setError('This trip had already ended on the server. Local state cleared.');
       } else if (status >= 500) {
         setError('Unexpected server error. Trip kept active — try again.');
