@@ -17,6 +17,8 @@ import { getMe } from '../lib/api';
 import { removeToken } from '../services/storage';
 import { disconnectSocket } from '../lib/socket';
 import { clearTrip } from '../lib/tripState';
+import PinService from '../services/PinService';
+import { Modal, TextInput, ActivityIndicator } from 'react-native';
 
 // A simple reusable selector component since we don't have a native picker installed
 function SegmentedControl({ options, selectedValue, onValueChange, disabled = false }) {
@@ -47,6 +49,13 @@ export default function SettingsScreen({ navigation }) {
   
   const [locStatus, setLocStatus] = useState('Unknown');
   const [micStatus, setMicStatus] = useState('Not Installed'); // Placeholder until expo-av is added
+
+  // PIN Management State
+  const [pinMode, setPinMode] = useState('none'); // 'none' | 'set' | 'change_old' | 'change_new' | 'remove'
+  const [pinInput, setPinInput] = useState('');
+  const [tempPin, setTempPin] = useState(''); // Stores old pin during change flow
+  const [pinError, setPinError] = useState('');
+  const [isPinLoading, setIsPinLoading] = useState(false);
 
   // Load state on mount
   useEffect(() => {
@@ -108,6 +117,60 @@ export default function SettingsScreen({ navigation }) {
       });
     } catch (err) {
       console.error('Logout error', err);
+    }
+  };
+
+  // ── PIN Management Handlers ────────────────────────────────────────────────
+  const closePinModal = () => {
+    setPinMode('none');
+    setPinInput('');
+    setTempPin('');
+    setPinError('');
+  };
+
+  const handlePinSubmit = async () => {
+    if (pinInput.length < 4) {
+      setPinError('PIN must be at least 4 digits');
+      return;
+    }
+    
+    setIsPinLoading(true);
+    setPinError('');
+
+    try {
+      if (pinMode === 'set') {
+        await PinService.setPin(pinInput);
+        setSettings({ ...settings, emergencyPinHash: await PinService.hashPin(pinInput) });
+        closePinModal();
+      } else if (pinMode === 'change_old') {
+        const isValid = await PinService.verifyPin(pinInput);
+        if (isValid) {
+          setTempPin(pinInput);
+          setPinInput('');
+          setPinMode('change_new');
+        } else {
+          setPinError('Incorrect old PIN');
+        }
+      } else if (pinMode === 'change_new') {
+        await PinService.changePin(tempPin, pinInput);
+        setSettings({ ...settings, emergencyPinHash: await PinService.hashPin(pinInput) });
+        closePinModal();
+      } else if (pinMode === 'remove') {
+        const isValid = await PinService.verifyPin(pinInput);
+        if (isValid) {
+          await PinService.removePin();
+          setSettings({ ...settings, emergencyPinHash: null, requirePinForSOSCancel: false });
+          // Also persist the toggle turning off
+          await saveSettings({ requirePinForSOSCancel: false });
+          closePinModal();
+        } else {
+          setPinError('Incorrect PIN');
+        }
+      }
+    } catch (e) {
+      setPinError('An error occurred. Try again.');
+    } finally {
+      setIsPinLoading(false);
     }
   };
 
@@ -283,17 +346,17 @@ export default function SettingsScreen({ navigation }) {
           <View style={styles.divider} />
           {settings.emergencyPinHash ? (
             <>
-              <TouchableOpacity style={styles.row} onPress={() => {/* TODO: Change PIN Flow */}}>
+              <TouchableOpacity style={styles.row} onPress={() => setPinMode('change_old')}>
                 <Text style={styles.label}>Change PIN</Text>
                 <Text style={styles.subText}>→</Text>
               </TouchableOpacity>
               <View style={styles.divider} />
-              <TouchableOpacity style={styles.row} onPress={() => {/* TODO: Remove PIN Flow */}}>
+              <TouchableOpacity style={styles.row} onPress={() => setPinMode('remove')}>
                 <Text style={styles.logoutText}>Remove PIN</Text>
               </TouchableOpacity>
             </>
           ) : (
-            <TouchableOpacity style={styles.row} onPress={() => {/* TODO: Set PIN Flow */}}>
+            <TouchableOpacity style={styles.row} onPress={() => setPinMode('set')}>
               <Text style={styles.label}>Set PIN</Text>
               <Text style={styles.subText}>→</Text>
             </TouchableOpacity>
@@ -333,6 +396,63 @@ export default function SettingsScreen({ navigation }) {
         </View>
 
       </ScrollView>
+
+      {/* ── PIN Management Modal ─────────────────────────────────────────────── */}
+      <Modal visible={pinMode !== 'none'} transparent animationType="fade">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalCard}>
+            <Text style={styles.modalTitle}>
+              {pinMode === 'set' ? 'Set Emergency PIN' :
+               pinMode === 'change_old' ? 'Enter Current PIN' :
+               pinMode === 'change_new' ? 'Set New PIN' :
+               'Remove PIN'}
+            </Text>
+            <Text style={styles.modalBody}>
+              {pinMode === 'remove' ? 'Enter your current PIN to confirm removal.' : 'PIN must be 4 to 6 digits.'}
+            </Text>
+            
+            <TextInput
+              style={styles.modalInput}
+              value={pinInput}
+              onChangeText={(text) => {
+                setPinInput(text.replace(/[^0-9]/g, ''));
+                setPinError('');
+              }}
+              keyboardType="number-pad"
+              secureTextEntry
+              maxLength={6}
+              placeholder="••••"
+              placeholderTextColor="#9ca3af"
+              autoFocus
+            />
+
+            {pinError ? <Text style={styles.modalError}>{pinError}</Text> : null}
+
+            <View style={styles.modalActions}>
+              <TouchableOpacity 
+                style={[styles.modalBtn, styles.modalCancelBtn]} 
+                onPress={closePinModal}
+                disabled={isPinLoading}
+              >
+                <Text style={styles.modalCancelBtnText}>Cancel</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                style={[styles.modalBtn, styles.modalSubmitBtn, (!pinInput || isPinLoading) && styles.modalSubmitBtnDisabled]} 
+                onPress={handlePinSubmit}
+                disabled={!pinInput || isPinLoading}
+              >
+                {isPinLoading ? (
+                  <ActivityIndicator color="#fff" />
+                ) : (
+                  <Text style={styles.modalSubmitBtnText}>Confirm</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
     </SafeAreaView>
   );
 }
@@ -424,5 +544,84 @@ const styles = StyleSheet.create({
   segmentTextActive: {
     color: '#111827',
     fontWeight: '600',
+  },
+
+  // Modal Styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  modalCard: {
+    width: '100%',
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 24,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 5,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#111827',
+    marginBottom: 8,
+  },
+  modalBody: {
+    fontSize: 15,
+    color: '#6b7280',
+    textAlign: 'center',
+    marginBottom: 24,
+  },
+  modalInput: {
+    width: '100%',
+    backgroundColor: '#f3f4f6',
+    borderRadius: 8,
+    padding: 16,
+    fontSize: 24,
+    textAlign: 'center',
+    letterSpacing: 8,
+    marginBottom: 16,
+    color: '#111827',
+    fontWeight: '700',
+  },
+  modalError: {
+    color: '#dc2626',
+    marginBottom: 16,
+    fontWeight: '500',
+  },
+  modalActions: {
+    flexDirection: 'row',
+    width: '100%',
+    gap: 12,
+  },
+  modalBtn: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  modalCancelBtn: {
+    backgroundColor: '#f3f4f6',
+  },
+  modalCancelBtnText: {
+    color: '#4b5563',
+    fontWeight: '600',
+    fontSize: 16,
+  },
+  modalSubmitBtn: {
+    backgroundColor: '#16a34a',
+  },
+  modalSubmitBtnDisabled: {
+    opacity: 0.6,
+  },
+  modalSubmitBtnText: {
+    color: '#fff',
+    fontWeight: '700',
+    fontSize: 16,
   },
 });
