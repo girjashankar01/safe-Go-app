@@ -348,7 +348,7 @@ export default function ActivityScreen({ navigation }) {
                 >
                   <View>
                     <Text style={[styles.historyItemType, { color: colors.text }]}>
-                      {latestTrip.status === 'active' ? 'Trip Active' : 'Completed Trip'}
+                      {!latestTrip.endedAt ? 'Active Trip' : 'Completed Trip'}
                     </Text>
                     <Text style={[styles.historyItemDate, { color: colors.secondaryText }]}>
                       Started {formatTimestamp(latestTrip.startedAt)} • {latestTrip.endedAt ? computeDuration(latestTrip.startedAt, latestTrip.endedAt) : 'In progress'}
