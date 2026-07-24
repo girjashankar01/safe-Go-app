@@ -144,11 +144,11 @@ export default function AudioPlayer({ incidentId, hasRecording, recordingDuratio
       <View style={styles.row}>
         <TouchableOpacity style={styles.playButton} onPress={handleAction}>
           {playbackState === 'Loading' || downloadState === 'Downloading' ? (
-            <Ionicons name="hourglass-outline" size={24} color="#FFF" />
+            <Ionicons name="hourglass-outline" size={24} color="#FFFFFF" />
           ) : playbackState === 'Playing' ? (
-            <Ionicons name="pause" size={24} color="#FFF" />
+            <Ionicons name="pause" size={24} color="#FFFFFF" />
           ) : (
-            <Ionicons name="play" size={24} color="#FFF" />
+            <Ionicons name="play" size={24} color="#FFFFFF" />
           )}
         </TouchableOpacity>
         
@@ -191,7 +191,7 @@ export default function AudioPlayer({ incidentId, hasRecording, recordingDuratio
 
         {downloadState === 'Downloaded' && playbackState !== 'Playing' && playbackState !== 'Loading' && (
           <TouchableOpacity style={styles.deleteButton} onPress={handleDelete}>
-            <Ionicons name="trash-outline" size={20} color="#FF3B30" />
+            <Ionicons name="trash-outline" size={20} color="#DC2626" />
           </TouchableOpacity>
         )}
       </View>
@@ -201,10 +201,17 @@ export default function AudioPlayer({ incidentId, hasRecording, recordingDuratio
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#1C1C1E',
+    backgroundColor: '#FFFFFF',
     borderRadius: 12,
     padding: 16,
     marginVertical: 8,
+    borderWidth: 1,
+    borderColor: '#DDE4E2',
+    shadowColor: '#000',
+    shadowOpacity: 0.03,
+    shadowRadius: 5,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 1,
   },
   row: {
     flexDirection: 'row',
@@ -214,7 +221,7 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: '#0A84FF',
+    backgroundColor: '#0F766E',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 16,
@@ -229,12 +236,12 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   metaText: {
-    color: '#EBEBF5',
+    color: '#1A1C1C',
     fontSize: 14,
     fontWeight: '500',
   },
   metaDot: {
-    color: '#8E8E93',
+    color: '#5C6564',
     marginHorizontal: 6,
   },
   statusRow: {
@@ -248,29 +255,29 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   badgeDownloaded: {
-    backgroundColor: 'rgba(48, 209, 88, 0.2)',
+    backgroundColor: '#E3F2EC',
   },
   badgeCloud: {
-    backgroundColor: 'rgba(10, 132, 255, 0.2)',
+    backgroundColor: '#E5F2F1',
   },
   badgeText: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#FFF',
+    color: '#0F766E',
   },
   downloadProgressText: {
-    color: '#0A84FF',
+    color: '#0F766E',
     fontSize: 12,
   },
   errorText: {
-    color: '#FF453A',
+    color: '#DC2626',
     fontSize: 12,
   },
   deleteButton: {
     padding: 8,
   },
   missingText: {
-    color: '#8E8E93',
+    color: '#5C6564',
     fontSize: 14,
     fontStyle: 'italic',
     textAlign: 'center',
@@ -281,19 +288,19 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   timeText: {
-    color: '#8E8E93',
+    color: '#5C6564',
     fontSize: 12,
   },
   progressTrack: {
     flex: 1,
     height: 4,
-    backgroundColor: '#3A3A3C',
+    backgroundColor: '#DDE4E2',
     borderRadius: 2,
     marginHorizontal: 8,
     overflow: 'hidden',
   },
   progressFill: {
     height: '100%',
-    backgroundColor: '#0A84FF',
+    backgroundColor: '#0F766E',
   }
 });

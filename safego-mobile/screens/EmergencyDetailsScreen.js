@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity, Linking, Platform } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity, Linking, Platform, SafeAreaView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import MapView, { Marker } from 'react-native-maps';
 import EmergencyHistoryService from '../services/EmergencyHistoryService';
 import AudioPlayer from '../components/AudioPlayer';
 
-export default function EmergencyDetailsScreen({ route }) {
+export default function EmergencyDetailsScreen({ route, navigation }) {
   const { incidentId } = route.params;
   const [incident, setIncident] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -65,12 +65,20 @@ export default function EmergencyDetailsScreen({ route }) {
   const lng = incident.lng;
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      
-      <View style={styles.header}>
-        <Text style={styles.title}>{incident.display_type}</Text>
-        <Text style={styles.subtitle}>{dateStr} at {timeStr}</Text>
-      </View>
+    <SafeAreaView style={styles.container}>
+      <ScrollView contentContainerStyle={styles.content}>
+        
+        <View style={styles.header}>
+          <TouchableOpacity
+            style={styles.backBtn}
+            onPress={() => navigation.goBack()}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.backBtnText}>← Back</Text>
+          </TouchableOpacity>
+          <Text style={styles.title}>{incident.display_type}</Text>
+          <Text style={styles.subtitle}>{dateStr} at {timeStr}</Text>
+        </View>
 
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Incident Integrity</Text>
@@ -158,7 +166,8 @@ export default function EmergencyDetailsScreen({ route }) {
         </View>
       </View>
       
-    </ScrollView>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
@@ -183,6 +192,15 @@ const styles = StyleSheet.create({
   },
   header: {
     marginBottom: 24,
+  },
+  backBtn: {
+    paddingVertical: 8,
+    marginBottom: 8,
+  },
+  backBtnText: {
+    fontSize: 15,
+    color: '#0F766E',
+    fontWeight: '600',
   },
   title: {
     color: '#1A1C1C',
