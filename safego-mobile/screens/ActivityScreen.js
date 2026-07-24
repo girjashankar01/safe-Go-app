@@ -11,6 +11,7 @@ import { Feather } from '@expo/vector-icons';
 import MapView, { Marker } from 'react-native-maps';
 import { useFocusEffect } from '@react-navigation/native';
 import Svg, { Defs, LinearGradient as SvgLinearGradient, Rect, Stop } from 'react-native-svg';
+import * as Location from 'expo-location';
 
 import LocationService from '../services/LocationService';
 import EmergencyHistoryService from '../services/EmergencyHistoryService';
@@ -80,6 +81,7 @@ export default function ActivityScreen({ navigation }) {
 
   // States
   const [coords, setCoords] = useState(null); // Current device coordinates
+  const [region, setRegion] = useState(null); // Map region state
   const [address, setAddress] = useState('Locating...');
   const [speed, setSpeed] = useState(0);
   const [motion, setMotion] = useState('Stationary');
@@ -150,24 +152,33 @@ export default function ActivityScreen({ navigation }) {
             setLastUpdated(Date.now());
             setAccuracy(loc.accuracy || null);
 
-            // Fetch address if missing (basic fallback)
-            const addr = await LocationService.getReadableAddress(loc.latitude, loc.longitude);
-            if (mounted && addr) {
-              setAddress(addr);
-            } else if (mounted) {
-              setAddress('Location acquired');
+            // Fetch address directly using Expo Location to avoid undefined methods
+            if (!address || address === 'Locating...') {
+              Location.reverseGeocodeAsync({ latitude: loc.latitude, longitude: loc.longitude })
+                .then((geocodeResult) => {
+                  if (mounted && geocodeResult && geocodeResult.length > 0) {
+                    const primary = geocodeResult[0];
+                    const name = [primary.city || primary.subregion, primary.region, primary.isoCountryCode || primary.country]
+                      .filter(Boolean)
+                      .join(', ');
+                    setAddress(name || 'Location acquired');
+                  }
+                })
+                .catch(() => {
+                  if (mounted) setAddress('Location acquired');
+                });
             }
 
-            // Manage Map Centering (prevent jitter)
+            // Manage Map Centering (prevent jitter) using region state
             if (!lastMapCenter.current) {
               // Initial center
               lastMapCenter.current = { latitude: loc.latitude, longitude: loc.longitude };
-              mapRef.current?.animateToRegion({
+              setRegion({
                 latitude: loc.latitude,
                 longitude: loc.longitude,
                 latitudeDelta: DELTA,
                 longitudeDelta: DELTA,
-              }, 400);
+              });
             } else {
               // Only recenter if moved more than 20 meters
               const dist = getDistanceFromLatLonInMeters(
@@ -178,9 +189,12 @@ export default function ActivityScreen({ navigation }) {
               );
               if (dist > 20) {
                 lastMapCenter.current = { latitude: loc.latitude, longitude: loc.longitude };
-                mapRef.current?.animateCamera({
-                  center: { latitude: loc.latitude, longitude: loc.longitude }
-                }, { duration: 1000 });
+                setRegion({
+                  latitude: loc.latitude,
+                  longitude: loc.longitude,
+                  latitudeDelta: DELTA,
+                  longitudeDelta: DELTA,
+                });
               }
             }
           }
@@ -219,55 +233,53 @@ export default function ActivityScreen({ navigation }) {
       >
         <Animated.View style={{ opacity: fadeAnim }}>
           
-          {/* 1. Embedded Map (220dp height) */}
-          <Card style={styles.mapCard}>
-            <MapView
-              ref={mapRef}
-              style={styles.mapView}
-              initialRegion={{
-                latitude: 37.78825,
-                longitude: -122.4324,
-                latitudeDelta: DELTA,
-                longitudeDelta: DELTA,
-              }}
-              scrollEnabled={false}
-              zoomEnabled={false}
-              pitchEnabled={false}
-              rotateEnabled={false}
-              showsUserLocation={true}
-              showsMyLocationButton={false}
-              showsCompass={false}
-              toolbarEnabled={false}
-            >
-              {coords && <Marker coordinate={coords} pinColor={colors.primary} />}
-            </MapView>
-            
-            {!coords && (
-              <View style={[StyleSheet.absoluteFill, { justifyContent: 'center', alignItems: 'center', backgroundColor: '#e5e7eb' }]}>
-                <Text style={{ color: colors.secondaryText }}>Loading map...</Text>
+          {/* 1. Embedded Map (220dp height) - FULL BLEED EDGE TO EDGE */}
+          <TouchableOpacity activeOpacity={0.9} onPress={() => navigation.navigate('Map')}>
+            <View style={styles.mapCard}>
+              <View pointerEvents="none" style={{ width: '100%', height: '100%' }}>
+                <MapView
+                  style={styles.mapView}
+                  region={
+                    region || {
+                      latitude: 37.78825,
+                      longitude: -122.4324,
+                      latitudeDelta: DELTA,
+                      longitudeDelta: DELTA,
+                    }
+                  }
+                  scrollEnabled={false}
+                  zoomEnabled={false}
+                  pitchEnabled={false}
+                  rotateEnabled={false}
+                  showsUserLocation={true}
+                  showsMyLocationButton={false}
+                  showsCompass={false}
+                  toolbarEnabled={false}
+                >
+                  {coords && <Marker coordinate={coords} pinColor={colors.primary} />}
+                </MapView>
+                
+                {!coords && (
+                  <View style={[StyleSheet.absoluteFill, { justifyContent: 'center', alignItems: 'center', backgroundColor: '#e5e7eb' }]}>
+                    <Text style={{ color: colors.secondaryText }}>Loading map...</Text>
+                  </View>
+                )}
+
+                {/* Seamless bottom fade using SVG */}
+                <View style={styles.mapGradient}>
+                  <Svg height="100%" width="100%">
+                    <Defs>
+                      <SvgLinearGradient id="fade" x1="0" y1="0" x2="0" y2="1">
+                        <Stop offset="0" stopColor={colors.background} stopOpacity="0" />
+                        <Stop offset="1" stopColor={colors.background} stopOpacity="1" />
+                      </SvgLinearGradient>
+                    </Defs>
+                    <Rect x="0" y="0" width="100%" height="100%" fill="url(#fade)" />
+                  </Svg>
+                </View>
               </View>
-            )}
-
-            {/* Seamless bottom fade using SVG */}
-            <View style={styles.mapGradient} pointerEvents="none">
-              <Svg height="100%" width="100%">
-                <Defs>
-                  <SvgLinearGradient id="fade" x1="0" y1="0" x2="0" y2="1">
-                    <Stop offset="0" stopColor={colors.background} stopOpacity="0" />
-                    <Stop offset="1" stopColor={colors.background} stopOpacity="1" />
-                  </SvgLinearGradient>
-                </Defs>
-                <Rect x="0" y="0" width="100%" height="100%" fill="url(#fade)" />
-              </Svg>
             </View>
-
-            {/* Invisible overlay to capture taps */}
-            <TouchableOpacity 
-              activeOpacity={0.8} 
-              onPress={() => navigation.navigate('Map')}
-              style={StyleSheet.absoluteFillObject}
-            />
-          </Card>
+          </TouchableOpacity>
 
           {/* 2. Current Location Tracking (160dp height) */}
           <TouchableOpacity activeOpacity={0.8} onPress={() => navigation.navigate('LiveTracking')}>
@@ -406,12 +418,12 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.xxxl,
   },
   
-  // Card base heights per spec
+  // Map
   mapCard: {
     height: 220,
-    marginBottom: spacing.md, // Tighter vertical padding
-    overflow: 'hidden',
-    padding: 0, // Maps take full width
+    marginBottom: spacing.md,
+    // Negative margin to push it edge-to-edge over the ScrollView's padding
+    marginHorizontal: -spacing.md,
   },
   trackingCard: {
     height: 160,
@@ -423,8 +435,6 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
     padding: spacing.md,
   },
-
-  // Map
   mapView: {
     width: '100%',
     height: 220,
