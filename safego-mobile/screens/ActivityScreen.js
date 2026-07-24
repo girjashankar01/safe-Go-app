@@ -17,7 +17,6 @@ import LocationService from '../services/LocationService';
 import EmergencyHistoryService from '../services/EmergencyHistoryService';
 import { getTrips } from '../lib/api';
 
-import { ScreenContainer } from '../components/ui/ScreenContainer';
 import { Card } from '../components/ui/Card';
 import { useTheme, typography, spacing, radius } from '../theme';
 
@@ -198,7 +197,7 @@ export default function ActivityScreen({ navigation }) {
   // ─── Renderers ───────────────────────────────────────────────────────────
 
   return (
-    <ScreenContainer scrollable={false} edges={['left', 'right']}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <ScrollView 
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
@@ -367,13 +366,16 @@ export default function ActivityScreen({ navigation }) {
 
         </Animated.View>
       </ScrollView>
-    </ScreenContainer>
+    </View>
   );
 }
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
   scrollView: {
     flex: 1,
   },
