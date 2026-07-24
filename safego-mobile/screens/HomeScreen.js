@@ -313,21 +313,14 @@ export default function HomeScreen({ navigation }) {
         />
 
         <ActionCard
-          label="Location"
-          iconName="map-pin"
-          style={styles.gridItem}
-          onPress={() => navigation.navigate('CurrentLocation')}
-        />
-
-        <ActionCard
-          label="Live Map"
+          label="Live Tracking"
           iconName="navigation"
           style={styles.gridItem}
           onPress={() => navigation.navigate('LiveTracking')}
         />
 
         <ActionCard
-          label="Map"
+          label="Live Map"
           iconName="map"
           style={styles.gridItem}
           onPress={() => navigation.navigate('Map')}

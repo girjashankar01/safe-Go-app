@@ -25,7 +25,7 @@ export const ActionCard: React.FC<ActionCardProps> = ({ label, iconName, style, 
       activeOpacity={0.7}
       {...rest}
     >
-      <Feather name={iconName} color={colors.primary} size={32} />
+      <Feather name={iconName} color={colors.primary} size={22} />
       <Text
         style={[
           styles.label,
@@ -44,13 +44,16 @@ export const ActionCard: React.FC<ActionCardProps> = ({ label, iconName, style, 
 
 const styles = StyleSheet.create({
   card: {
-    aspectRatio: 1,
-    justifyContent: 'center',
+    flexDirection: 'row',
     alignItems: 'center',
-    padding: spacing.lg,
+    justifyContent: 'flex-start',
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
+    minHeight: 64,
   },
   label: {
-    marginTop: spacing.md,
-    textAlign: 'center',
+    marginLeft: spacing.sm,
+    flex: 1,
+    textAlign: 'left',
   },
 });
