@@ -4,7 +4,7 @@ import { useTheme, radius, typography, spacing } from '../../theme';
 
 interface ButtonProps extends TouchableOpacityProps {
   label: string;
-  variant?: 'primary' | 'danger' | 'outline' | 'ghost';
+  variant?: 'primary' | 'danger' | 'errorContainer' | 'outline' | 'ghost';
   style?: ViewStyle | ViewStyle[];
   textStyle?: TextStyle | TextStyle[];
   icon?: React.ReactNode;
@@ -22,13 +22,15 @@ export const Button: React.FC<ButtonProps> = ({
 
   const getBackgroundColor = () => {
     if (variant === 'primary') return colors.primary;
-    if (variant === 'danger') return colors.danger;
+    if (variant === 'danger') return colors.error || colors.danger;
+    if (variant === 'errorContainer') return colors.errorContainer;
     return 'transparent';
   };
 
   const getTextColor = () => {
     if (variant === 'primary' || variant === 'danger') return '#FFFFFF';
-    if (variant === 'outline') return colors.text;
+    if (variant === 'errorContainer') return colors.error;
+    if (variant === 'outline') return colors.onSurface || colors.text;
     return colors.primary; // ghost
   };
 

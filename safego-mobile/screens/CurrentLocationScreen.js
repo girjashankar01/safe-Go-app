@@ -120,8 +120,8 @@ export default function CurrentLocationScreen({ navigation }) {
         {/* Loading */}
         {loading ? (
           <View style={styles.loadingCard}>
-            <ActivityIndicator size="large" color="#16a34a" />
-            <Text style={styles.loadingText}>Loading current location…</Text>
+            <ActivityIndicator size="large" color="#0F766E" />
+            <Text style={styles.loadingText}>Acquiring GPS signal…</Text>
           </View>
         ) : null}
 
@@ -137,7 +137,7 @@ export default function CurrentLocationScreen({ navigation }) {
         {!loading && !error && coords ? (
           <View style={styles.dataCard}>
             <View style={styles.dataCardHeader}>
-              <View style={styles.dotGreen} />
+              <View style={styles.dotIndicator} />
               <Text style={styles.dataCardLabel}>GPS Fix</Text>
             </View>
 
@@ -169,7 +169,7 @@ export default function CurrentLocationScreen({ navigation }) {
 
         {/* Refresh button — always visible, disabled while loading */}
         <TouchableOpacity
-          style={[styles.refreshBtn, loading && styles.refreshBtnDisabled]}
+          style={[styles.shareBtn, loading && styles.refreshBtnDisabled]}
           onPress={fetchLocation}
           disabled={loading}
           activeOpacity={0.8}
@@ -202,9 +202,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 14,
-    backgroundColor: '#fff',
+    backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
+    borderBottomColor: '#DDE4E2',
   },
   backBtn: {
     paddingVertical: 4,
@@ -212,7 +212,7 @@ const styles = StyleSheet.create({
   },
   backBtnText: {
     fontSize: 15,
-    color: '#16a34a',
+    color: '#0F766E',
     fontWeight: '600',
   },
   headerTitle: {
@@ -220,7 +220,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: 17,
     fontWeight: '700',
-    color: '#111827',
+    color: '#1A1C1C',
   },
   headerSpacer: {
     width: 60,
@@ -235,13 +235,13 @@ const styles = StyleSheet.create({
 
   // Loading card
   loadingCard: {
-    backgroundColor: '#fff',
+    backgroundColor: '#FFFFFF',
     borderRadius: 12,
     padding: 32,
     marginBottom: 20,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#e5e7eb',
+    borderColor: '#DDE4E2',
     shadowColor: '#000',
     shadowOpacity: 0.04,
     shadowRadius: 6,
@@ -251,39 +251,39 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 14,
     fontSize: 15,
-    color: '#6b7280',
+    color: '#5C6564',
     fontWeight: '500',
   },
 
   // Error card
   errorCard: {
-    backgroundColor: '#fff1f2',
+    backgroundColor: '#FEE2E2',
     borderRadius: 12,
     padding: 20,
     marginBottom: 20,
     borderWidth: 1,
-    borderColor: '#fecdd3',
+    borderColor: '#DC2626',
   },
   errorTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#be123c',
+    color: '#DC2626',
     marginBottom: 6,
   },
   errorBody: {
     fontSize: 14,
-    color: '#9f1239',
+    color: '#DC2626',
     lineHeight: 20,
   },
 
   // Data card
   dataCard: {
-    backgroundColor: '#fff',
+    backgroundColor: '#FFFFFF',
     borderRadius: 12,
     padding: 16,
-    marginBottom: 20,
+    marginBottom: 16,
     borderWidth: 1,
-    borderColor: '#e5e7eb',
+    borderColor: '#DDE4E2',
     shadowColor: '#000',
     shadowOpacity: 0.04,
     shadowRadius: 6,
@@ -295,17 +295,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 14,
   },
-  dotGreen: {
+  dotIndicator: {
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#16a34a',
+    backgroundColor: '#0F766E',
     marginRight: 8,
   },
   dataCardLabel: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#6b7280',
+    color: '#5C6564',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
@@ -317,7 +317,7 @@ const styles = StyleSheet.create({
   dataLabel: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#9ca3af',
+    color: '#5C6564',
     textTransform: 'uppercase',
     letterSpacing: 0.4,
     marginBottom: 4,
@@ -329,27 +329,28 @@ const styles = StyleSheet.create({
   dataValue: {
     fontSize: 22,
     fontWeight: '700',
-    color: '#111827',
+    color: '#1A1C1C',
     letterSpacing: -0.3,
   },
   dataUnit: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#6b7280',
+    color: '#5C6564',
     marginLeft: 4,
   },
   separator: {
     height: 1,
-    backgroundColor: '#f3f4f6',
+    backgroundColor: '#DDE4E2',
   },
 
-  // Refresh button
-  refreshBtn: {
-    backgroundColor: '#16a34a',
+  // Share button
+  shareBtn: {
+    backgroundColor: '#0F766E',
     borderRadius: 10,
     paddingVertical: 15,
     alignItems: 'center',
     marginBottom: 14,
+    marginTop: 4,
     shadowColor: '#000',
     shadowOpacity: 0.06,
     shadowRadius: 4,
@@ -368,8 +369,8 @@ const styles = StyleSheet.create({
   // Disclaimer
   disclaimer: {
     fontSize: 12,
-    color: '#9ca3af',
+    color: '#5C6564',
     textAlign: 'center',
-    lineHeight: 17,
+    lineHeight: 18,
   },
 });

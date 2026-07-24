@@ -208,7 +208,7 @@ const styles = StyleSheet.create({
   },
   backBtnText: {
     fontSize: 15,
-    color: '#16a34a',
+    color: '#4F46E5',
     fontWeight: '600',
   },
   headerTitle: {

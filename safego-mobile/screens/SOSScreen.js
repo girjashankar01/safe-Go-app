@@ -13,10 +13,12 @@ import {
 import { Feather } from '@expo/vector-icons';
 import SOSService from '../services/SOSService';
 import PinService from '../services/PinService';
+import { useTheme } from '../theme';
 
 // ─── Screen ───────────────────────────────────────────────────────────────────
 
 export default function SOSScreen({ navigation }) {
+  const { colors } = useTheme();
   const [sosState, setSosState] = useState({
     status: 'idle',
     countdown: 0,
@@ -119,7 +121,11 @@ export default function SOSScreen({ navigation }) {
 
         {/* SOS button */}
         <TouchableOpacity
-          style={[styles.sosBtn, ((status === 'recording' || status === 'uploading' || status === 'sending') || cooldownRemaining > 0) && styles.sosBtnDisabled]}
+          style={[
+            styles.sosBtn, 
+            { backgroundColor: colors.error, shadowColor: colors.error },
+            ((status === 'recording' || status === 'uploading' || status === 'sending') || cooldownRemaining > 0) && styles.sosBtnDisabled
+          ]}
           onPress={handlePress}
           activeOpacity={0.85}
           disabled={status !== 'idle' || cooldownRemaining > 0}
@@ -144,9 +150,9 @@ export default function SOSScreen({ navigation }) {
           <Animated.View style={[styles.countdownCard, { transform: [{ scale: cardScale }] }]}>
             <View style={{ marginBottom: 16 }}>
               {status === 'success' ? (
-                <Feather name="check-circle" size={48} color="#16a34a" />
+                <Feather name="check-circle" size={48} color={colors.success} />
               ) : (
-                <Feather name="alert-triangle" size={48} color="#dc2626" />
+                <Feather name="alert-triangle" size={48} color={colors.error} />
               )}
             </View>
             <Text style={styles.overlayTitle}>
@@ -170,7 +176,7 @@ export default function SOSScreen({ navigation }) {
             )}
 
             {(status === 'uploading' || status === 'sending') && (
-              <ActivityIndicator size="large" color="#dc2626" style={{ marginVertical: 20 }} />
+              <ActivityIndicator size="large" color={colors.error} style={{ marginVertical: 20 }} />
             )}
             
             {status === 'countdown' && (
@@ -229,7 +235,7 @@ const styles = StyleSheet.create({
   },
   backBtnText: {
     fontSize: 15,
-    color: '#16a34a',
+    color: '#4F46E5',
     fontWeight: '600',
   },
   headerTitle: {
@@ -254,13 +260,13 @@ const styles = StyleSheet.create({
   // Warning card
   warningCard: {
     width: '100%',
-    backgroundColor: '#fff1f2',
+    backgroundColor: '#FEE2E2', // M3 Error Container
     borderRadius: 16,
     padding: 24,
     alignItems: 'center',
     marginBottom: 28,
     borderWidth: 1,
-    borderColor: '#fecdd3',
+    borderColor: '#DC2626', // M3 Error
     shadowColor: '#000',
     shadowOpacity: 0.04,
     shadowRadius: 6,
@@ -274,13 +280,13 @@ const styles = StyleSheet.create({
   warningTitle: {
     fontSize: 20,
     fontWeight: '800',
-    color: '#be123c',
+    color: '#DC2626', // M3 Error
     marginBottom: 10,
     textAlign: 'center',
   },
   warningBody: {
     fontSize: 15,
-    color: '#9f1239',
+    color: '#DC2626', // M3 Error
     textAlign: 'center',
     lineHeight: 22,
   },
@@ -288,36 +294,36 @@ const styles = StyleSheet.create({
   // Success banner
   successBanner: {
     width: '100%',
-    backgroundColor: '#f0fdf4',
+    backgroundColor: '#E3F2EC', // M3 Success Container
     borderRadius: 10,
     padding: 14,
     marginBottom: 20,
     borderWidth: 1,
-    borderColor: '#bbf7d0',
+    borderColor: '#4D9375', // M3 Success
     alignItems: 'center',
   },
   successText: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#15803d',
+    color: '#4D9375', // M3 Success
     textAlign: 'center',
   },
 
   // Error banner
   errorBanner: {
     width: '100%',
-    backgroundColor: '#fff1f2',
+    backgroundColor: '#FEE2E2', // M3 Error Container
     borderRadius: 10,
     padding: 14,
     marginBottom: 20,
     borderWidth: 1,
-    borderColor: '#fecdd3',
+    borderColor: '#DC2626', // M3 Error
     alignItems: 'center',
   },
   errorText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#be123c',
+    color: '#DC2626', // M3 Error
     textAlign: 'center',
     lineHeight: 20,
   },
@@ -390,7 +396,7 @@ const styles = StyleSheet.create({
   countdownNumber: {
     fontSize: 72,
     fontWeight: '900',
-    color: '#dc2626',
+    color: '#DC2626', // Keep hardcoded or inline: handled in render? Let's just update the hex to match exactly.
     marginBottom: 24,
     textAlign: 'center',
   },

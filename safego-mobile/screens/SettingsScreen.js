@@ -20,6 +20,7 @@ import { clearTrip } from '../lib/tripState';
 import PinService from '../services/PinService';
 import AudioPlaybackService from '../services/AudioPlaybackService';
 import { Modal, TextInput, ActivityIndicator } from 'react-native';
+import { useTheme } from '../theme';
 
 // A simple reusable selector component since we don't have a native picker installed
 function SegmentedControl({ options, selectedValue, onValueChange, disabled = false }) {
@@ -45,6 +46,7 @@ function SegmentedControl({ options, selectedValue, onValueChange, disabled = fa
 }
 
 export default function SettingsScreen({ navigation }) {
+  const { colors } = useTheme();
   const [settings, setSettings] = useState(null);
   const [userEmail, setUserEmail] = useState('');
   
@@ -250,7 +252,7 @@ export default function SettingsScreen({ navigation }) {
             <Switch
               value={settings.recordAudio}
               onValueChange={(val) => updateSetting('recordAudio', val)}
-              trackColor={{ false: '#d1d5db', true: '#16a34a' }}
+              trackColor={{ false: '#d1d5db', true: colors.primary }}
             />
           </View>
           <View style={styles.divider} />
@@ -277,7 +279,7 @@ export default function SettingsScreen({ navigation }) {
             <Switch
               value={settings.periodicCheckInsEnabled}
               onValueChange={(val) => updateSetting('periodicCheckInsEnabled', val)}
-              trackColor={{ false: '#d1d5db', true: '#16a34a' }}
+              trackColor={{ false: '#d1d5db', true: colors.primary }}
             />
           </View>
           <View style={styles.divider} />
@@ -331,7 +333,7 @@ export default function SettingsScreen({ navigation }) {
             <Switch
               value={settings.highAccuracyTracking}
               onValueChange={(val) => updateSetting('highAccuracyTracking', val)}
-              trackColor={{ false: '#d1d5db', true: '#16a34a' }}
+              trackColor={{ false: '#d1d5db', true: colors.primary }}
             />
           </View>
         </View>
@@ -344,7 +346,7 @@ export default function SettingsScreen({ navigation }) {
             <Switch
               value={settings.requirePinForSOSCancel}
               onValueChange={(val) => updateSetting('requirePinForSOSCancel', val)}
-              trackColor={{ false: '#d1d5db', true: '#16a34a' }}
+              trackColor={{ false: '#d1d5db', true: colors.primary }}
             />
           </View>
           <View style={styles.divider} />
@@ -470,7 +472,7 @@ export default function SettingsScreen({ navigation }) {
               </TouchableOpacity>
               
               <TouchableOpacity 
-                style={[styles.modalBtn, styles.modalSubmitBtn, (!pinInput || isPinLoading) && styles.modalSubmitBtnDisabled]} 
+                style={[styles.modalBtn, { backgroundColor: colors.primary }, (!pinInput || isPinLoading) && styles.modalSubmitBtnDisabled]} 
                 onPress={handlePinSubmit}
                 disabled={!pinInput || isPinLoading}
               >
@@ -501,7 +503,7 @@ const styles = StyleSheet.create({
     borderBottomColor: '#e5e7eb',
   },
   backBtn: { paddingVertical: 4, paddingRight: 12 },
-  backBtnText: { fontSize: 15, color: '#16a34a', fontWeight: '600' },
+  backBtnText: { fontSize: 15, color: '#4F46E5', fontWeight: '600' },
   headerTitle: { flex: 1, textAlign: 'center', fontSize: 17, fontWeight: '700', color: '#111827' },
   headerSpacer: { width: 60 },
   scroll: { padding: 16, paddingBottom: 40 },

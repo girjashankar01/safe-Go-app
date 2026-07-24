@@ -13,7 +13,8 @@ import {
 import { Feather } from '@expo/vector-icons';
 import LocationService from '../services/LocationService';
 import { startTrip, endTrip, getActiveTrip, getMe } from '../lib/api';
-import { getSocket } from '../lib/socket';
+import { connectSocket, getSocket } from '../lib/socket';
+import { useTheme } from '../theme';
 import {
   setTrip,
   clearTrip,
@@ -27,6 +28,7 @@ import { useSafetyIdentity } from '../components/SafetyIdentityContext';
 // ─── Screen ───────────────────────────────────────────────────────────────────
 
 export default function TripScreen({ navigation }) {
+  const { colors } = useTheme();
   const { missingFields } = useSafetyIdentity();
   
   // Local mirror of tripState — drives all UI.
@@ -438,17 +440,21 @@ export default function TripScreen({ navigation }) {
             ) : null}
 
             {/* End Trip button */}
-            <TouchableOpacity
-              style={[styles.endBtn, working && styles.endBtnDisabled]}
-              onPress={handleEndTrip}
-              activeOpacity={0.85}
-              disabled={working}
-            >
-              {working ? (
-                <ActivityIndicator color="#fff" />
-              ) : (
-                <Text style={styles.endBtnText}>End Trip</Text>
-              )}
+            <TouchableOpacity 
+                style={[
+                  styles.endBtn, 
+                  { backgroundColor: colors.errorContainer, borderColor: colors.error, borderWidth: 1, shadowColor: colors.errorContainer },
+                  working && styles.endBtnDisabled
+                ]} 
+                onPress={handleEndTrip}
+                disabled={working}
+                activeOpacity={0.8}
+              >
+                {working ? (
+                  <ActivityIndicator color={colors.error} />
+                ) : (
+                  <Text style={[styles.endBtnText, { color: colors.error }]}>End Trip</Text>
+                )}
             </TouchableOpacity>
           </>
         )}
@@ -515,7 +521,7 @@ const styles = StyleSheet.create({
   },
   backBtnText: {
     fontSize: 15,
-    color: '#16a34a',
+    color: '#4F46E5', // Indigo
     fontWeight: '600',
   },
   headerTitle: {

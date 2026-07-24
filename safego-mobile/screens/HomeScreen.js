@@ -211,7 +211,7 @@ export default function HomeScreen({ navigation }) {
         <View style={styles.spacer} />
 
         <View style={styles.headerRight}>
-          <View style={[styles.avatarCircle, { backgroundColor: colors.primary + '20' }]}>
+          <View style={[styles.avatarCircle, { backgroundColor: colors.primaryContainer }]}>
             <Text style={[styles.avatarInitial, { color: colors.primary }]}>
               {profile?.personal?.fullName ? profile.personal.fullName.charAt(0).toUpperCase() : '?'}
             </Text>

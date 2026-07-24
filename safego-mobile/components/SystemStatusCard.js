@@ -77,25 +77,25 @@ export default function SystemStatusCard({ socketStatus }) {
   const isBatteryLow = batteryLevel !== null && batteryLevel < 20;
 
   let overallStatus = 'ALL SYSTEMS ACTIVE';
-  let overallColor = '#16a34a'; // Green
+  let overallColor = colors.success; // Muted Green
 
   if (isBatteryCritical || (!isSocketConnected && !isLocationOn)) {
     overallStatus = 'CRITICAL ISSUE';
-    overallColor = '#dc2626'; // Red
+    overallColor = colors.error; // Error Red
   } else if (!isSocketConnected || isBatteryLow || locationStatus === 'Permission Required' || locationStatus === 'Off') {
     overallStatus = 'SOME ISSUES';
     overallColor = '#f59e0b'; // Amber
   }
 
   // Battery formatting
-  let batteryColor = '#16a34a';
+  let batteryColor = colors.success;
   let batteryLabel = 'Good';
   if (batteryLevel !== null) {
     if (batteryLevel < 10) {
-      batteryColor = '#991b1b'; // Dark Red
+      batteryColor = '#991b1b'; // Dark Red (critical)
       batteryLabel = 'Critical';
     } else if (batteryLevel < 20) {
-      batteryColor = '#dc2626'; // Red
+      batteryColor = colors.error; // Error
       batteryLabel = 'Low';
     } else if (batteryLevel < 50) {
       batteryColor = '#f59e0b'; // Orange
@@ -118,7 +118,7 @@ export default function SystemStatusCard({ socketStatus }) {
           <Feather name="wifi" size={20} color={colors.secondaryText} style={styles.icon} />
           <Text style={[styles.label, { color: colors.text, fontSize: typography.sizes.body }]}>Socket Connection</Text>
         </View>
-        <Text style={[styles.value, { color: isSocketConnected ? colors.primary : colors.danger, fontSize: typography.sizes.body }]}>
+        <Text style={[styles.value, { color: isSocketConnected ? colors.success : colors.error, fontSize: typography.sizes.body }]}>
           {isSocketConnected ? 'Connected' : 'Disconnected'}
         </Text>
       </View>
@@ -129,7 +129,7 @@ export default function SystemStatusCard({ socketStatus }) {
           <Feather name="map-pin" size={20} color={colors.secondaryText} style={styles.icon} />
           <Text style={[styles.label, { color: colors.text, fontSize: typography.sizes.body }]}>Location Services</Text>
         </View>
-        <Text style={[styles.value, { color: isLocationOn ? colors.primary : colors.danger, fontSize: typography.sizes.body }]}>
+        <Text style={[styles.value, { color: isLocationOn ? colors.success : (locationStatus === 'Checking...' ? '#6b7280' : '#f59e0b'), fontSize: typography.sizes.body }]}>
           {locationStatus}
         </Text>
       </View>

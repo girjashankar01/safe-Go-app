@@ -93,9 +93,9 @@ function PulseDot({ isLive }) {
 
 const dot = StyleSheet.create({
   wrapper: { width: 20, height: 20, alignItems: 'center', justifyContent: 'center', marginRight: 8 },
-  ring:    { position: 'absolute', width: 16, height: 16, borderRadius: 8, backgroundColor: '#16a34a', opacity: 0.35 },
-  core:    { width: 10, height: 10, borderRadius: 5, backgroundColor: '#16a34a' },
-  coreOff: { backgroundColor: '#9ca3af' },
+  ring:    { position: 'absolute', width: 16, height: 16, borderRadius: 8, backgroundColor: '#0F766E', opacity: 0.35 },
+  core:    { width: 10, height: 10, borderRadius: 5, backgroundColor: '#0F766E' },
+  coreOff: { backgroundColor: '#5C6564' },
 });
 
 // ─── Data Row ─────────────────────────────────────────────────────────────────
@@ -231,8 +231,8 @@ export default function LiveTrackingScreen({ navigation }) {
         {/* Initial loading */}
         {initialising && !error ? (
           <View style={styles.loadingCard}>
-            <ActivityIndicator size="large" color="#16a34a" />
-            <Text style={styles.loadingText}>Acquiring GPS signal…</Text>
+            <ActivityIndicator size="large" color="#006A60" />
+            <Text style={styles.loadingText}>Connecting to SafeGo Network...</Text>
           </View>
         ) : null}
 
@@ -334,9 +334,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 14,
-    backgroundColor: '#fff',
+    backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
+    borderBottomColor: '#DDE4E2',
   },
   backBtn: {
     paddingVertical: 4,
@@ -344,7 +344,7 @@ const styles = StyleSheet.create({
   },
   backBtnText: {
     fontSize: 15,
-    color: '#16a34a',
+    color: '#4F46E5',
     fontWeight: '600',
   },
   headerTitle: {
@@ -352,7 +352,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: 17,
     fontWeight: '700',
-    color: '#111827',
+    color: '#1A1C1C',
   },
   headerSpacer: {
     width: 60,
@@ -369,28 +369,28 @@ const styles = StyleSheet.create({
   statusBanner: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f0fdf4',
+    backgroundColor: '#E3F2EC',
     borderRadius: 12,
     padding: 14,
     marginBottom: 20,
     borderWidth: 1,
-    borderColor: '#bbf7d0',
+    borderColor: '#4D9375',
   },
   statusBannerOff: {
-    backgroundColor: '#f9fafb',
-    borderColor: '#e5e7eb',
+    backgroundColor: '#FAFAFA',
+    borderColor: '#DDE4E2',
   },
   statusText: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#15803d',
+    color: '#4D9375',
   },
   statusTextOff: {
-    color: '#6b7280',
+    color: '#5C6564',
   },
   statusSub: {
     fontSize: 12,
-    color: '#6b7280',
+    color: '#5C6564',
     marginTop: 2,
   },
 
@@ -418,22 +418,22 @@ const styles = StyleSheet.create({
 
   // Error card
   errorCard: {
-    backgroundColor: '#fff1f2',
+    backgroundColor: '#FEE2E2',
     borderRadius: 12,
     padding: 20,
     marginBottom: 20,
     borderWidth: 1,
-    borderColor: '#fecdd3',
+    borderColor: '#DC2626',
   },
   errorTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#be123c',
+    color: '#DC2626',
     marginBottom: 6,
   },
   errorBody: {
     fontSize: 14,
-    color: '#9f1239',
+    color: '#DC2626',
     lineHeight: 20,
   },
 
@@ -460,16 +460,16 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#16a34a',
+    backgroundColor: '#0F766E',
     marginRight: 8,
   },
   dotIndicatorOff: {
-    backgroundColor: '#9ca3af',
+    backgroundColor: '#5C6564',
   },
   dataCardLabel: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#6b7280',
+    color: '#5C6564',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
@@ -481,7 +481,7 @@ const styles = StyleSheet.create({
   dataLabel: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#9ca3af',
+    color: '#5C6564',
     textTransform: 'uppercase',
     letterSpacing: 0.4,
     marginBottom: 4,
@@ -493,18 +493,18 @@ const styles = StyleSheet.create({
   dataValue: {
     fontSize: 22,
     fontWeight: '700',
-    color: '#111827',
+    color: '#1A1C1C',
     letterSpacing: -0.3,
   },
   dataUnit: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#6b7280',
+    color: '#5C6564',
     marginLeft: 4,
   },
   separator: {
     height: 1,
-    backgroundColor: '#f3f4f6',
+    backgroundColor: '#DDE4E2',
   },
 
   // Toggle button
@@ -521,10 +521,10 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   toggleBtnStop: {
-    backgroundColor: '#dc2626',
+    backgroundColor: '#DC2626',
   },
   toggleBtnStart: {
-    backgroundColor: '#16a34a',
+    backgroundColor: '#0F766E',
   },
   toggleBtnText: {
     color: '#fff',

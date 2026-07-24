@@ -36,8 +36,8 @@ export default function MainTabs() {
     <Tab.Navigator
       screenOptions={({ route }) => ({
         headerShown: false,
-        tabBarActiveTintColor: '#4F46E5', // Indigo interactive accent
-        tabBarInactiveTintColor: colors.secondaryText,
+        tabBarActiveTintColor: colors.primary,
+        tabBarInactiveTintColor: colors.onSurfaceVariant,
         tabBarShowLabel: true,
         tabBarLabelStyle: {
           fontSize: 11,
@@ -59,7 +59,7 @@ export default function MainTabs() {
             paddingBottom: 10,
             paddingTop: 8,
             // Fallback translucent background to avoid the native BlurView crash
-            backgroundColor: colors.card === '#1c1c1e' ? 'rgba(28,28,30,0.92)' : 'rgba(255,255,255,0.92)',
+            backgroundColor: colors.surface === '#1A2120' ? 'rgba(26,33,32,0.92)' : 'rgba(255,255,255,0.92)',
           },
           getTabBarStyle(route)
         ],

@@ -87,7 +87,7 @@ export default function PinModal() {
             secureTextEntry
             maxLength={6}
             placeholder="••••"
-            placeholderTextColor="#9ca3af"
+            placeholderTextColor="#5C6564"
             autoFocus
           />
 
@@ -130,7 +130,7 @@ const styles = StyleSheet.create({
   },
   card: {
     width: '100%',
-    backgroundColor: '#fff',
+    backgroundColor: '#FFFFFF',
     borderRadius: 16,
     padding: 24,
     alignItems: 'center',
@@ -142,29 +142,29 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#111827',
+    color: '#1A1C1C',
     marginBottom: 8,
   },
   body: {
     fontSize: 15,
-    color: '#6b7280',
+    color: '#5C6564',
     textAlign: 'center',
     marginBottom: 24,
   },
   input: {
     width: '100%',
-    backgroundColor: '#f3f4f6',
+    backgroundColor: '#F0F4F3',
     borderRadius: 8,
     padding: 16,
     fontSize: 24,
     textAlign: 'center',
     letterSpacing: 8,
     marginBottom: 16,
-    color: '#111827',
+    color: '#1A1C1C',
     fontWeight: '700',
   },
   error: {
-    color: '#dc2626',
+    color: '#DC2626',
     marginBottom: 16,
     fontWeight: '500',
   },
@@ -180,15 +180,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   cancelBtn: {
-    backgroundColor: '#f3f4f6',
+    backgroundColor: '#F0F4F3',
   },
   cancelBtnText: {
-    color: '#4b5563',
+    color: '#5C6564',
     fontWeight: '600',
     fontSize: 16,
   },
   submitBtn: {
-    backgroundColor: '#16a34a',
+    backgroundColor: '#0F766E',
   },
   submitBtnDisabled: {
     opacity: 0.6,

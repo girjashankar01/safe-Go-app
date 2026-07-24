@@ -9,9 +9,11 @@ import {
   Switch,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
+import { useTheme } from '../theme';
 import { getSettings, saveSettings } from '../services/SettingsService';
 
 export default function EmergencyAlarmSettingsScreen({ navigation }) {
+  const { colors } = useTheme();
   const [settings, setSettings] = useState(null);
 
   useEffect(() => {
@@ -84,7 +86,7 @@ export default function EmergencyAlarmSettingsScreen({ navigation }) {
             <Switch
               value={settings.emergencyAlarmEnabled}
               onValueChange={(v) => updateSetting('emergencyAlarmEnabled', v)}
-              trackColor={{ false: '#d1d5db', true: '#16a34a' }}
+              trackColor={{ false: '#d1d5db', true: colors.primary }}
             />
           </View>
         </View>
@@ -106,7 +108,7 @@ export default function EmergencyAlarmSettingsScreen({ navigation }) {
                      'Manual only'}
                   </Text>
                   {settings.emergencyAlarmTrigger === t && (
-                    <Feather name="check" size={20} color="#16a34a" />
+                    <Feather name="check" size={20} color={colors.primary} />
                   )}
                 </TouchableOpacity>
               ))}
@@ -119,7 +121,7 @@ export default function EmergencyAlarmSettingsScreen({ navigation }) {
                 <Switch
                   value={settings.emergencyAlarmSound}
                   onValueChange={(v) => updateSetting('emergencyAlarmSound', v)}
-                  trackColor={{ false: '#d1d5db', true: '#16a34a' }}
+                  trackColor={{ false: '#d1d5db', true: colors.primary }}
                 />
               </View>
               <View style={styles.row}>
@@ -127,7 +129,7 @@ export default function EmergencyAlarmSettingsScreen({ navigation }) {
                 <Switch
                   value={settings.emergencyAlarmVibration}
                   onValueChange={(v) => updateSetting('emergencyAlarmVibration', v)}
-                  trackColor={{ false: '#d1d5db', true: '#16a34a' }}
+                  trackColor={{ false: '#d1d5db', true: colors.primary }}
                 />
               </View>
               <View style={styles.row}>
@@ -135,7 +137,7 @@ export default function EmergencyAlarmSettingsScreen({ navigation }) {
                 <Switch
                   value={settings.emergencyAlarmScreenFlash}
                   onValueChange={(v) => updateSetting('emergencyAlarmScreenFlash', v)}
-                  trackColor={{ false: '#d1d5db', true: '#16a34a' }}
+                  trackColor={{ false: '#d1d5db', true: colors.primary }}
                 />
               </View>
             </View>
@@ -152,7 +154,7 @@ export default function EmergencyAlarmSettingsScreen({ navigation }) {
                     {d === 0 ? 'Until stopped manually' : `${d} seconds`}
                   </Text>
                   {settings.emergencyAlarmDuration === d && (
-                    <Feather name="check" size={20} color="#16a34a" />
+                    <Feather name="check" size={20} color={colors.primary} />
                   )}
                 </TouchableOpacity>
               ))}
@@ -185,7 +187,7 @@ const styles = StyleSheet.create({
   },
   backBtnText: {
     fontSize: 15,
-    color: '#16a34a',
+    color: '#4F46E5', // Indigo
     fontWeight: '600',
   },
   headerTitle: {
