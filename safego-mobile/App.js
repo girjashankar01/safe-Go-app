@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, View } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { ThemeProvider } from './theme';
 
 import LoginScreen from './screens/LoginScreen';
 import RegisterScreen from './screens/RegisterScreen';
@@ -68,38 +69,40 @@ export default function App() {
   }
 
   return (
-    <View style={{ flex: 1 }}>
-      <SafetyIdentityProvider>
-        <NavigationContainer ref={navigationRef}>
-        <Stack.Navigator
-          initialRouteName={initialRoute}
-          screenOptions={{ headerShown: false }}
-        >
-          <Stack.Screen name="Login" component={LoginScreen} />
-          <Stack.Screen name="Register" component={RegisterScreen} />
-          <Stack.Screen name="Home" component={HomeScreen} />
-        <Stack.Screen name="EmergencyContacts" component={EmergencyContactsScreen} />
-        <Stack.Screen name="CurrentLocation" component={CurrentLocationScreen} />
-        <Stack.Screen name="LiveTracking" component={LiveTrackingScreen} />
-        <Stack.Screen name="Map" component={MapScreen} />
-        <Stack.Screen name="Trip" component={TripScreen} />
-        <Stack.Screen name="History" component={HistoryScreen} />
-        <Stack.Screen name="TripDetails" component={TripDetailsScreen} />
-        <Stack.Screen name="Profile" component={ProfileScreen} />
-        <Stack.Screen name="Settings" component={SettingsScreen} />
-        <Stack.Screen name="FakeCall" component={FakeCallScreen} />
-        <Stack.Screen name="EmergencyAlarmSettings" component={EmergencyAlarmSettingsScreen} />
-        <Stack.Screen name="EmergencyServices" component={EmergencyServicesScreen} />
-        <Stack.Screen name="EmergencyHistory" component={EmergencyHistoryScreen} />
-        <Stack.Screen name="EmergencyDetails" component={EmergencyDetailsScreen} />
-      </Stack.Navigator>
-      <CheckInModal />
-      <FakeCallModal />
-      <EmergencyAlarmModal />
-      <EmergencyOverlay />
-      <PinModal />
-      </NavigationContainer>
-    </SafetyIdentityProvider>
-  </View>
+    <ThemeProvider>
+      <View style={{ flex: 1 }}>
+        <SafetyIdentityProvider>
+          <NavigationContainer ref={navigationRef}>
+          <Stack.Navigator
+            initialRouteName={initialRoute}
+            screenOptions={{ headerShown: false }}
+          >
+            <Stack.Screen name="Login" component={LoginScreen} />
+            <Stack.Screen name="Register" component={RegisterScreen} />
+            <Stack.Screen name="Home" component={HomeScreen} />
+          <Stack.Screen name="EmergencyContacts" component={EmergencyContactsScreen} />
+          <Stack.Screen name="CurrentLocation" component={CurrentLocationScreen} />
+          <Stack.Screen name="LiveTracking" component={LiveTrackingScreen} />
+          <Stack.Screen name="Map" component={MapScreen} />
+          <Stack.Screen name="Trip" component={TripScreen} />
+          <Stack.Screen name="History" component={HistoryScreen} />
+          <Stack.Screen name="TripDetails" component={TripDetailsScreen} />
+          <Stack.Screen name="Profile" component={ProfileScreen} />
+          <Stack.Screen name="Settings" component={SettingsScreen} />
+          <Stack.Screen name="FakeCall" component={FakeCallScreen} />
+          <Stack.Screen name="EmergencyAlarmSettings" component={EmergencyAlarmSettingsScreen} />
+          <Stack.Screen name="EmergencyServices" component={EmergencyServicesScreen} />
+          <Stack.Screen name="EmergencyHistory" component={EmergencyHistoryScreen} />
+          <Stack.Screen name="EmergencyDetails" component={EmergencyDetailsScreen} />
+        </Stack.Navigator>
+        <CheckInModal />
+        <FakeCallModal />
+        <EmergencyAlarmModal />
+        <EmergencyOverlay />
+        <PinModal />
+        </NavigationContainer>
+      </SafetyIdentityProvider>
+    </View>
+  </ThemeProvider>
   );
 }
