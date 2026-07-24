@@ -349,28 +349,7 @@ export default function HomeScreen({ navigation }) {
         </Card>
       </TouchableOpacity>
 
-      {/* Emergency History */}
-      <TouchableOpacity onPress={() => navigation.navigate('EmergencyHistory')} activeOpacity={0.8}>
-        <Card style={styles.historyCard}>
-          <View style={styles.historyHeader}>
-            <Text style={[styles.historyTitle, { color: colors.text }]}>Emergency History</Text>
-            <Feather name="clock" color={colors.secondaryText} size={20} />
-          </View>
-          
-          <View style={styles.historyBody}>
-            {historyItems.length > 0 ? (
-              <View style={styles.historyRow}>
-                <Text style={[styles.historyLabel, { color: colors.text }]}>{historyItems[0].display_type}</Text>
-                <Text style={[styles.historyValue, { color: colors.secondaryText }]}>
-                  {new Date(historyItems[0].fired_at).toLocaleDateString()}
-                </Text>
-              </View>
-            ) : (
-              <Text style={[styles.historyEmpty, { color: colors.secondaryText }]}>No past emergencies.</Text>
-            )}
-          </View>
-        </Card>
-      </TouchableOpacity>
+
 
       {/* Emergency Resources */}
       <TouchableOpacity onPress={() => navigation.navigate('EmergencyServices')} activeOpacity={0.8}>
@@ -402,15 +381,6 @@ export default function HomeScreen({ navigation }) {
         </Card>
       </TouchableOpacity>
 
-      {/* Trip History */}
-      <TouchableOpacity onPress={() => navigation.navigate('History')} activeOpacity={0.8}>
-        <Card style={styles.tripHistoryCard}>
-          <View style={styles.tripHistoryContent}>
-            <Text style={[styles.tripHistoryTitle, { color: colors.text }]}>Trip History</Text>
-            <Feather name="chevron-right" color={colors.secondaryText} size={24} />
-          </View>
-        </Card>
-      </TouchableOpacity>
 
     </ScreenContainer>
   );
