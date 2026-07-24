@@ -1,39 +1,13 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, View } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { ThemeProvider } from './theme';
 
-import LoginScreen from './screens/LoginScreen';
-import RegisterScreen from './screens/RegisterScreen';
-import HomeScreen from './screens/HomeScreen';
-import EmergencyContactsScreen from './screens/EmergencyContactsScreen';
-import CurrentLocationScreen from './screens/CurrentLocationScreen';
-import LiveTrackingScreen from './screens/LiveTrackingScreen';
-import MapScreen from './screens/MapScreen';
-import TripScreen from './screens/TripScreen';
-import HistoryScreen from './screens/HistoryScreen';
-import TripDetailsScreen from './screens/TripDetailsScreen';
-import ActivityScreen from './screens/ActivityScreen';
-import ProfileScreen from './screens/ProfileScreen';
-import SettingsScreen from './screens/SettingsScreen';
-import FakeCallScreen from './screens/FakeCallScreen';
-import EmergencyAlarmSettingsScreen from './screens/EmergencyAlarmSettingsScreen';
-import EmergencyServicesScreen from './screens/EmergencyServicesScreen';
-import EmergencyHistoryScreen from './screens/EmergencyHistoryScreen';
-import EmergencyDetailsScreen from './screens/EmergencyDetailsScreen';
+import RootNavigator from './navigation/RootNavigator';
 
 import { setUnauthenticatedHandler } from './lib/api';
 import BootstrapService from './services/BootstrapService';
 import { SafetyIdentityProvider } from './components/SafetyIdentityContext';
-
-import CheckInModal from './components/CheckInModal';
-import PinModal from './components/PinModal';
-import FakeCallModal from './components/FakeCallModal';
-import EmergencyAlarmModal from './components/EmergencyAlarmModal';
-import EmergencyOverlay from './components/EmergencyOverlay';
-
-const Stack = createNativeStackNavigator();
 
 function LoadingScreen() {
   return (
@@ -74,37 +48,10 @@ export default function App() {
       <View style={{ flex: 1 }}>
         <SafetyIdentityProvider>
           <NavigationContainer ref={navigationRef}>
-          <Stack.Navigator
-            initialRouteName={initialRoute}
-            screenOptions={{ headerShown: false }}
-          >
-            <Stack.Screen name="Login" component={LoginScreen} />
-            <Stack.Screen name="Register" component={RegisterScreen} />
-            <Stack.Screen name="Home" component={HomeScreen} />
-          <Stack.Screen name="EmergencyContacts" component={EmergencyContactsScreen} />
-          <Stack.Screen name="CurrentLocation" component={CurrentLocationScreen} />
-          <Stack.Screen name="LiveTracking" component={LiveTrackingScreen} />
-          <Stack.Screen name="Map" component={MapScreen} />
-          <Stack.Screen name="Trip" component={TripScreen} />
-          <Stack.Screen name="History" component={HistoryScreen} />
-          <Stack.Screen name="TripDetails" component={TripDetailsScreen} />
-          <Stack.Screen name="Activity" component={ActivityScreen} />
-          <Stack.Screen name="Profile" component={ProfileScreen} />
-          <Stack.Screen name="Settings" component={SettingsScreen} />
-          <Stack.Screen name="FakeCall" component={FakeCallScreen} />
-          <Stack.Screen name="EmergencyAlarmSettings" component={EmergencyAlarmSettingsScreen} />
-          <Stack.Screen name="EmergencyServices" component={EmergencyServicesScreen} />
-          <Stack.Screen name="EmergencyHistory" component={EmergencyHistoryScreen} />
-          <Stack.Screen name="EmergencyDetails" component={EmergencyDetailsScreen} />
-        </Stack.Navigator>
-        <CheckInModal />
-        <FakeCallModal />
-        <EmergencyAlarmModal />
-        <EmergencyOverlay />
-        <PinModal />
-        </NavigationContainer>
-      </SafetyIdentityProvider>
-    </View>
-  </ThemeProvider>
+            <RootNavigator initialRoute={initialRoute} />
+          </NavigationContainer>
+        </SafetyIdentityProvider>
+      </View>
+    </ThemeProvider>
   );
 }
