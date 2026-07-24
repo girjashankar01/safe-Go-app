@@ -198,12 +198,7 @@ export default function ActivityScreen({ navigation }) {
   // ─── Renderers ───────────────────────────────────────────────────────────
 
   return (
-    <ScreenContainer scrollable={false} edges={['top', 'left', 'right']}>
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={[styles.headerTitle, { color: colors.text }]}>Activity Dashboard</Text>
-      </View>
-
+    <ScreenContainer scrollable={false} edges={['left', 'right']}>
       <ScrollView 
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
@@ -379,14 +374,6 @@ export default function ActivityScreen({ navigation }) {
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
-  header: {
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.sm, // Reduced spacing
-  },
-  headerTitle: {
-    fontSize: typography.sizes.title,
-    fontWeight: typography.weights.bold,
-  },
   scrollView: {
     flex: 1,
   },
@@ -397,7 +384,7 @@ const styles = StyleSheet.create({
   
   // Map
   mapCard: {
-    height: 220,
+    height: 260,
     marginBottom: spacing.md,
     // Negative margin to push it edge-to-edge over the ScrollView's padding
     marginHorizontal: -spacing.md,
@@ -414,7 +401,7 @@ const styles = StyleSheet.create({
   },
   mapView: {
     width: '100%',
-    height: 220,
+    height: 260,
     backgroundColor: '#e5e7eb',
   },
   mapGradient: {
