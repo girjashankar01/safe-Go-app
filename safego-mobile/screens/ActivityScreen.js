@@ -81,7 +81,6 @@ export default function ActivityScreen({ navigation }) {
 
   // States
   const [coords, setCoords] = useState(null); // Current device coordinates
-  const [region, setRegion] = useState(null); // Map region state
   const [address, setAddress] = useState('Locating...');
   const [speed, setSpeed] = useState(0);
   const [motion, setMotion] = useState('Stationary');
@@ -169,16 +168,13 @@ export default function ActivityScreen({ navigation }) {
                 });
             }
 
-            // Manage Map Centering (prevent jitter) using region state
+            // Manage Map Centering (prevent jitter) using animateCamera
             if (!lastMapCenter.current) {
               // Initial center
               lastMapCenter.current = { latitude: loc.latitude, longitude: loc.longitude };
-              setRegion({
-                latitude: loc.latitude,
-                longitude: loc.longitude,
-                latitudeDelta: DELTA,
-                longitudeDelta: DELTA,
-              });
+              mapRef.current?.animateCamera({
+                center: { latitude: loc.latitude, longitude: loc.longitude }
+              }, { duration: 1000 });
             } else {
               // Only recenter if moved more than 20 meters
               const dist = getDistanceFromLatLonInMeters(
@@ -189,12 +185,9 @@ export default function ActivityScreen({ navigation }) {
               );
               if (dist > 20) {
                 lastMapCenter.current = { latitude: loc.latitude, longitude: loc.longitude };
-                setRegion({
-                  latitude: loc.latitude,
-                  longitude: loc.longitude,
-                  latitudeDelta: DELTA,
-                  longitudeDelta: DELTA,
-                });
+                mapRef.current?.animateCamera({
+                  center: { latitude: loc.latitude, longitude: loc.longitude }
+                }, { duration: 1000 });
               }
             }
           }
@@ -238,15 +231,14 @@ export default function ActivityScreen({ navigation }) {
             <View style={styles.mapCard}>
               <View pointerEvents="none" style={{ width: '100%', height: '100%' }}>
                 <MapView
+                  ref={mapRef}
                   style={styles.mapView}
-                  region={
-                    region || {
-                      latitude: 37.78825,
-                      longitude: -122.4324,
-                      latitudeDelta: DELTA,
-                      longitudeDelta: DELTA,
-                    }
-                  }
+                  initialRegion={{
+                    latitude: 37.78825,
+                    longitude: -122.4324,
+                    latitudeDelta: DELTA,
+                    longitudeDelta: DELTA,
+                  }}
                   scrollEnabled={false}
                   zoomEnabled={false}
                   pitchEnabled={false}
