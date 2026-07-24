@@ -325,13 +325,6 @@ export default function HomeScreen({ navigation }) {
           style={styles.gridItem}
           onPress={() => navigation.navigate('Map')}
         />
-
-        <ActionCard
-          label="Trip History"
-          iconName="clock"
-          style={styles.gridItem}
-          onPress={() => navigation.navigate('History')}
-        />
       </View>
 
       {/* Trip Control */}
@@ -408,8 +401,18 @@ export default function HomeScreen({ navigation }) {
             )}
           </View>
           <View style={styles.resourcesAction}>
-            <Text style={[styles.resourcesActionText, { color: colors.danger }]}>Find Nearby</Text>
-            <Feather name="chevron-right" color={colors.danger} size={18} />
+            <Text style={[styles.resourcesActionText, { color: colors.text }]}>Find Nearby</Text>
+            <Feather name="chevron-right" color={colors.text} size={18} />
+          </View>
+        </Card>
+      </TouchableOpacity>
+
+      {/* Trip History */}
+      <TouchableOpacity onPress={() => navigation.navigate('History')} activeOpacity={0.8}>
+        <Card style={styles.tripHistoryCard}>
+          <View style={styles.tripHistoryContent}>
+            <Text style={[styles.tripHistoryTitle, { color: colors.text }]}>Trip History</Text>
+            <Feather name="chevron-right" color={colors.secondaryText} size={24} />
           </View>
         </Card>
       </TouchableOpacity>
@@ -641,7 +644,7 @@ const styles = StyleSheet.create({
     fontWeight: typography.weights.regular,
   },
   resourcesCard: {
-    marginBottom: spacing.xxxl,
+    marginBottom: spacing.lg,
   },
   resourcesHeader: {
     flexDirection: 'row',
@@ -681,5 +684,18 @@ const styles = StyleSheet.create({
     fontSize: typography.sizes.body,
     fontWeight: typography.weights.medium,
     marginRight: spacing.xs,
+  },
+  tripHistoryCard: {
+    marginBottom: spacing.xxxl,
+    padding: spacing.lg,
+  },
+  tripHistoryContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  tripHistoryTitle: {
+    fontSize: typography.sizes.body,
+    fontWeight: typography.weights.medium,
   }
 });

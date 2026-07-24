@@ -25,7 +25,7 @@ export const ActionCard: React.FC<ActionCardProps> = ({ label, iconName, style, 
       activeOpacity={0.7}
       {...rest}
     >
-      <Feather name={iconName} color={colors.primary} size={22} />
+      <Feather name={iconName} color={colors.text} size={22} />
       <Text
         style={[
           styles.label,
