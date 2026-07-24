@@ -15,6 +15,7 @@ import {
 import { Feather } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Picker } from '@react-native-picker/picker';
+import { ActionSheetIOS } from 'react-native';
 
 import ProfileService, { PersonalInfo, MedicalInfo } from '../services/ProfileService';
 import { useSafetyIdentity } from '../components/SafetyIdentityContext';
@@ -89,6 +90,28 @@ export default function ProfileScreen({ navigation }: any) {
     }
   };
 
+  const handleBloodGroupPress = () => {
+    if (Platform.OS === 'ios') {
+      ActionSheetIOS.showActionSheetWithOptions(
+        {
+          options: ['Cancel', 'Unknown', ...BLOOD_GROUPS.filter(g => g !== 'Unknown')],
+          cancelButtonIndex: 0,
+          title: 'Select Blood Group'
+        },
+        (buttonIndex) => {
+          if (buttonIndex > 0) {
+            const selected = ['Cancel', 'Unknown', ...BLOOD_GROUPS.filter(g => g !== 'Unknown')][buttonIndex];
+            setPersonal(prev => ({ ...prev, bloodGroup: selected }));
+          }
+        }
+      );
+    } else {
+      // Fallback for Android (using existing picker wrapped in a modal, or just an alert for simplicity)
+      // Since Picker intercepts scrolling, we will wrap it in a custom alert/modal for Android later if needed,
+      // but for now, we can leave the inline picker for Android.
+    }
+  };
+
   // Missing Information Checklist computation
   const isMissing = (val?: string) => !val || val.trim().length === 0;
   const missingItems = [
@@ -121,6 +144,7 @@ export default function ProfileScreen({ navigation }: any) {
           <ProfileAvatar 
             avatarUrl={personal?.avatarUrl} 
             fullName={personal?.fullName || ''}
+            onChangePhoto={(uri) => setPersonal(prev => ({ ...prev, avatarUrl: uri }))}
           />
 
           {/* Checklist */}
@@ -179,18 +203,26 @@ export default function ProfileScreen({ navigation }: any) {
 
             <View style={styles.pickerRow}>
               <Text style={styles.label}>Blood Group</Text>
-              <View style={styles.pickerContainer}>
-                <Picker
-                  selectedValue={personal?.bloodGroup || ''}
-                  onValueChange={(itemValue) => setPersonal(prev => ({ ...prev, bloodGroup: itemValue }))}
-                  style={styles.picker}
-                >
-                  <Picker.Item label="Select..." value="" color="#9ca3af" />
-                  {BLOOD_GROUPS.map(bg => (
-                    <Picker.Item key={bg} label={bg} value={bg} />
-                  ))}
-                </Picker>
-              </View>
+              {Platform.OS === 'ios' ? (
+                <TouchableOpacity style={styles.inputTouchable} onPress={handleBloodGroupPress}>
+                  <Text style={personal?.bloodGroup ? styles.inputText : styles.placeholderText}>
+                    {personal?.bloodGroup || 'Select Blood Group'}
+                  </Text>
+                </TouchableOpacity>
+              ) : (
+                <View style={styles.pickerContainer}>
+                  <Picker
+                    selectedValue={personal?.bloodGroup || ''}
+                    onValueChange={(itemValue) => setPersonal(prev => ({ ...prev, bloodGroup: itemValue }))}
+                    style={styles.picker}
+                  >
+                    <Picker.Item label="Select..." value="" color="#9ca3af" />
+                    {BLOOD_GROUPS.map(bg => (
+                      <Picker.Item key={bg} label={bg} value={bg} />
+                    ))}
+                  </Picker>
+                </View>
+              )}
             </View>
           </View>
 
@@ -445,13 +477,93 @@ const styles = StyleSheet.create({
     color: '#9ca3af',
   },
   textArea: {
-    fontSize: 15,
-    color: '#111827',
-    marginTop: 8,
+    fontSize: 16,
+    color: '#1f2937',
     minHeight: 60,
+    marginTop: 8,
     textAlignVertical: 'top',
   },
-  
+  previewContainer: {
+    flex: 1,
+    backgroundColor: '#f3f4f6',
+  },
+  previewHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    backgroundColor: '#ffffff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e7eb',
+  },
+  previewHeaderTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#111827',
+  },
+  previewCloseBtn: {
+    fontSize: 16,
+    color: '#16a34a',
+    fontWeight: '500',
+  },
+  previewScroll: {
+    flex: 1,
+    padding: 16,
+  },
+  previewNoticeBox: {
+    flexDirection: 'row',
+    backgroundColor: '#e0f2fe',
+    padding: 16,
+    borderRadius: 8,
+    marginBottom: 24,
+  },
+  previewNoticeText: {
+    flex: 1,
+    marginLeft: 12,
+    fontSize: 14,
+    color: '#0369a1',
+    lineHeight: 20,
+  },
+  previewCard: {
+    backgroundColor: '#ffffff',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 24,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+  },
+  previewLabel: {
+    fontSize: 12,
+    color: '#6b7280',
+    textTransform: 'uppercase',
+    fontWeight: '600',
+    marginBottom: 4,
+    marginTop: 16,
+  },
+  previewValue: {
+    fontSize: 16,
+    color: '#111827',
+  },
+  previewBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 16,
+    marginTop: 16,
+    marginBottom: 32,
+    backgroundColor: '#ffffff',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+  },
+  previewIcon: {
+    marginRight: 8,
+  },
+  previewBtnText: {
+    fontSize: 16,
+    color: '#16a34a',
+    fontWeight: '600',
+  },
   navRow: {
     flexDirection: 'row',
     alignItems: 'center',

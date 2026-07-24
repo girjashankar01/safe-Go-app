@@ -7,9 +7,10 @@ import ProfileService from '../services/ProfileService';
 interface ProfileAvatarProps {
   avatarUrl?: string;
   fullName: string;
+  onChangePhoto?: (uri: string) => void;
 }
 
-export default function ProfileAvatar({ avatarUrl, fullName }: ProfileAvatarProps) {
+export default function ProfileAvatar({ avatarUrl, fullName, onChangePhoto }: ProfileAvatarProps) {
   const [loading, setLoading] = useState(false);
 
   const getInitials = (name: string) => {
@@ -37,7 +38,10 @@ export default function ProfileAvatar({ avatarUrl, fullName }: ProfileAvatarProp
       if (!result.canceled && result.assets && result.assets.length > 0) {
         setLoading(true);
         const uri = result.assets[0].uri;
-        await ProfileService.uploadAvatar(uri);
+        const uploadedUrl = await ProfileService.uploadAvatar(uri);
+        if (uploadedUrl && onChangePhoto) {
+          onChangePhoto(uploadedUrl);
+        }
       }
     } catch (error) {
       console.error('Error picking image:', error);
@@ -59,6 +63,9 @@ export default function ProfileAvatar({ avatarUrl, fullName }: ProfileAvatarProp
           onPress: async () => {
             setLoading(true);
             await ProfileService.removeAvatar();
+            if (onChangePhoto) {
+              onChangePhoto('');
+            }
             setLoading(false);
           }
         },

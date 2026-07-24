@@ -210,13 +210,13 @@ export default function HomeScreen({ navigation }) {
         
         <View style={styles.spacer} />
 
-        <View style={styles.headerRight}>
+        <TouchableOpacity style={styles.headerRight} onPress={() => navigation.navigate('Profile')} activeOpacity={0.8}>
           <View style={[styles.avatarCircle, { backgroundColor: colors.primaryContainer }]}>
             <Text style={[styles.avatarInitial, { color: colors.primary }]}>
               {profile?.personal?.fullName ? profile.personal.fullName.charAt(0).toUpperCase() : '?'}
             </Text>
           </View>
-        </View>
+        </TouchableOpacity>
       </View>
 
       {/* Emergency Profile Summary */}

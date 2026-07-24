@@ -20,6 +20,7 @@ import EmergencyDetailsScreen from '../screens/EmergencyDetailsScreen';
 import TripScreen from '../screens/TripScreen';
 import FakeCallScreen from '../screens/FakeCallScreen';
 import CurrentLocationScreen from '../screens/CurrentLocationScreen';
+import EmergencyContactsScreen from '../screens/EmergencyContactsScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -52,6 +53,7 @@ export default function RootNavigator({ initialRoute }) {
         <Stack.Screen name="Trip" component={TripScreen} />
         <Stack.Screen name="FakeCall" component={FakeCallScreen} />
         <Stack.Screen name="CurrentLocation" component={CurrentLocationScreen} />
+        <Stack.Screen name="EmergencyContacts" component={EmergencyContactsScreen} />
       </Stack.Navigator>
 
       {/* Global Modals (rendered outside navigation flow but inside provider context) */}
