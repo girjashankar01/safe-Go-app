@@ -48,18 +48,18 @@ export default function EmergencyHistoryScreen() {
         <View style={styles.cardHeader}>
           <Text style={styles.cardType}>{item.display_type}</Text>
           <View style={[styles.statusBadge, item.status === 'completed' ? styles.statusCompleted : styles.statusFailed]}>
-            <Text style={styles.statusText}>{item.display_status}</Text>
+            <Text style={[styles.statusText, item.status === 'completed' ? styles.statusTextCompleted : styles.statusTextFailed]}>{item.display_status}</Text>
           </View>
         </View>
 
         <View style={styles.cardBody}>
           <View style={styles.row}>
-            <Ionicons name="time-outline" size={16} color="#8E8E93" />
+            <Ionicons name="time-outline" size={16} color="#5C6564" />
             <Text style={styles.infoText}>{dateStr} at {timeStr}</Text>
           </View>
           
           <View style={styles.row}>
-            <Ionicons name="location-outline" size={16} color="#8E8E93" />
+            <Ionicons name="location-outline" size={16} color="#5C6564" />
             <Text style={styles.infoText} numberOfLines={1}>
               {item.location_name || 'Location unknown'}
             </Text>
@@ -67,7 +67,7 @@ export default function EmergencyHistoryScreen() {
           
           {item.has_recording && (
             <View style={styles.row}>
-              <Ionicons name="mic-outline" size={16} color="#8E8E93" />
+              <Ionicons name="mic-outline" size={16} color="#5C6564" />
               <Text style={styles.infoText}>Audio recording available</Text>
             </View>
           )}
@@ -80,7 +80,7 @@ export default function EmergencyHistoryScreen() {
     if (loading) return null;
     return (
       <View style={styles.emptyContainer}>
-        <Ionicons name="shield-checkmark-outline" size={64} color="#3A3A3C" />
+        <Ionicons name="shield-checkmark-outline" size={64} color="#5C6564" />
         <Text style={styles.emptyTitle}>No emergency incidents yet.</Text>
         <Text style={styles.emptySubtitle}>
           Your emergency history will appear here after an SOS is successfully sent.
@@ -98,7 +98,7 @@ export default function EmergencyHistoryScreen() {
         contentContainerStyle={styles.listContent}
         ListEmptyComponent={renderEmpty}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#FFF" />
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#5C6564" />
         }
       />
     </View>
@@ -108,17 +108,24 @@ export default function EmergencyHistoryScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000',
+    backgroundColor: '#FAFAFA',
   },
   listContent: {
     padding: 16,
     flexGrow: 1,
   },
   card: {
-    backgroundColor: '#1C1C1E',
+    backgroundColor: '#FFFFFF',
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#DDE4E2',
+    shadowColor: '#000',
+    shadowOpacity: 0.03,
+    shadowRadius: 5,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 1,
   },
   cardHeader: {
     flexDirection: 'row',
@@ -127,7 +134,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   cardType: {
-    color: '#FFF',
+    color: '#1A1C1C',
     fontSize: 16,
     fontWeight: '600',
   },
@@ -135,18 +142,24 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 4,
-    backgroundColor: '#3A3A3C',
+    backgroundColor: '#F0F4F3',
   },
   statusCompleted: {
-    backgroundColor: 'rgba(48, 209, 88, 0.2)',
+    backgroundColor: '#E3F2EC',
   },
   statusFailed: {
-    backgroundColor: 'rgba(255, 69, 58, 0.2)',
+    backgroundColor: '#FEE2E2',
   },
   statusText: {
-    color: '#FFF',
+    color: '#1A1C1C',
     fontSize: 12,
     fontWeight: '600',
+  },
+  statusTextCompleted: {
+    color: '#4D9375',
+  },
+  statusTextFailed: {
+    color: '#DC2626',
   },
   cardBody: {
     gap: 8,
@@ -156,7 +169,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   infoText: {
-    color: '#EBEBF5',
+    color: '#5C6564',
     fontSize: 14,
     marginLeft: 8,
   },
@@ -167,7 +180,7 @@ const styles = StyleSheet.create({
     padding: 32,
   },
   emptyTitle: {
-    color: '#FFF',
+    color: '#1A1C1C',
     fontSize: 18,
     fontWeight: '600',
     marginTop: 16,
@@ -175,7 +188,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   emptySubtitle: {
-    color: '#8E8E93',
+    color: '#5C6564',
     fontSize: 14,
     textAlign: 'center',
     lineHeight: 20,

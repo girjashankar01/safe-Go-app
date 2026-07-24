@@ -42,7 +42,7 @@ export default function EmergencyDetailsScreen({ route }) {
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#0A84FF" />
+        <ActivityIndicator size="large" color="#0F766E" />
       </View>
     );
   }
@@ -76,16 +76,16 @@ export default function EmergencyDetailsScreen({ route }) {
         <Text style={styles.sectionTitle}>Incident Integrity</Text>
         <View style={styles.integrityCard}>
           <View style={styles.integrityRow}>
-            <Ionicons name="checkmark-circle" size={20} color="#30D158" />
+            <Ionicons name="checkmark-circle" size={20} color="#4D9375" />
             <Text style={styles.integrityText}>Delivered to Backend</Text>
           </View>
           <View style={styles.integrityRow}>
-            <Ionicons name="checkmark-circle" size={20} color="#30D158" />
+            <Ionicons name="checkmark-circle" size={20} color="#4D9375" />
             <Text style={styles.integrityText}>Stored in Database</Text>
           </View>
           {incident.has_recording && (
             <View style={styles.integrityRow}>
-              <Ionicons name="checkmark-circle" size={20} color="#30D158" />
+              <Ionicons name="checkmark-circle" size={20} color="#4D9375" />
               <Text style={styles.integrityText}>Audio Uploaded</Text>
             </View>
           )}
@@ -128,7 +128,7 @@ export default function EmergencyDetailsScreen({ route }) {
               </View>
               
               <TouchableOpacity style={styles.mapsButton} onPress={openInMaps}>
-                <Ionicons name="map-outline" size={20} color="#FFF" />
+                <Ionicons name="map-outline" size={20} color="#0F766E" />
                 <Text style={styles.mapsButtonText}>Open in Maps</Text>
               </TouchableOpacity>
             </>
@@ -165,11 +165,11 @@ export default function EmergencyDetailsScreen({ route }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000',
+    backgroundColor: '#FAFAFA',
   },
   loadingContainer: {
     flex: 1,
-    backgroundColor: '#000',
+    backgroundColor: '#FAFAFA',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -178,36 +178,43 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
   },
   errorText: {
-    color: '#FF453A',
+    color: '#DC2626',
     fontSize: 16,
   },
   header: {
     marginBottom: 24,
   },
   title: {
-    color: '#FFF',
+    color: '#1A1C1C',
     fontSize: 28,
     fontWeight: 'bold',
     marginBottom: 4,
   },
   subtitle: {
-    color: '#8E8E93',
+    color: '#5C6564',
     fontSize: 16,
   },
   section: {
     marginBottom: 24,
   },
   sectionTitle: {
-    color: '#FFF',
+    color: '#1A1C1C',
     fontSize: 18,
     fontWeight: '600',
     marginBottom: 12,
   },
   integrityCard: {
-    backgroundColor: '#1C1C1E',
+    backgroundColor: '#FFFFFF',
     borderRadius: 12,
     padding: 16,
     gap: 12,
+    borderWidth: 1,
+    borderColor: '#DDE4E2',
+    shadowColor: '#000',
+    shadowOpacity: 0.03,
+    shadowRadius: 5,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 1,
   },
   integrityRow: {
     flexDirection: 'row',
@@ -215,16 +222,23 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   integrityText: {
-    color: '#EBEBF5',
+    color: '#1A1C1C',
     fontSize: 15,
   },
   locationCard: {
-    backgroundColor: '#1C1C1E',
+    backgroundColor: '#FFFFFF',
     borderRadius: 12,
     overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#DDE4E2',
+    shadowColor: '#000',
+    shadowOpacity: 0.03,
+    shadowRadius: 5,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 1,
   },
   locationName: {
-    color: '#FFF',
+    color: '#1A1C1C',
     fontSize: 16,
     padding: 16,
   },
@@ -239,36 +253,43 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#3A3A3C',
+    backgroundColor: '#F0F4F3',
     padding: 16,
     gap: 8,
   },
   mapsButtonText: {
-    color: '#FFF',
+    color: '#0F766E',
     fontSize: 16,
     fontWeight: '500',
   },
   detailsCard: {
-    backgroundColor: '#1C1C1E',
+    backgroundColor: '#FFFFFF',
     borderRadius: 12,
     paddingHorizontal: 16,
+    borderWidth: 1,
+    borderColor: '#DDE4E2',
+    shadowColor: '#000',
+    shadowOpacity: 0.03,
+    shadowRadius: 5,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 1,
   },
   detailRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#3A3A3C',
+    borderBottomColor: '#DDE4E2',
   },
   noBorder: {
     borderBottomWidth: 0,
   },
   detailLabel: {
-    color: '#8E8E93',
+    color: '#5C6564',
     fontSize: 16,
   },
   detailValue: {
-    color: '#FFF',
+    color: '#1A1C1C',
     fontSize: 16,
     fontWeight: '500',
   }
