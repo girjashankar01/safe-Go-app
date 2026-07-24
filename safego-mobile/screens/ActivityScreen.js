@@ -386,10 +386,11 @@ const styles = StyleSheet.create({
   
   // Map
   mapCard: {
-    height: 260,
+    height: 360,
     marginBottom: spacing.md,
     // Negative margin to push it edge-to-edge over the ScrollView's padding
     marginHorizontal: -spacing.md,
+    overflow: 'hidden',
   },
   trackingCard: {
     height: 160,
@@ -403,7 +404,7 @@ const styles = StyleSheet.create({
   },
   mapView: {
     width: '100%',
-    height: 260,
+    height: 390,
     backgroundColor: '#e5e7eb',
   },
   mapGradient: {
