@@ -1,9 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, DeviceEventEmitter } from 'react-native';
-import { Feather } from '@expo/vector-icons';
+import { View, Text, StyleSheet } from 'react-native';
+import { Wifi, MapPin, Battery as BatteryIcon } from 'lucide-react-native';
 import LocationService from '../services/LocationService';
 import * as Battery from 'expo-battery';
+import { useTheme, spacing, typography } from '../theme';
+import { Card } from './ui/Card';
+
 export default function SystemStatusCard({ socketStatus }) {
+  const { colors } = useTheme();
   const [locationStatus, setLocationStatus] = useState('Checking...');
   const [batteryLevel, setBatteryLevel] = useState(null);
 
@@ -100,21 +104,21 @@ export default function SystemStatusCard({ socketStatus }) {
   }
 
   return (
-    <View style={styles.card}>
+    <Card style={styles.cardSpacing}>
       <View style={styles.header}>
         <View style={[styles.statusDot, { backgroundColor: overallColor }]} />
-        <Text style={[styles.headerTitle, { color: overallColor }]}>{overallStatus}</Text>
+        <Text style={[styles.headerTitle, { color: overallColor, fontSize: typography.sizes.small }]}>{overallStatus}</Text>
       </View>
 
-      <View style={styles.divider} />
+      <View style={[styles.divider, { backgroundColor: colors.divider }]} />
 
       {/* Socket */}
       <View style={styles.row}>
         <View style={styles.left}>
-          <Feather name="wifi" size={20} color="#6b7280" style={styles.icon} />
-          <Text style={styles.label}>Socket Connection</Text>
+          <Wifi size={20} color={colors.secondaryText} style={styles.icon} />
+          <Text style={[styles.label, { color: colors.text, fontSize: typography.sizes.body }]}>Socket Connection</Text>
         </View>
-        <Text style={[styles.value, { color: isSocketConnected ? '#16a34a' : '#dc2626' }]}>
+        <Text style={[styles.value, { color: isSocketConnected ? colors.primary : colors.danger, fontSize: typography.sizes.body }]}>
           {isSocketConnected ? 'Connected' : 'Disconnected'}
         </Text>
       </View>
@@ -122,10 +126,10 @@ export default function SystemStatusCard({ socketStatus }) {
       {/* Location */}
       <View style={styles.row}>
         <View style={styles.left}>
-          <Feather name="map-pin" size={20} color="#6b7280" style={styles.icon} />
-          <Text style={styles.label}>Location Services</Text>
+          <MapPin size={20} color={colors.secondaryText} style={styles.icon} />
+          <Text style={[styles.label, { color: colors.text, fontSize: typography.sizes.body }]}>Location Services</Text>
         </View>
-        <Text style={[styles.value, { color: isLocationOn ? '#16a34a' : '#dc2626' }]}>
+        <Text style={[styles.value, { color: isLocationOn ? colors.primary : colors.danger, fontSize: typography.sizes.body }]}>
           {locationStatus}
         </Text>
       </View>
@@ -133,30 +137,20 @@ export default function SystemStatusCard({ socketStatus }) {
       {/* Battery */}
       <View style={styles.row}>
         <View style={styles.left}>
-          <Feather name="battery" size={20} color="#6b7280" style={styles.icon} />
-          <Text style={styles.label}>Battery</Text>
+          <BatteryIcon size={20} color={colors.secondaryText} style={styles.icon} />
+          <Text style={[styles.label, { color: colors.text, fontSize: typography.sizes.body }]}>Battery</Text>
         </View>
-        <Text style={[styles.value, { color: batteryColor }]}>
+        <Text style={[styles.value, { color: batteryColor, fontSize: typography.sizes.body }]}>
           {batteryLevel !== null ? `${batteryLevel}% • ${batteryLabel}` : 'Unknown'}
         </Text>
       </View>
-    </View>
+    </Card>
   );
 }
 
 const styles = StyleSheet.create({
-  card: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 28,
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-    shadowColor: '#000',
-    shadowOpacity: 0.04,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 1,
+  cardSpacing: {
+    marginBottom: spacing.xxl,
   },
   header: {
     flexDirection: 'row',

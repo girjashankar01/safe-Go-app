@@ -1,73 +1,46 @@
 import React, { useEffect, useState, useRef } from 'react';
 import {
-  SafeAreaView,
-  ScrollView,
   View,
   Text,
   TouchableOpacity,
   ActivityIndicator,
   StyleSheet,
-  Alert,
   Animated,
+  Dimensions
 } from 'react-native';
 import { getMe } from '../lib/api';
 import { connectSocket, getSocket } from '../lib/socket';
 import { getSettings } from '../services/SettingsService';
 import FakeCallService from '../services/FakeCallService';
 import { useSafetyIdentity } from '../components/SafetyIdentityContext';
-import { Feather } from '@expo/vector-icons';
+import { 
+  Settings, ShieldAlert, ShieldCheck, 
+  PhoneCall, Bell, MapPin, Map as MapIcon, 
+  ChevronRight, Phone 
+} from 'lucide-react-native';
 import EmergencyDirectoryService from '../services/EmergencyDirectoryService';
 import EmergencyHistoryService from '../services/EmergencyHistoryService';
 import SOSService from '../services/SOSService';
 import EmergencyAlarmService from '../services/EmergencyAlarmService';
-
-// ─── Coming Soon alert ───────────────────────────────────────────────────────
-const comingSoon = (feature) =>
-  Alert.alert('Coming Soon', `${feature} will be available in a future update.`);
-
+import { hasActiveTrip, restoreTrip } from '../lib/tripState';
 import SystemStatusCard from '../components/SystemStatusCard';
-
-// ─── Action Button ────────────────────────────────────────────────────────────
-function ActionButton({ label, onPress, variant = 'default', disabled = false }) {
-  const isPrimary = variant === 'primary';
-  const isDestructive = variant === 'destructive';
-
-  return (
-    <TouchableOpacity
-      style={[
-        styles.actionButton,
-        isPrimary && styles.actionButtonPrimary,
-        isDestructive && styles.actionButtonDestructive,
-        disabled && styles.actionButtonDisabled,
-      ]}
-      onPress={onPress}
-      disabled={disabled}
-      activeOpacity={0.75}
-    >
-      <Text
-        style={[
-          styles.actionButtonText,
-          isPrimary && styles.actionButtonTextPrimary,
-          isDestructive && styles.actionButtonTextDestructive,
-          disabled && styles.actionButtonTextDisabled,
-        ]}
-      >
-        {label}
-      </Text>
-    </TouchableOpacity>
-  );
-}
+import { useTheme, spacing, typography, radius } from '../theme';
+import { Card } from '../components/ui/Card';
+import { Button } from '../components/ui/Button';
+import { ActionCard } from '../components/ui/ActionCard';
+import { ScreenContainer } from '../components/ui/ScreenContainer';
 
 // ─── Hold-to-Activate SOS Button ────────────────────────────────────────────────
 function HoldToActivateButton({ onActivate }) {
+  const { colors } = useTheme();
   const holdProgress = useRef(new Animated.Value(0)).current;
-  const holdTimer = useRef(null);
+  const buttonSize = Math.min(220, Dimensions.get('window').width * 0.55);
 
   const startHold = () => {
     Animated.timing(holdProgress, {
       toValue: 1,
-      duration: 3000, // 3 seconds
-      useNativeDriver: false, // width/height cannot use native driver
+      duration: 2000, // 2 seconds
+      useNativeDriver: false,
     }).start(({ finished }) => {
       if (finished) {
         onActivate();
@@ -87,53 +60,67 @@ function HoldToActivateButton({ onActivate }) {
 
   const progressSize = holdProgress.interpolate({
     inputRange: [0, 1],
-    outputRange: [140, 240] // Grows from inner circle size to outer limit
+    outputRange: [buttonSize, buttonSize + 60]
   });
 
   return (
     <View style={styles.holdContainer}>
       <TouchableOpacity 
-        style={styles.holdTouchable}
+        style={[styles.holdTouchable, { width: buttonSize + 60, height: buttonSize + 60 }]}
         onPressIn={startHold}
         onPressOut={cancelHold}
         activeOpacity={1}
       >
-        <Animated.View style={[styles.holdProgress, { width: progressSize, height: progressSize, borderRadius: Animated.divide(progressSize, 2) }]} />
-        <View style={styles.holdInnerCircle}>
-          <Text style={styles.holdText}>SOS</Text>
+        <Animated.View 
+          style={[
+            styles.holdProgress, 
+            { 
+              width: progressSize, 
+              height: progressSize, 
+              borderRadius: Animated.divide(progressSize, 2),
+              backgroundColor: colors.danger + '40'
+            }
+          ]} 
+        />
+        <View style={[
+          styles.holdInnerCircle, 
+          { 
+            width: buttonSize, 
+            height: buttonSize, 
+            borderRadius: buttonSize / 2, 
+            backgroundColor: colors.danger, 
+            shadowColor: colors.danger 
+          }
+        ]}>
+          <Text style={[styles.holdText, { fontSize: typography.sizes.display }]}>SOS</Text>
         </View>
       </TouchableOpacity>
-      <Text style={styles.holdSubtext}>Hold SOS button for 3 seconds to activate SOS</Text>
+      <Text style={[styles.holdSubtext, { color: colors.secondaryText, fontSize: typography.sizes.small }]}>Press and hold</Text>
     </View>
   );
 }
 
 export default function HomeScreen({ navigation }) {
+  const { colors, isDark } = useTheme();
   const { profile, missingFields, status: profileStatus } = useSafetyIdentity();
   
-  // Socket connection status — 'connecting' | 'connected' | 'disconnected' | 'error'
   const [socketStatus, setSocketStatus] = useState(
     getSocket().connected ? 'connected' : 'connecting'
   );
   const [fakeCallState, setFakeCallState] = useState({ status: 'Idle', remainingDelay: 0 });
   const [dirState, setDirState] = useState('Loading');
-  const [historyItems, setHistoryItems] = useState([]);
   const [alarmState, setAlarmState] = useState({ status: 'Idle' });
+  const [tripActive, setTripActive] = useState(false);
 
   useEffect(() => {
     const unsub = FakeCallService.subscribe((s) => setFakeCallState(s));
     return unsub;
   }, []);
 
-  // Connect socket here to cover the auto-login path (App.js calls getMe() then
-  // navigates directly to Home without going through LoginScreen).
-  // connectSocket() is a no-op if the socket is already connected.
   useEffect(() => {
     connectSocket();
   }, []);
 
-  // Subscribe to socket lifecycle events and keep socketStatus in sync.
-  // Listeners are registered with named functions so they can be cleanly removed.
   useEffect(() => {
     const socket = getSocket();
 
@@ -148,19 +135,12 @@ export default function HomeScreen({ navigation }) {
     socket.io.on('reconnect_attempt', onReconnecting);
     socket.io.on('reconnect',         onConnect);
 
-    // Sync immediately in case the socket state changed before listeners were attached.
     setSocketStatus(socket.connected ? 'connected' : 'connecting');
 
-    // Setup EmergencyDirectoryService & History
     const unsubDir = EmergencyDirectoryService.subscribe((s) => setDirState(s));
     EmergencyDirectoryService.initialize();
 
-    const unsubHistory = EmergencyHistoryService.subscribe(() => {
-      setHistoryItems(EmergencyHistoryService.getCachedHistory());
-    });
-    setHistoryItems(EmergencyHistoryService.getCachedHistory());
-    
-    // Silently fetch fresh history for the home screen
+    // Silently fetch fresh history for background sync (UI removed in Phase 2)
     EmergencyHistoryService.fetchHistory().catch(e => console.log('Silently ignoring fetch history error on home screen', e));
 
     const unsubAlarm = EmergencyAlarmService.subscribe((s) => setAlarmState(s));
@@ -172,183 +152,131 @@ export default function HomeScreen({ navigation }) {
       socket.io.off('reconnect_attempt', onReconnecting);
       socket.io.off('reconnect',         onConnect);
       unsubDir();
-      unsubHistory();
       unsubAlarm();
     };
   }, []);
 
+  // Update trip state on focus
+  useEffect(() => {
+    const checkTrip = async () => {
+      await restoreTrip();
+      setTripActive(hasActiveTrip());
+    };
+    checkTrip();
+    const unsubscribe = navigation.addListener('focus', checkTrip);
+    return unsubscribe;
+  }, [navigation]);
+
   const cachedNumbers = EmergencyDirectoryService.getCachedNumbers();
   const primaryEmergency = cachedNumbers.find(n => n.service_type === 'Emergency' || n.priority === 1) || cachedNumbers[0];
   const womensHelpline = cachedNumbers.find(n => n.service_type === "Women's Helpline" || n.service_name.toLowerCase().includes('women'));
+  
+  // Pick up to three initials
+  const contactInitials = cachedNumbers
+    .slice(0, 3)
+    .map(n => n.service_name.charAt(0).toUpperCase());
 
   // ── Loading ────────────────────────────────────────────────────────────────
   if (profileStatus === 'Loading') {
     return (
-      <SafeAreaView style={styles.centered}>
-        <ActivityIndicator size="large" color="#16a34a" />
-        <Text style={styles.loadingText}>Loading your profile…</Text>
-      </SafeAreaView>
+      <View style={[styles.centered, { backgroundColor: colors.background }]}>
+        <ActivityIndicator size="large" color={colors.primary} />
+        <Text style={[styles.loadingText, { color: colors.secondaryText }]}>Loading your profile…</Text>
+      </View>
     );
   }
 
   // ── Main render ────────────────────────────────────────────────────────────
   return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView
-        contentContainerStyle={styles.scroll}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Header */}
-        <View style={styles.header}>
-          <Text style={styles.appName}>SafeGo</Text>
-          <View style={styles.avatarCircle}>
-            <Text style={styles.avatarInitial}>
-              {profile?.personal?.fullName
-                ? profile.personal.fullName.charAt(0).toUpperCase()
-                : '?'}
+    <ScreenContainer scrollable>
+      
+      {/* Header */}
+      <View style={styles.header}>
+        <View style={styles.headerLeft}>
+          <Text style={[styles.appName, { color: colors.primary }]}>SafeGo</Text>
+          <View style={styles.welcomeSection}>
+            <Text style={[styles.welcomeGreeting, { color: colors.secondaryText }]}>Welcome back</Text>
+            {profile?.personal?.fullName ? (
+              <Text style={[styles.welcomeName, { color: colors.text }]}>{profile.personal.fullName}</Text>
+            ) : null}
+          </View>
+        </View>
+        
+        <View style={styles.headerRight}>
+          <TouchableOpacity 
+            style={[styles.settingsBtn, { backgroundColor: isDark ? colors.card : '#f3f4f6' }]} 
+            onPress={() => navigation.navigate('Settings')}
+          >
+            <Settings size={20} color={colors.text} />
+          </TouchableOpacity>
+          <View style={[styles.avatarCircle, { backgroundColor: colors.primary + '20' }]}>
+            <Text style={[styles.avatarInitial, { color: colors.primary }]}>
+              {profile?.personal?.fullName ? profile.personal.fullName.charAt(0).toUpperCase() : '?'}
             </Text>
           </View>
         </View>
+      </View>
 
-        {/* Welcome */}
-        <View style={styles.welcomeSection}>
-          <Text style={styles.welcomeGreeting}>Welcome back</Text>
-          {profile?.personal?.fullName ? (
-            <Text style={styles.welcomeName}>{profile.personal.fullName}</Text>
-          ) : null}
-        </View>
-
-        {/* Safety Identity Card */}
-        <TouchableOpacity 
-          style={[styles.identityCard, missingFields.totalMissing > 0 ? styles.identityCardWarning : styles.identityCardSuccess]}
-          onPress={() => navigation.navigate('Profile')}
-        >
+      {/* Emergency Profile Summary */}
+      <TouchableOpacity onPress={() => navigation.navigate('Profile')} activeOpacity={0.8}>
+        <Card style={[styles.identityCard, missingFields.totalMissing > 0 && { borderColor: colors.warning, borderWidth: 1 }]}>
           <View style={styles.identityHeader}>
-            <Feather name="shield" size={20} color={missingFields.totalMissing > 0 ? "#b45309" : "#166534"} />
-            <Text style={[styles.identityTitle, { color: missingFields.totalMissing > 0 ? "#b45309" : "#166534" }]}>
-              {missingFields.totalMissing > 0 ? "Incomplete Emergency Information" : "Emergency Information Ready"}
+            {missingFields.totalMissing > 0 ? (
+              <ShieldAlert size={20} color={colors.warning} />
+            ) : (
+              <ShieldCheck size={20} color={colors.primary} />
+            )}
+            <Text style={[styles.identityTitle, { color: missingFields.totalMissing > 0 ? colors.warning : colors.primary }]}>
+              {missingFields.totalMissing > 0 ? "Incomplete Emergency Info" : "Emergency Profile Ready"}
             </Text>
           </View>
           
           <View style={styles.identityDetails}>
             <View style={styles.identityRow}>
-              <Text style={styles.identityLabel}>Blood Group</Text>
-              <Text style={styles.identityValue}>{profile.personal.bloodGroup || '—'}</Text>
+              <Text style={[styles.identityLabel, { color: colors.secondaryText }]}>Blood Group</Text>
+              <Text style={[styles.identityValue, { color: colors.text }]}>{profile.personal.bloodGroup || '—'}</Text>
             </View>
             <View style={styles.identityRow}>
-              <Text style={styles.identityLabel}>Medical Notes</Text>
-              <Text style={styles.identityValue}>{missingFields.medicalInfo ? '—' : 'Available'}</Text>
+              <Text style={[styles.identityLabel, { color: colors.secondaryText }]}>Medical Notes</Text>
+              <Text style={[styles.identityValue, { color: colors.text }]}>{missingFields.medicalInfo ? '—' : 'Available'}</Text>
             </View>
             <View style={styles.identityRow}>
-              <Text style={styles.identityLabel}>Last Updated</Text>
-              <Text style={styles.identityValue}>{new Date(profile.updatedAt).toLocaleDateString()}</Text>
+              <Text style={[styles.identityLabel, { color: colors.secondaryText }]}>Last Updated</Text>
+              <Text style={[styles.identityValue, { color: colors.text }]}>{new Date(profile.updatedAt).toLocaleDateString()}</Text>
             </View>
           </View>
+        </Card>
+      </TouchableOpacity>
 
-          {missingFields.totalMissing > 0 && (
-            <View style={styles.identityMissing}>
-              <Text style={styles.identityMissingLabel}>Missing:</Text>
-              <Text style={styles.identityMissingText}>
-                {[
-                  missingFields.name && "Name",
-                  missingFields.bloodGroup && "Blood Group",
-                  missingFields.medicalInfo && "Medical Info"
-                ].filter(Boolean).join(', ')}
-              </Text>
-            </View>
-          )}
-        </TouchableOpacity>
+      {/* System Status */}
+      <SystemStatusCard socketStatus={socketStatus} />
 
-        {/* Status card — live system status */}
-        <SystemStatusCard socketStatus={socketStatus} />
+      {/* SOS Button */}
+      <HoldToActivateButton onActivate={() => SOSService.triggerManualSOS()} />
 
-        {/* Emergency Resources Card */}
-        <View style={styles.emergencyCard}>
-          <View style={styles.emergencyCardHeader}>
-            <Text style={styles.emergencyCardTitle}>Emergency</Text>
-            <Text style={styles.emergencyCardSubtitle}>
-              {EmergencyDirectoryService.getCurrentLocationStr()}
-            </Text>
-          </View>
-          <View style={styles.emergencyCardBody}>
-            {primaryEmergency && (
-              <View style={styles.emergencyRow}>
-                <Text style={styles.emergencyLabel}>Emergency</Text>
-                <Text style={styles.emergencyValue}>{primaryEmergency.phone_number}</Text>
-              </View>
-            )}
-            {womensHelpline && (
-              <View style={styles.emergencyRow}>
-                <Text style={styles.emergencyLabel}>Women's Helpline</Text>
-                <Text style={styles.emergencyValue}>{womensHelpline.phone_number}</Text>
-              </View>
-            )}
-            {dirState === 'Ready' && (
-              <Text style={styles.emergencyUpdated}>Updated Now</Text>
-            )}
-          </View>
-          <TouchableOpacity 
-            style={styles.emergencyBtn} 
-            onPress={() => navigation.navigate('EmergencyServices')}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.emergencyBtnText}>Emergency Resources →</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Emergency History Card */}
-        <View style={styles.historyCard}>
-          <View style={styles.historyCardHeader}>
-            <Text style={styles.historyCardTitle}>Emergency History</Text>
-          </View>
-          
-          {historyItems.length > 0 ? (
-            <View style={styles.historyRow}>
-              <View>
-                <Text style={styles.historyType}>{historyItems[0].display_type}</Text>
-                <Text style={styles.historyTime}>
-                  {new Date(historyItems[0].fired_at).toLocaleDateString()}
-                </Text>
-              </View>
-              <TouchableOpacity 
-                style={styles.historyBtn} 
-                onPress={() => navigation.navigate('EmergencyHistory')}
-                activeOpacity={0.7}
-              >
-                <Text style={styles.historyBtnText}>View All →</Text>
-              </TouchableOpacity>
-            </View>
-          ) : (
-            <View style={styles.historyRow}>
-              <Text style={styles.historyEmptyText}>No past emergencies.</Text>
-              <TouchableOpacity 
-                style={styles.historyBtn} 
-                onPress={() => navigation.navigate('EmergencyHistory')}
-                activeOpacity={0.7}
-              >
-                <Text style={styles.historyBtnText}>History →</Text>
-              </TouchableOpacity>
-            </View>
-          )}
-        </View>
-
-        {/* Quick actions */}
-        <Text style={styles.sectionTitle}>Quick Actions</Text>
-
+      {/* Quick Actions (2x2 Grid) */}
+      <Text style={[styles.sectionTitle, { color: colors.secondaryText }]}>Quick Actions</Text>
+      <View style={styles.gridContainer}>
         {/* Fake Call Action (dynamic based on state) */}
         {fakeCallState.status === 'Scheduled' ? (
-          <View style={styles.scheduledCallCard}>
-            <View>
-              <Text style={styles.scheduledCallTitle}>Fake Call Scheduled</Text>
-              <Text style={styles.scheduledCallSubtitle}>{fakeCallState.remainingDelay}s remaining</Text>
+          <Card style={styles.gridItem}>
+             <View style={styles.scheduledCallContent}>
+              <Text style={[styles.scheduledCallTitle, { color: colors.text }]}>Call Scheduled</Text>
+              <Text style={[styles.scheduledCallSubtitle, { color: colors.primary }]}>{fakeCallState.remainingDelay}s remaining</Text>
+              <Button 
+                label="Cancel" 
+                variant="danger" 
+                style={styles.cancelCallBtn} 
+                textStyle={{ fontSize: typography.sizes.small }} 
+                onPress={() => FakeCallService.cancel()} 
+              />
             </View>
-            <TouchableOpacity style={styles.cancelCallBtn} onPress={() => FakeCallService.cancel()}>
-              <Text style={styles.cancelCallBtnText}>Cancel</Text>
-            </TouchableOpacity>
-          </View>
+          </Card>
         ) : (
-          <ActionButton
-            label="Trigger Fake Call"
+          <ActionCard
+            label="Fake Call"
+            Icon={PhoneCall}
+            style={styles.gridItem}
             onPress={async () => {
               const settings = await getSettings();
               FakeCallService.start({
@@ -362,496 +290,328 @@ export default function HomeScreen({ navigation }) {
           />
         )}
 
-        {/* Siren Toggle Button */}
-        {alarmState.status === 'Playing' || alarmState.status === 'Preparing' ? (
-          <TouchableOpacity 
-            style={[styles.actionButton, styles.sirenActiveButton]} 
-            onPress={() => EmergencyAlarmService.stop()}
-            activeOpacity={0.8}
-          >
-            <Feather name="volume-x" size={24} color="#fff" style={{ marginRight: 12 }} />
-            <Text style={styles.sirenText}>Stop Siren</Text>
-          </TouchableOpacity>
-        ) : (
-          <TouchableOpacity 
-            style={[styles.actionButton, styles.sirenButton]} 
-            onPress={() => EmergencyAlarmService.start(true, true)}
-            activeOpacity={0.8}
-          >
-            <Feather name="volume-2" size={24} color="#fff" style={{ marginRight: 12 }} />
-            <Text style={styles.sirenText}>Loud Siren</Text>
-          </TouchableOpacity>
-        )}
-
-        {/* SOS — Big Circular Hold Button */}
-        <HoldToActivateButton onActivate={() => SOSService.triggerManualSOS()} />
-
-        <ActionButton
-          label="Manage Trip"
-          variant="primary"
-          onPress={() => navigation.navigate('Trip')}
+        {/* Siren Action */}
+        <ActionCard
+          label={alarmState.status === 'Playing' || alarmState.status === 'Preparing' ? "Stop Siren" : "Loud Siren"}
+          Icon={Bell}
+          style={styles.gridItem}
+          onPress={() => {
+            if (alarmState.status === 'Playing' || alarmState.status === 'Preparing') {
+              EmergencyAlarmService.stop();
+            } else {
+              EmergencyAlarmService.start(true, true);
+            }
+          }}
         />
 
-        <ActionButton
-          label="Trip History"
-          onPress={() => navigation.navigate('History')}
-        />
-
-        <ActionButton
-          label="Emergency Contacts"
-          onPress={() => navigation.navigate('EmergencyContacts')}
-        />
-
-        <ActionButton
-          label="Current Location"
+        <ActionCard
+          label="Location"
+          Icon={MapPin}
+          style={styles.gridItem}
           onPress={() => navigation.navigate('CurrentLocation')}
         />
 
-        <ActionButton
-          label="Live Tracking"
+        <ActionCard
+          label="Live Map"
+          Icon={MapIcon}
+          style={styles.gridItem}
           onPress={() => navigation.navigate('LiveTracking')}
         />
+      </View>
 
-        <ActionButton
-          label="Map"
-          onPress={() => navigation.navigate('Map')}
-        />
+      {/* Trip Control */}
+      <Button
+        label={tripActive ? "End Trip" : "Start Trip"}
+        variant={tripActive ? "danger" : "primary"}
+        style={styles.tripButton}
+        onPress={() => navigation.navigate('Trip')}
+      />
 
-        <ActionButton
-          label="Settings"
-          onPress={() => navigation.navigate('Settings')}
-        />
+      {/* Emergency Contacts */}
+      <TouchableOpacity onPress={() => navigation.navigate('EmergencyContacts')} activeOpacity={0.8}>
+        <Card style={styles.contactsCard}>
+          <View style={styles.contactsContent}>
+            <View>
+              <Text style={[styles.contactsTitle, { color: colors.text }]}>Emergency Contacts</Text>
+              <View style={styles.initialsContainer}>
+                {contactInitials.map((initial, i) => (
+                  <View key={i} style={[styles.initialBubble, { backgroundColor: colors.primary + '20', borderColor: colors.card }]}>
+                    <Text style={[styles.initialText, { color: colors.primary }]}>{initial}</Text>
+                  </View>
+                ))}
+              </View>
+            </View>
+            <ChevronRight color={colors.secondaryText} size={24} />
+          </View>
+        </Card>
+      </TouchableOpacity>
 
-        {/* Divider */}
-        <View style={styles.divider} />
-      </ScrollView>
-    </SafeAreaView>
+      {/* Emergency Resources */}
+      <TouchableOpacity onPress={() => navigation.navigate('EmergencyServices')} activeOpacity={0.8}>
+        <Card style={styles.resourcesCard}>
+          <View style={styles.resourcesHeader}>
+            <Text style={[styles.resourcesTitle, { color: colors.danger }]}>Emergency</Text>
+            <Text style={[styles.resourcesLocation, { color: colors.secondaryText }]}>
+              {EmergencyDirectoryService.getCurrentLocationStr()}
+            </Text>
+          </View>
+          <View style={styles.resourcesBody}>
+            {primaryEmergency && (
+              <View style={styles.resourcesRow}>
+                <Text style={[styles.resourcesLabel, { color: colors.text }]}>Emergency</Text>
+                <Text style={[styles.resourcesValue, { color: colors.text }]}>{primaryEmergency.phone_number}</Text>
+              </View>
+            )}
+            {womensHelpline && (
+              <View style={styles.resourcesRow}>
+                <Text style={[styles.resourcesLabel, { color: colors.text }]}>Women's Helpline</Text>
+                <Text style={[styles.resourcesValue, { color: colors.text }]}>{womensHelpline.phone_number}</Text>
+              </View>
+            )}
+          </View>
+          <View style={styles.resourcesAction}>
+            <Text style={[styles.resourcesActionText, { color: colors.danger }]}>Find Nearby</Text>
+            <ChevronRight color={colors.danger} size={18} />
+          </View>
+        </Card>
+      </TouchableOpacity>
+
+    </ScreenContainer>
   );
 }
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
-  emergencyCard: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 28,
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-    shadowColor: '#000',
-    shadowOpacity: 0.04,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 1,
-  },
-  emergencyCardHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'baseline',
-    marginBottom: 12,
-  },
-  emergencyCardTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#dc2626',
-  },
-  emergencyCardSubtitle: {
-    fontSize: 12,
-    color: '#6b7280',
-    fontWeight: '500',
-  },
-  emergencyCardBody: {
-    marginBottom: 16,
-  },
-  emergencyRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 4,
-  },
-  emergencyLabel: {
-    fontSize: 14,
-    color: '#374151',
-    fontWeight: '500',
-  },
-  emergencyValue: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#111827',
-  },
-  emergencyUpdated: {
-    fontSize: 12,
-    color: '#9ca3af',
-    marginTop: 8,
-    fontStyle: 'italic',
-  },
-  emergencyBtn: {
-    backgroundColor: '#fef2f2',
-    paddingVertical: 10,
-    borderRadius: 8,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#fee2e2',
-  },
-  emergencyBtnText: {
-    color: '#dc2626',
-    fontWeight: '600',
-    fontSize: 14,
-  },
-  historyCard: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 28,
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-  },
-  historyCardHeader: {
-    marginBottom: 8,
-  },
-  historyCardTitle: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#6b7280',
-    textTransform: 'uppercase',
-  },
-  historyRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  historyType: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: '#111827',
-  },
-  historyEmptyText: {
-    fontSize: 15,
-    color: '#9ca3af',
-    fontStyle: 'italic',
-  },
-  historyTime: {
-    fontSize: 13,
-    color: '#6b7280',
-    marginTop: 2,
-  },
-  historyBtn: {
-    backgroundColor: '#f3f4f6',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 8,
-  },
-  historyBtnText: {
-    color: '#374151',
-    fontWeight: '600',
-    fontSize: 13,
-  },
-  container: {
-    flex: 1,
-    backgroundColor: '#f9fafb',
-  },
   centered: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f9fafb',
   },
-  scroll: {
-    paddingHorizontal: 20,
-    paddingTop: 16,
-    paddingBottom: 40,
-  },
-
-  // Loading
   loadingText: {
-    marginTop: 12,
-    fontSize: 14,
-    color: '#6b7280',
+    marginTop: spacing.md,
+    fontSize: typography.sizes.small,
   },
-
-  // Header
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: spacing.xxl,
+  },
+  headerLeft: {
+    flex: 1,
+  },
+  headerRight: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 28,
   },
   appName: {
-    fontSize: 22,
-    fontWeight: '800',
-    color: '#16a34a',
+    fontSize: typography.sizes.title,
+    fontWeight: typography.weights.bold,
     letterSpacing: -0.5,
+    marginBottom: spacing.sm,
   },
-  avatarCircle: {
+  welcomeSection: {
+    justifyContent: 'center',
+  },
+  welcomeGreeting: {
+    fontSize: typography.sizes.small,
+    fontWeight: typography.weights.medium,
+  },
+  welcomeName: {
+    fontSize: typography.sizes.headline,
+    fontWeight: typography.weights.bold,
+  },
+  settingsBtn: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#dcfce7',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: spacing.md,
+  },
+  avatarCircle: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     justifyContent: 'center',
     alignItems: 'center',
   },
   avatarInitial: {
-    fontSize: 17,
-    fontWeight: '700',
-    color: '#16a34a',
+    fontSize: typography.sizes.section,
+    fontWeight: typography.weights.bold,
   },
-
-  // Welcome
-  welcomeSection: {
-    marginBottom: 24,
-  },
-  welcomeGreeting: {
-    fontSize: 14,
-    color: '#6b7280',
-    fontWeight: '500',
-    marginBottom: 2,
-  },
-  welcomeName: {
-    fontSize: 26,
-    fontWeight: '700',
-    color: '#111827',
-    marginBottom: 4,
-  },
-  welcomeEmail: {
-    fontSize: 14,
-    color: '#6b7280',
-  },
-  errorText: {
-    fontSize: 14,
-    color: '#dc2626',
-    marginTop: 4,
-  },
-
-
-
-  // Section title
-  sectionTitle: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#6b7280',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    marginBottom: 12,
-  },
-
-  // Action buttons
-  actionButton: {
-    backgroundColor: '#fff',
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-    borderRadius: 10,
-    paddingVertical: 15,
-    paddingHorizontal: 18,
-    marginBottom: 10,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOpacity: 0.03,
-    shadowRadius: 4,
-    shadowOffset: { width: 0, height: 1 },
-    elevation: 1,
-  },
-  actionButtonPrimary: {
-    backgroundColor: '#16a34a',
-    borderColor: '#16a34a',
-  },
-  actionButtonDestructive: {
-    backgroundColor: '#fff',
-    borderColor: '#fca5a5',
-  },
-  actionButtonDisabled: {
-    opacity: 0.45,
-  },
-  actionButtonText: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#374151',
-  },
-  actionButtonTextPrimary: {
-    color: '#fff',
-  },
-  actionButtonTextDestructive: {
-    color: '#dc2626',
-  },
-  actionButtonTextDisabled: {
-    color: '#9ca3af',
-  },
-
-  // Divider
-  divider: {
-    height: 1,
-    backgroundColor: '#e5e7eb',
-    marginVertical: 16,
-  },
-  scheduledCallCard: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: '#fff',
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
-  },
-  scheduledCallTitle: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: '#111827',
-  },
-  scheduledCallSubtitle: {
-    fontSize: 13,
-    color: '#16a34a',
-    marginTop: 2,
-    fontWeight: '600',
-  },
-  cancelCallBtn: {
-    backgroundColor: '#fee2e2',
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-  },
-  cancelCallBtnText: {
-    color: '#dc2626',
-    fontWeight: '600',
-    fontSize: 13,
-  },
-
-  // Siren Button Styles
-  sirenButton: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#ef4444', // Orange/Red
-    borderColor: '#ef4444',
-    height: 60,
-    borderRadius: 16,
-    borderWidth: 0,
-    shadowColor: '#ef4444',
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 4 },
-  },
-  sirenActiveButton: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#991b1b', // Dark Red
-    borderColor: '#991b1b',
-    height: 60,
-    borderRadius: 16,
-    borderWidth: 0,
-    shadowColor: '#991b1b',
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 4 },
-  },
-  sirenText: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: '700',
-  },
-
-  // Identity Card
   identityCard: {
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 24,
-    borderWidth: 1,
-  },
-  identityCardWarning: {
-    backgroundColor: '#fffbeb',
-    borderColor: '#fde68a',
-  },
-  identityCardSuccess: {
-    backgroundColor: '#f0fdf4',
-    borderColor: '#bbf7d0',
+    marginBottom: spacing.xxl,
+    padding: spacing.lg,
   },
   identityHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: spacing.md,
   },
   identityTitle: {
-    fontSize: 15,
-    fontWeight: '700',
-    marginLeft: 8,
+    fontSize: typography.sizes.body,
+    fontWeight: typography.weights.bold,
+    marginLeft: spacing.sm,
   },
   identityDetails: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 12,
   },
   identityRow: {
     flex: 1,
   },
   identityLabel: {
-    fontSize: 11,
-    color: '#6b7280',
+    fontSize: typography.sizes.small,
+    fontWeight: typography.weights.semibold,
     textTransform: 'uppercase',
-    fontWeight: '600',
-    marginBottom: 2,
+    marginBottom: spacing.xs,
   },
   identityValue: {
-    fontSize: 13,
-    color: '#111827',
-    fontWeight: '500',
+    fontSize: typography.sizes.body,
+    fontWeight: typography.weights.medium,
   },
-  identityMissing: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(0,0,0,0.05)',
-  },
-  identityMissingLabel: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#b45309',
-    marginRight: 4,
-  },
-  identityMissingText: {
-    fontSize: 12,
-    color: '#cbd5e1',
-  },
-  // Hold To Activate Styles
   holdContainer: {
     alignItems: 'center',
-    marginVertical: 32,
+    marginVertical: spacing.xxxl,
   },
   holdTouchable: {
-    width: 240,
-    height: 240,
     justifyContent: 'center',
     alignItems: 'center',
     position: 'relative',
   },
   holdProgress: {
     position: 'absolute',
-    backgroundColor: 'rgba(239, 68, 68, 0.2)', // light red fading
   },
   holdInnerCircle: {
-    width: 140,
-    height: 140,
-    borderRadius: 70,
-    backgroundColor: '#ef4444',
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#ef4444',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.8,
-    shadowRadius: 15,
-    elevation: 10,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 10,
+    elevation: 8,
     position: 'absolute',
   },
   holdText: {
     color: '#fff',
-    fontSize: 32,
     fontWeight: '900',
     letterSpacing: 2,
   },
   holdSubtext: {
-    color: '#94a3b8',
-    fontSize: 14,
-    marginTop: 16,
+    marginTop: spacing.xl,
+    textAlign: 'center',
+    fontWeight: typography.weights.medium,
+  },
+  sectionTitle: {
+    fontSize: typography.sizes.small,
+    fontWeight: typography.weights.bold,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: spacing.md,
+  },
+  gridContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    marginBottom: spacing.xxl,
+  },
+  gridItem: {
+    width: '48%',
+    marginBottom: spacing.md,
+  },
+  scheduledCallContent: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  scheduledCallTitle: {
+    fontSize: typography.sizes.body,
+    fontWeight: typography.weights.bold,
     textAlign: 'center',
   },
+  scheduledCallSubtitle: {
+    fontSize: typography.sizes.small,
+    fontWeight: typography.weights.semibold,
+    marginTop: spacing.xs,
+    marginBottom: spacing.md,
+    textAlign: 'center',
+  },
+  cancelCallBtn: {
+    height: 32,
+    paddingHorizontal: spacing.md,
+  },
+  tripButton: {
+    marginBottom: spacing.xxl,
+  },
+  contactsCard: {
+    marginBottom: spacing.xxl,
+  },
+  contactsContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  contactsTitle: {
+    fontSize: typography.sizes.section,
+    fontWeight: typography.weights.bold,
+    marginBottom: spacing.sm,
+  },
+  initialsContainer: {
+    flexDirection: 'row',
+  },
+  initialBubble: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: -8,
+    borderWidth: 2,
+  },
+  initialText: {
+    fontSize: typography.sizes.small,
+    fontWeight: typography.weights.bold,
+  },
+  resourcesCard: {
+    marginBottom: spacing.xxxl,
+  },
+  resourcesHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: spacing.md,
+  },
+  resourcesTitle: {
+    fontSize: typography.sizes.section,
+    fontWeight: typography.weights.bold,
+  },
+  resourcesLocation: {
+    fontSize: typography.sizes.small,
+    fontWeight: typography.weights.medium,
+  },
+  resourcesBody: {
+    marginBottom: spacing.lg,
+  },
+  resourcesRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: spacing.xs,
+  },
+  resourcesLabel: {
+    fontSize: typography.sizes.body,
+    fontWeight: typography.weights.medium,
+  },
+  resourcesValue: {
+    fontSize: typography.sizes.body,
+    fontWeight: typography.weights.bold,
+  },
+  resourcesAction: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  resourcesActionText: {
+    fontSize: typography.sizes.body,
+    fontWeight: typography.weights.bold,
+    marginRight: spacing.xs,
+  }
 });
