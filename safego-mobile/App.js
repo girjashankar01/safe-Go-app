@@ -14,6 +14,7 @@ import MapScreen from './screens/MapScreen';
 import TripScreen from './screens/TripScreen';
 import HistoryScreen from './screens/HistoryScreen';
 import TripDetailsScreen from './screens/TripDetailsScreen';
+import ActivityScreen from './screens/ActivityScreen';
 import ProfileScreen from './screens/ProfileScreen';
 import SettingsScreen from './screens/SettingsScreen';
 import FakeCallScreen from './screens/FakeCallScreen';
@@ -87,6 +88,7 @@ export default function App() {
           <Stack.Screen name="Trip" component={TripScreen} />
           <Stack.Screen name="History" component={HistoryScreen} />
           <Stack.Screen name="TripDetails" component={TripDetailsScreen} />
+          <Stack.Screen name="Activity" component={ActivityScreen} />
           <Stack.Screen name="Profile" component={ProfileScreen} />
           <Stack.Screen name="Settings" component={SettingsScreen} />
           <Stack.Screen name="FakeCall" component={FakeCallScreen} />
