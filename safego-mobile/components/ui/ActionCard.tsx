@@ -1,14 +1,14 @@
 import React from 'react';
 import { TouchableOpacity, Text, StyleSheet, TouchableOpacityProps } from 'react-native';
 import { useTheme, radius, typography, spacing, getElevation } from '../../theme';
-import { LucideIcon } from 'lucide-react-native';
+import { Feather } from '@expo/vector-icons';
 
 interface ActionCardProps extends TouchableOpacityProps {
   label: string;
-  Icon: LucideIcon;
+  iconName: keyof typeof Feather.glyphMap;
 }
 
-export const ActionCard: React.FC<ActionCardProps> = ({ label, Icon, style, ...rest }) => {
+export const ActionCard: React.FC<ActionCardProps> = ({ label, iconName, style, ...rest }) => {
   const { colors, isDark } = useTheme();
 
   return (
@@ -25,7 +25,7 @@ export const ActionCard: React.FC<ActionCardProps> = ({ label, Icon, style, ...r
       activeOpacity={0.7}
       {...rest}
     >
-      <Icon color={colors.primary} size={32} strokeWidth={2} />
+      <Feather name={iconName} color={colors.primary} size={32} />
       <Text
         style={[
           styles.label,
@@ -44,7 +44,6 @@ export const ActionCard: React.FC<ActionCardProps> = ({ label, Icon, style, ...r
 
 const styles = StyleSheet.create({
   card: {
-    flex: 1,
     aspectRatio: 1,
     justifyContent: 'center',
     alignItems: 'center',

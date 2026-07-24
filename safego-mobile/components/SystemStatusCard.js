@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { Wifi, MapPin, Battery as BatteryIcon } from 'lucide-react-native';
+import { Feather } from '@expo/vector-icons';
 import LocationService from '../services/LocationService';
 import * as Battery from 'expo-battery';
 import { useTheme, spacing, typography } from '../theme';
@@ -115,7 +115,7 @@ export default function SystemStatusCard({ socketStatus }) {
       {/* Socket */}
       <View style={styles.row}>
         <View style={styles.left}>
-          <Wifi size={20} color={colors.secondaryText} style={styles.icon} />
+          <Feather name="wifi" size={20} color={colors.secondaryText} style={styles.icon} />
           <Text style={[styles.label, { color: colors.text, fontSize: typography.sizes.body }]}>Socket Connection</Text>
         </View>
         <Text style={[styles.value, { color: isSocketConnected ? colors.primary : colors.danger, fontSize: typography.sizes.body }]}>
@@ -126,7 +126,7 @@ export default function SystemStatusCard({ socketStatus }) {
       {/* Location */}
       <View style={styles.row}>
         <View style={styles.left}>
-          <MapPin size={20} color={colors.secondaryText} style={styles.icon} />
+          <Feather name="map-pin" size={20} color={colors.secondaryText} style={styles.icon} />
           <Text style={[styles.label, { color: colors.text, fontSize: typography.sizes.body }]}>Location Services</Text>
         </View>
         <Text style={[styles.value, { color: isLocationOn ? colors.primary : colors.danger, fontSize: typography.sizes.body }]}>
@@ -137,7 +137,7 @@ export default function SystemStatusCard({ socketStatus }) {
       {/* Battery */}
       <View style={styles.row}>
         <View style={styles.left}>
-          <BatteryIcon size={20} color={colors.secondaryText} style={styles.icon} />
+          <Feather name="battery" size={20} color={colors.secondaryText} style={styles.icon} />
           <Text style={[styles.label, { color: colors.text, fontSize: typography.sizes.body }]}>Battery</Text>
         </View>
         <Text style={[styles.value, { color: batteryColor, fontSize: typography.sizes.body }]}>

@@ -13,11 +13,7 @@ import { connectSocket, getSocket } from '../lib/socket';
 import { getSettings } from '../services/SettingsService';
 import FakeCallService from '../services/FakeCallService';
 import { useSafetyIdentity } from '../components/SafetyIdentityContext';
-import { 
-  Settings, ShieldAlert, ShieldCheck, 
-  PhoneCall, Bell, MapPin, Map as MapIcon, 
-  ChevronRight, Phone 
-} from 'lucide-react-native';
+import { Feather } from '@expo/vector-icons';
 import EmergencyDirectoryService from '../services/EmergencyDirectoryService';
 import EmergencyHistoryService from '../services/EmergencyHistoryService';
 import SOSService from '../services/SOSService';
@@ -78,7 +74,7 @@ function HoldToActivateButton({ onActivate }) {
               width: progressSize, 
               height: progressSize, 
               borderRadius: Animated.divide(progressSize, 2),
-              backgroundColor: colors.danger + '40'
+              backgroundColor: colors.danger + '30' // slightly less opacity
             }
           ]} 
         />
@@ -89,13 +85,18 @@ function HoldToActivateButton({ onActivate }) {
             height: buttonSize, 
             borderRadius: buttonSize / 2, 
             backgroundColor: colors.danger, 
-            shadowColor: colors.danger 
+            shadowColor: colors.danger,
+            shadowOpacity: 0.2, // reduced
+            shadowRadius: 8, // reduced
+            elevation: 4
           }
         ]}>
           <Text style={[styles.holdText, { fontSize: typography.sizes.display }]}>SOS</Text>
         </View>
       </TouchableOpacity>
-      <Text style={[styles.holdSubtext, { color: colors.secondaryText, fontSize: typography.sizes.small }]}>Press and hold</Text>
+      <Text style={[styles.holdSubtext, { color: colors.secondaryText, fontSize: typography.sizes.small }]}>
+        Press & Hold{'\n'}2 seconds
+      </Text>
     </View>
   );
 }
@@ -193,21 +194,22 @@ export default function HomeScreen({ navigation }) {
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerLeft}>
-          <Text style={[styles.appName, { color: colors.primary }]}>SafeGo</Text>
-          <View style={styles.welcomeSection}>
-            <Text style={[styles.welcomeGreeting, { color: colors.secondaryText }]}>Welcome back</Text>
-            {profile?.personal?.fullName ? (
-              <Text style={[styles.welcomeName, { color: colors.text }]}>{profile.personal.fullName}</Text>
-            ) : null}
-          </View>
+          <Text style={[styles.appName, { color: colors.text }]}>SafeGo</Text>
         </View>
         
+        <View style={styles.headerCenter}>
+          <Text style={[styles.welcomeGreeting, { color: colors.secondaryText }]}>Welcome back</Text>
+          {profile?.personal?.fullName ? (
+            <Text style={[styles.welcomeName, { color: colors.text }]}>{profile.personal.fullName}</Text>
+          ) : null}
+        </View>
+
         <View style={styles.headerRight}>
           <TouchableOpacity 
             style={[styles.settingsBtn, { backgroundColor: isDark ? colors.card : '#f3f4f6' }]} 
             onPress={() => navigation.navigate('Settings')}
           >
-            <Settings size={20} color={colors.text} />
+            <Feather name="settings" size={20} color={colors.text} />
           </TouchableOpacity>
           <View style={[styles.avatarCircle, { backgroundColor: colors.primary + '20' }]}>
             <Text style={[styles.avatarInitial, { color: colors.primary }]}>
@@ -222,25 +224,25 @@ export default function HomeScreen({ navigation }) {
         <Card style={[styles.identityCard, missingFields.totalMissing > 0 && { borderColor: colors.warning, borderWidth: 1 }]}>
           <View style={styles.identityHeader}>
             {missingFields.totalMissing > 0 ? (
-              <ShieldAlert size={20} color={colors.warning} />
+              <Feather name="alert-triangle" size={20} color={colors.warning} />
             ) : (
-              <ShieldCheck size={20} color={colors.primary} />
+              <Feather name="shield" size={20} color={colors.primary} />
             )}
-            <Text style={[styles.identityTitle, { color: missingFields.totalMissing > 0 ? colors.warning : colors.primary }]}>
+            <Text style={[styles.identityTitle, { color: colors.text }]}>
               {missingFields.totalMissing > 0 ? "Incomplete Emergency Info" : "Emergency Profile Ready"}
             </Text>
           </View>
           
           <View style={styles.identityDetails}>
-            <View style={styles.identityRow}>
+            <View style={styles.identityCol}>
               <Text style={[styles.identityLabel, { color: colors.secondaryText }]}>Blood Group</Text>
               <Text style={[styles.identityValue, { color: colors.text }]}>{profile.personal.bloodGroup || '—'}</Text>
             </View>
-            <View style={styles.identityRow}>
+            <View style={styles.identityCol}>
               <Text style={[styles.identityLabel, { color: colors.secondaryText }]}>Medical Notes</Text>
               <Text style={[styles.identityValue, { color: colors.text }]}>{missingFields.medicalInfo ? '—' : 'Available'}</Text>
             </View>
-            <View style={styles.identityRow}>
+            <View style={styles.identityCol}>
               <Text style={[styles.identityLabel, { color: colors.secondaryText }]}>Last Updated</Text>
               <Text style={[styles.identityValue, { color: colors.text }]}>{new Date(profile.updatedAt).toLocaleDateString()}</Text>
             </View>
@@ -275,7 +277,7 @@ export default function HomeScreen({ navigation }) {
         ) : (
           <ActionCard
             label="Fake Call"
-            Icon={PhoneCall}
+            iconName="phone-call"
             style={styles.gridItem}
             onPress={async () => {
               const settings = await getSettings();
@@ -293,7 +295,7 @@ export default function HomeScreen({ navigation }) {
         {/* Siren Action */}
         <ActionCard
           label={alarmState.status === 'Playing' || alarmState.status === 'Preparing' ? "Stop Siren" : "Loud Siren"}
-          Icon={Bell}
+          iconName="bell"
           style={styles.gridItem}
           onPress={() => {
             if (alarmState.status === 'Playing' || alarmState.status === 'Preparing') {
@@ -306,14 +308,14 @@ export default function HomeScreen({ navigation }) {
 
         <ActionCard
           label="Location"
-          Icon={MapPin}
+          iconName="map-pin"
           style={styles.gridItem}
           onPress={() => navigation.navigate('CurrentLocation')}
         />
 
         <ActionCard
           label="Live Map"
-          Icon={MapIcon}
+          iconName="map"
           style={styles.gridItem}
           onPress={() => navigation.navigate('LiveTracking')}
         />
@@ -341,7 +343,7 @@ export default function HomeScreen({ navigation }) {
                 ))}
               </View>
             </View>
-            <ChevronRight color={colors.secondaryText} size={24} />
+            <Feather name="chevron-right" color={colors.secondaryText} size={24} />
           </View>
         </Card>
       </TouchableOpacity>
@@ -350,7 +352,7 @@ export default function HomeScreen({ navigation }) {
       <TouchableOpacity onPress={() => navigation.navigate('EmergencyServices')} activeOpacity={0.8}>
         <Card style={styles.resourcesCard}>
           <View style={styles.resourcesHeader}>
-            <Text style={[styles.resourcesTitle, { color: colors.danger }]}>Emergency</Text>
+            <Text style={[styles.resourcesTitle, { color: colors.text }]}>Emergency Resources</Text>
             <Text style={[styles.resourcesLocation, { color: colors.secondaryText }]}>
               {EmergencyDirectoryService.getCurrentLocationStr()}
             </Text>
@@ -371,7 +373,7 @@ export default function HomeScreen({ navigation }) {
           </View>
           <View style={styles.resourcesAction}>
             <Text style={[styles.resourcesActionText, { color: colors.danger }]}>Find Nearby</Text>
-            <ChevronRight color={colors.danger} size={18} />
+            <Feather name="chevron-right" color={colors.danger} size={18} />
           </View>
         </Card>
       </TouchableOpacity>
@@ -393,55 +395,56 @@ const styles = StyleSheet.create({
   },
   header: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: spacing.xxl,
+    alignItems: 'center',
+    marginBottom: spacing.lg, // reduced
   },
   headerLeft: {
+    flexShrink: 0,
+  },
+  headerCenter: {
     flex: 1,
+    alignItems: 'center',
   },
   headerRight: {
+    flexShrink: 0,
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'flex-end',
   },
   appName: {
     fontSize: typography.sizes.title,
-    fontWeight: typography.weights.bold,
+    fontWeight: typography.weights.bold, // kept bold
     letterSpacing: -0.5,
-    marginBottom: spacing.sm,
-  },
-  welcomeSection: {
-    justifyContent: 'center',
   },
   welcomeGreeting: {
     fontSize: typography.sizes.small,
-    fontWeight: typography.weights.medium,
+    fontWeight: typography.weights.regular, // reduced
   },
   welcomeName: {
-    fontSize: typography.sizes.headline,
-    fontWeight: typography.weights.bold,
+    fontSize: typography.sizes.section,
+    fontWeight: typography.weights.bold, // bold
   },
   settingsBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: spacing.md,
   },
   avatarCircle: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     justifyContent: 'center',
     alignItems: 'center',
   },
   avatarInitial: {
-    fontSize: typography.sizes.section,
+    fontSize: typography.sizes.body,
     fontWeight: typography.weights.bold,
   },
   identityCard: {
-    marginBottom: spacing.xxl,
+    marginBottom: spacing.lg, // reduced
     padding: spacing.lg,
   },
   identityHeader: {
@@ -451,29 +454,29 @@ const styles = StyleSheet.create({
   },
   identityTitle: {
     fontSize: typography.sizes.body,
-    fontWeight: typography.weights.bold,
+    fontWeight: typography.weights.medium, // reduced
     marginLeft: spacing.sm,
   },
   identityDetails: {
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
-  identityRow: {
+  identityCol: {
     flex: 1,
+    alignItems: 'flex-start',
   },
   identityLabel: {
     fontSize: typography.sizes.small,
-    fontWeight: typography.weights.semibold,
-    textTransform: 'uppercase',
+    fontWeight: typography.weights.regular, // reduced
     marginBottom: spacing.xs,
   },
   identityValue: {
     fontSize: typography.sizes.body,
-    fontWeight: typography.weights.medium,
+    fontWeight: typography.weights.semibold, // medium -> semibold
   },
   holdContainer: {
     alignItems: 'center',
-    marginVertical: spacing.xxxl,
+    marginVertical: spacing.lg, // reduced
   },
   holdTouchable: {
     justifyContent: 'center',
@@ -486,10 +489,6 @@ const styles = StyleSheet.create({
   holdInnerCircle: {
     justifyContent: 'center',
     alignItems: 'center',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4,
-    shadowRadius: 10,
-    elevation: 8,
     position: 'absolute',
   },
   holdText: {
@@ -498,13 +497,14 @@ const styles = StyleSheet.create({
     letterSpacing: 2,
   },
   holdSubtext: {
-    marginTop: spacing.xl,
+    marginTop: spacing.md,
     textAlign: 'center',
-    fontWeight: typography.weights.medium,
+    fontWeight: typography.weights.regular, // reduced
+    lineHeight: 20,
   },
   sectionTitle: {
     fontSize: typography.sizes.small,
-    fontWeight: typography.weights.bold,
+    fontWeight: typography.weights.medium, // reduced
     textTransform: 'uppercase',
     letterSpacing: 0.5,
     marginBottom: spacing.md,
@@ -513,7 +513,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
-    marginBottom: spacing.xxl,
+    marginBottom: spacing.lg, // reduced
   },
   gridItem: {
     width: '48%',
@@ -541,10 +541,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
   },
   tripButton: {
-    marginBottom: spacing.xxl,
+    marginBottom: spacing.lg, // reduced
   },
   contactsCard: {
-    marginBottom: spacing.xxl,
+    marginBottom: spacing.lg, // reduced
   },
   contactsContent: {
     flexDirection: 'row',
@@ -552,8 +552,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   contactsTitle: {
-    fontSize: typography.sizes.section,
-    fontWeight: typography.weights.bold,
+    fontSize: typography.sizes.body,
+    fontWeight: typography.weights.medium, // reduced
     marginBottom: spacing.sm,
   },
   initialsContainer: {
@@ -582,15 +582,15 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   resourcesTitle: {
-    fontSize: typography.sizes.section,
-    fontWeight: typography.weights.bold,
+    fontSize: typography.sizes.body,
+    fontWeight: typography.weights.medium, // reduced
   },
   resourcesLocation: {
     fontSize: typography.sizes.small,
-    fontWeight: typography.weights.medium,
+    fontWeight: typography.weights.regular, // reduced
   },
   resourcesBody: {
-    marginBottom: spacing.lg,
+    marginBottom: spacing.md,
   },
   resourcesRow: {
     flexDirection: 'row',
@@ -599,11 +599,11 @@ const styles = StyleSheet.create({
   },
   resourcesLabel: {
     fontSize: typography.sizes.body,
-    fontWeight: typography.weights.medium,
+    fontWeight: typography.weights.regular, // reduced
   },
   resourcesValue: {
     fontSize: typography.sizes.body,
-    fontWeight: typography.weights.bold,
+    fontWeight: typography.weights.semibold, // semi-bold
   },
   resourcesAction: {
     flexDirection: 'row',
@@ -611,7 +611,7 @@ const styles = StyleSheet.create({
   },
   resourcesActionText: {
     fontSize: typography.sizes.body,
-    fontWeight: typography.weights.bold,
+    fontWeight: typography.weights.medium,
     marginRight: spacing.xs,
   }
 });
