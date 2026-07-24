@@ -201,17 +201,16 @@ export default function HomeScreen({ navigation }) {
       <View style={styles.header}>
         <View style={styles.headerLeft}>
           <Text style={[styles.appName, { color: colors.text }]}>SafeGo</Text>
-        </View>
-        
-        <View style={styles.headerCenter}>
-          <Text style={[styles.welcomeGreeting, { color: colors.secondaryText }]}>Welcome back</Text>
           {profile?.personal?.fullName ? (
-            <Text style={[styles.welcomeName, { color: colors.text }]}>{profile.personal.fullName}</Text>
+            <Text style={[styles.welcomeGreeting, { color: colors.secondaryText }]}>
+              Welcome back, {profile.personal.fullName}
+            </Text>
           ) : null}
         </View>
+        
+        <View style={styles.spacer} />
 
         <View style={styles.headerRight}>
-
           <View style={[styles.avatarCircle, { backgroundColor: colors.primary + '20' }]}>
             <Text style={[styles.avatarInitial, { color: colors.primary }]}>
               {profile?.personal?.fullName ? profile.personal.fullName.charAt(0).toUpperCase() : '?'}
@@ -404,10 +403,10 @@ const styles = StyleSheet.create({
   },
   headerLeft: {
     flexShrink: 0,
+    justifyContent: 'center',
   },
-  headerCenter: {
+  spacer: {
     flex: 1,
-    alignItems: 'center',
   },
   headerRight: {
     flexShrink: 0,
@@ -423,10 +422,7 @@ const styles = StyleSheet.create({
   welcomeGreeting: {
     fontSize: typography.sizes.small,
     fontWeight: typography.weights.regular, // reduced
-  },
-  welcomeName: {
-    fontSize: typography.sizes.section,
-    fontWeight: typography.weights.bold, // bold
+    marginTop: 2,
   },
   settingsBtn: {
     width: 36,
