@@ -221,33 +221,32 @@ export default function ActivityScreen({ navigation }) {
           
           {/* 1. Embedded Map (220dp height) */}
           <Card style={styles.mapCard}>
-            <View style={styles.mapWrapper}>
-              {coords ? (
-                <MapView
-                  ref={mapRef}
-                  style={styles.mapView}
-                  initialRegion={{
-                    latitude: coords.latitude,
-                    longitude: coords.longitude,
-                    latitudeDelta: DELTA,
-                    longitudeDelta: DELTA,
-                  }}
-                  scrollEnabled={false}
-                  zoomEnabled={false}
-                  pitchEnabled={false}
-                  rotateEnabled={false}
-                  showsUserLocation={true}
-                  showsMyLocationButton={false}
-                  showsCompass={false}
-                >
-                  <Marker coordinate={coords} pinColor={colors.primary} />
-                </MapView>
-              ) : (
-                <View style={[styles.mapView, { justifyContent: 'center', alignItems: 'center' }]}>
-                  <Text style={{ color: colors.secondaryText }}>Loading map...</Text>
-                </View>
-              )}
-            </View>
+            <MapView
+              ref={mapRef}
+              style={styles.mapView}
+              initialRegion={{
+                latitude: 37.78825,
+                longitude: -122.4324,
+                latitudeDelta: DELTA,
+                longitudeDelta: DELTA,
+              }}
+              scrollEnabled={false}
+              zoomEnabled={false}
+              pitchEnabled={false}
+              rotateEnabled={false}
+              showsUserLocation={true}
+              showsMyLocationButton={false}
+              showsCompass={false}
+              toolbarEnabled={false}
+            >
+              {coords && <Marker coordinate={coords} pinColor={colors.primary} />}
+            </MapView>
+            
+            {!coords && (
+              <View style={[StyleSheet.absoluteFill, { justifyContent: 'center', alignItems: 'center', backgroundColor: '#e5e7eb' }]}>
+                <Text style={{ color: colors.secondaryText }}>Loading map...</Text>
+              </View>
+            )}
 
             {/* Seamless bottom fade using SVG */}
             <View style={styles.mapGradient} pointerEvents="none">
@@ -426,12 +425,10 @@ const styles = StyleSheet.create({
   },
 
   // Map
-  mapWrapper: {
-    flex: 1,
-    backgroundColor: '#e5e7eb',
-  },
   mapView: {
-    ...StyleSheet.absoluteFillObject,
+    width: '100%',
+    height: 220,
+    backgroundColor: '#e5e7eb',
   },
   mapGradient: {
     position: 'absolute',
