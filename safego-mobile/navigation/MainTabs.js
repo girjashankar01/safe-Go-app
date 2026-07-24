@@ -1,7 +1,8 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { getFocusedRouteNameFromRoute } from '@react-navigation/native';
-import { Home, Compass, Settings } from 'lucide-react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { BlurView } from 'expo-blur';
 import { useTheme } from '../theme';
 
 import HomeStack from './HomeStack';
@@ -40,18 +41,27 @@ export default function MainTabs() {
         tabBarInactiveTintColor: colors.secondaryText,
         tabBarShowLabel: true,
         unmountOnBlur: false, // Explicitly preserve state
+        tabBarBackground: () => (
+          <BlurView 
+            tint={colors.background === '#000000' || colors.card === '#1c1c1e' ? "dark" : "light"} 
+            intensity={80} 
+            style={{ flex: 1 }} 
+          />
+        ),
         tabBarStyle: [
           {
-            borderTopWidth: 0,
-            elevation: 8,
+            position: 'absolute', // Required so content scrolls underneath the blur
+            borderTopWidth: 1,
+            borderTopColor: 'rgba(0,0,0,0.08)',
+            elevation: 0,
             shadowColor: '#000',
             shadowOffset: { width: 0, height: -2 },
-            shadowOpacity: 0.1,
-            shadowRadius: 4,
+            shadowOpacity: 0.04,
+            shadowRadius: 8,
             height: 60,
             paddingBottom: 8,
             paddingTop: 8,
-            backgroundColor: colors.card,
+            backgroundColor: colors.card === '#1c1c1e' ? 'rgba(28,28,30,0.6)' : 'rgba(255,255,255,0.6)',
           },
           getTabBarStyle(route)
         ],
@@ -62,7 +72,9 @@ export default function MainTabs() {
         component={HomeStack} 
         options={{
           tabBarLabel: 'Home',
-          tabBarIcon: ({ color, size }) => <Home color={color} size={size} />
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons name={focused ? "home" : "home-outline"} color={color} size={size} />
+          )
         }}
       />
       <Tab.Screen 
@@ -70,7 +82,9 @@ export default function MainTabs() {
         component={ActivityStack} 
         options={{
           tabBarLabel: 'Activity',
-          tabBarIcon: ({ color, size }) => <Compass color={color} size={size} />
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons name={focused ? "compass" : "compass-outline"} color={color} size={size} />
+          )
         }}
       />
       <Tab.Screen 
@@ -78,7 +92,9 @@ export default function MainTabs() {
         component={SettingsStack} 
         options={{
           tabBarLabel: 'Settings',
-          tabBarIcon: ({ color, size }) => <Settings color={color} size={size} />
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons name={focused ? "settings" : "settings-outline"} color={color} size={size} />
+          )
         }}
       />
     </Tab.Navigator>
