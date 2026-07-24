@@ -9,7 +9,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import * as Location from 'expo-location';
+import LocationService from '../services/LocationService';
 import MapView, { Marker } from 'react-native-maps';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -71,17 +71,19 @@ export default function CurrentLocationScreen({ navigation }) {
 
     try {
       // Check permission first — don't re-request, just check.
-      const { status } = await Location.getForegroundPermissionsAsync();
-      if (status !== 'granted') {
+      const hasPerm = await LocationService.ensurePermission();
+      if (!hasPerm) {
         setError('Location permission is not granted. Grant it from the Home screen first.');
         return;
       }
 
-      // Single one-shot read. HIGH_ACCURACY gives the best fix.
-      const result = await Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.High,
-      });
-      setLocation(result);
+      // Single one-shot read.
+      const result = await LocationService.getCurrentLocation();
+      if (!result) {
+        setError('Could not retrieve location. Please try again.');
+        return;
+      }
+      setLocation({ coords: result, timestamp: result.timestamp });
       DeviceEventEmitter.emit('LocationUpdated', result.timestamp ? new Date(result.timestamp).toISOString() : new Date().toISOString());
     } catch (e) {
       setError(parseLocationError(e));

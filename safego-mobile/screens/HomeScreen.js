@@ -15,6 +15,7 @@ import { getSettings } from '../services/SettingsService';
 import FakeCallService from '../services/FakeCallService';
 import { useSafetyIdentity } from '../components/SafetyIdentityContext';
 import { Feather } from '@expo/vector-icons';
+import EmergencyDirectoryService from '../services/EmergencyDirectoryService';
 
 // ─── Coming Soon alert ───────────────────────────────────────────────────────
 const comingSoon = (feature) =>
@@ -62,6 +63,7 @@ export default function HomeScreen({ navigation }) {
     getSocket().connected ? 'connected' : 'connecting'
   );
   const [fakeCallState, setFakeCallState] = useState({ status: 'Idle', remainingDelay: 0 });
+  const [dirState, setDirState] = useState('Loading');
 
   useEffect(() => {
     const unsub = FakeCallService.subscribe((s) => setFakeCallState(s));
@@ -94,14 +96,23 @@ export default function HomeScreen({ navigation }) {
     // Sync immediately in case the socket state changed before listeners were attached.
     setSocketStatus(socket.connected ? 'connected' : 'connecting');
 
+    // Setup EmergencyDirectoryService
+    const unsubDir = EmergencyDirectoryService.subscribe((s) => setDirState(s));
+    EmergencyDirectoryService.initialize();
+
     return () => {
       socket.off('connect',       onConnect);
       socket.off('disconnect',    onDisconnect);
       socket.off('connect_error', onConnectError);
       socket.io.off('reconnect_attempt', onReconnecting);
       socket.io.off('reconnect',         onConnect);
+      unsubDir();
     };
   }, []);
+
+  const cachedNumbers = EmergencyDirectoryService.getCachedNumbers();
+  const primaryEmergency = cachedNumbers.find(n => n.service_type === 'Emergency' || n.priority === 1) || cachedNumbers[0];
+  const womensHelpline = cachedNumbers.find(n => n.service_type === "Women's Helpline" || n.service_name.toLowerCase().includes('women'));
 
   // ── Loading ────────────────────────────────────────────────────────────────
   if (profileStatus === 'Loading') {
@@ -183,6 +194,40 @@ export default function HomeScreen({ navigation }) {
 
         {/* Status card — live system status */}
         <SystemStatusCard socketStatus={socketStatus} />
+
+        {/* Emergency Resources Card */}
+        <View style={styles.emergencyCard}>
+          <View style={styles.emergencyCardHeader}>
+            <Text style={styles.emergencyCardTitle}>Emergency</Text>
+            <Text style={styles.emergencyCardSubtitle}>
+              {EmergencyDirectoryService.getCurrentLocationStr()}
+            </Text>
+          </View>
+          <View style={styles.emergencyCardBody}>
+            {primaryEmergency && (
+              <View style={styles.emergencyRow}>
+                <Text style={styles.emergencyLabel}>Emergency</Text>
+                <Text style={styles.emergencyValue}>{primaryEmergency.phone_number}</Text>
+              </View>
+            )}
+            {womensHelpline && (
+              <View style={styles.emergencyRow}>
+                <Text style={styles.emergencyLabel}>Women's Helpline</Text>
+                <Text style={styles.emergencyValue}>{womensHelpline.phone_number}</Text>
+              </View>
+            )}
+            {dirState === 'Ready' && (
+              <Text style={styles.emergencyUpdated}>Updated Now</Text>
+            )}
+          </View>
+          <TouchableOpacity 
+            style={styles.emergencyBtn} 
+            onPress={() => navigation.navigate('EmergencyServices')}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.emergencyBtnText}>Emergency Resources →</Text>
+          </TouchableOpacity>
+        </View>
 
         {/* Quick actions */}
         <Text style={styles.sectionTitle}>Quick Actions</Text>
@@ -266,6 +311,72 @@ export default function HomeScreen({ navigation }) {
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
+  emergencyCard: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 28,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    shadowColor: '#000',
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 1,
+  },
+  emergencyCardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'baseline',
+    marginBottom: 12,
+  },
+  emergencyCardTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#dc2626',
+  },
+  emergencyCardSubtitle: {
+    fontSize: 12,
+    color: '#6b7280',
+    fontWeight: '500',
+  },
+  emergencyCardBody: {
+    marginBottom: 16,
+  },
+  emergencyRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 4,
+  },
+  emergencyLabel: {
+    fontSize: 14,
+    color: '#374151',
+    fontWeight: '500',
+  },
+  emergencyValue: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#111827',
+  },
+  emergencyUpdated: {
+    fontSize: 12,
+    color: '#9ca3af',
+    marginTop: 8,
+    fontStyle: 'italic',
+  },
+  emergencyBtn: {
+    backgroundColor: '#fef2f2',
+    paddingVertical: 10,
+    borderRadius: 8,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#fee2e2',
+  },
+  emergencyBtnText: {
+    color: '#dc2626',
+    fontWeight: '600',
+    fontSize: 14,
+  },
   container: {
     flex: 1,
     backgroundColor: '#f9fafb',

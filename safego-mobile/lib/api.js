@@ -122,4 +122,14 @@ export const getTrips = () =>
 export const getTrip = (id) =>
   api.get(`/trips/${id}`).then((res) => res.data);
 
+// ─── Emergency Directory ───────────────────────────────────────────────────────
+
+export const fetchEmergencyServices = (country, state, city) => {
+  const params = {};
+  if (country) params.country = country;
+  if (state) params.state = state;
+  if (city) params.city = city;
+  return api.get('/directory/emergency-services', { params }).then((res) => res.data);
+};
+
 export default api;

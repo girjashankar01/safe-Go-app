@@ -11,7 +11,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import * as Location from 'expo-location';
+import LocationService from '../services/LocationService';
 import { getSocket } from '../lib/socket';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -128,34 +128,31 @@ export default function LiveTrackingScreen({ navigation }) {
     setError('');
 
     // Guard: check permission without re-requesting.
-    const { status } = await Location.getForegroundPermissionsAsync();
-    if (status !== 'granted') {
+    const hasPerm = await LocationService.ensurePermission();
+    if (!hasPerm) {
       setError('Location permission is not granted. Grant it from the Home screen first.');
       setInitialising(false);
       return;
     }
 
     try {
-      const poll = async () => {
-        try {
-          const loc = await Location.getCurrentPositionAsync({
-            accuracy: Location.Accuracy.High,
-          });
-          setLocation(loc);
-          DeviceEventEmitter.emit('LocationUpdated', loc.timestamp ? new Date(loc.timestamp).toISOString() : new Date().toISOString());
-          setUpdateCount((n) => n + 1);
-          setInitialising(false);
-          // Local diagnostics only. Trip tracking is handled by TripScreen.
-        } catch (e) {
-          console.warn('[LiveTracking] poll error:', e);
-        }
-      };
+      // First fix
+      const initialLoc = await LocationService.getCurrentLocation();
+      if (initialLoc) {
+        setLocation({ coords: initialLoc, timestamp: initialLoc.timestamp });
+        DeviceEventEmitter.emit('LocationUpdated', new Date(initialLoc.timestamp).toISOString());
+        setUpdateCount((n) => n + 1);
+        setInitialising(false);
+      }
 
-      // Initial fix
-      await poll();
+      const sub = await LocationService.watchLocation((loc) => {
+        setLocation({ coords: loc, timestamp: loc.timestamp });
+        DeviceEventEmitter.emit('LocationUpdated', new Date(loc.timestamp).toISOString());
+        setUpdateCount((n) => n + 1);
+        setInitialising(false);
+      });
       
-      const interval = setInterval(poll, UPDATE_INTERVAL_MS);
-      subscriptionRef.current = { remove: () => clearInterval(interval) };
+      subscriptionRef.current = sub;
       setIsTracking(true);
     } catch (e) {
       setError(parseLocationError(e));

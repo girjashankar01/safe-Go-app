@@ -2,7 +2,7 @@ import { getSettings } from './SettingsService';
 import { triggerSOS as apiTriggerSOS, uploadSOSAudio } from '../lib/api';
 import { getTrip, hasActiveTrip } from '../lib/tripState';
 import AudioRecordingService from './AudioRecordingService';
-import * as Location from 'expo-location';
+import LocationService from './LocationService';
 import EmergencyAlarmService from './EmergencyAlarmService';
 import ProfileService from './ProfileService';
 
@@ -54,20 +54,11 @@ class SOSService {
   }
 
   private async getLatestLocation() {
-    try {
-      const { status } = await Location.getForegroundPermissionsAsync();
-      if (status !== 'granted') return { latitude: null, longitude: null };
-
-      const loc = await Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.Balanced,
-      });
-      return {
-        latitude:  loc.coords.latitude,
-        longitude: loc.coords.longitude,
-      };
-    } catch {
-      return { latitude: null, longitude: null };
+    const loc = await LocationService.getCurrentLocation();
+    if (loc) {
+      return { latitude: loc.latitude, longitude: loc.longitude };
     }
+    return { latitude: null, longitude: null };
   }
 
   private async triggerAlarmIfNeeded(stage: 'immediately' | 'after_upload' | 'after_sent') {

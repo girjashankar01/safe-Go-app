@@ -12,6 +12,7 @@ import authRoutes from './routes/auth.js';
 import tripRoutes from './routes/trips.js';
 import sosRoutes from './routes/sos.js';
 import trackHandler from './routes/track.js';
+import directoryRoutes from './routes/directory.js';
 import db from './config/supabase.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -28,6 +29,7 @@ app.set('io', io);
 app.use('/auth', authRoutes);
 app.use('/trips', tripRoutes);
 app.use('/sos', sosRoutes);
+app.use('/directory', directoryRoutes);
 
 // Public tracking link — no auth
 app.get('/track/:token', trackHandler);

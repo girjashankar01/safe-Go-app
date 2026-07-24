@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, DeviceEventEmitter } from 'react-native';
 import { Feather } from '@expo/vector-icons';
-import * as Location from 'expo-location';
+import LocationService from '../services/LocationService';
 import * as Battery from 'expo-battery';
 export default function SystemStatusCard({ socketStatus }) {
   const [locationStatus, setLocationStatus] = useState('Checking...');
@@ -13,17 +13,17 @@ export default function SystemStatusCard({ socketStatus }) {
 
     const checkLocation = async () => {
       try {
-        const { status } = await Location.getForegroundPermissionsAsync();
-        if (status !== 'granted') {
+        const hasPerm = await LocationService.ensurePermission();
+        if (!hasPerm) {
           if (mounted) setLocationStatus('Permission Required');
           return;
         }
         
-        const servicesEnabled = await Location.hasServicesEnabledAsync();
+        const servicesEnabled = await LocationService.hasServicesEnabled();
         if (mounted) setLocationStatus(servicesEnabled ? 'On' : 'Off');
 
         // Fetch current location to get a fresh timestamp on mount
-        await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+        await LocationService.getCurrentLocation();
       } catch (e) {
         if (mounted) setLocationStatus('Error');
       }

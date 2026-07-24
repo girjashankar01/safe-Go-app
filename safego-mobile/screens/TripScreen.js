@@ -11,7 +11,7 @@ import {
   View,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
-import * as Location from 'expo-location';
+import LocationService from '../services/LocationService';
 import { startTrip, endTrip, getActiveTrip, getMe } from '../lib/api';
 import { getSocket } from '../lib/socket';
 import {
@@ -112,60 +112,48 @@ export default function TripScreen({ navigation }) {
     const startWatcher = async () => {
       isStartingWatcher.current = true;
       try {
-        const { status } = await Location.getForegroundPermissionsAsync();
-        if (status !== 'granted') {
+        const hasPerm = await LocationService.ensurePermission();
+        if (!hasPerm) {
           if (mounted) setError('Location permission revoked. Tracking stopped.');
           isStartingWatcher.current = false;
           return;
         }
 
         console.log('[TripTracking] watcher started');
-        const sub = await Location.watchPositionAsync(
-          {
-            accuracy: Location.Accuracy.High,
-            timeInterval: 3000,
-            distanceInterval: 0,
-          },
-          (loc) => {
-            if (!mounted) return;
+        const sub = await LocationService.watchLocation((loc) => {
+          if (!mounted) return;
 
-            const lat = loc.coords.latitude;
-            const lng = loc.coords.longitude;
-            const accuracy = loc.coords.accuracy;
-            let speed = loc.coords.speed;
-            
-            if (speed == null || speed === -1) {
-              speed = null;
-            }
-            
-            const timestamp = loc.timestamp ? new Date(loc.timestamp).toISOString() : new Date().toISOString();
-            
-            DeviceEventEmitter.emit('LocationUpdated', timestamp);
+          const lat = loc.latitude;
+          const lng = loc.longitude;
+          const accuracy = loc.accuracy;
+          const speed = loc.speed;
+          const timestamp = loc.timestamp ? new Date(loc.timestamp).toISOString() : new Date().toISOString();
+          
+          DeviceEventEmitter.emit('LocationUpdated', timestamp);
 
-            setTrackingStats({
+          setTrackingStats({
+            lat,
+            lng,
+            accuracy,
+            speed,
+            timestamp
+          });
+
+          const socket = getSocket();
+          if (socket && socket.connected) {
+            const payload = {
+              tripId: trip.tripId,
+              userId: trip.userId,
               lat,
               lng,
               accuracy,
               speed,
               timestamp
-            });
-
-            const socket = getSocket();
-            if (socket && socket.connected) {
-              const payload = {
-                tripId: trip.tripId,
-                userId: trip.userId,
-                lat,
-                lng,
-                accuracy,
-                speed,
-                timestamp
-              };
-              socket.emit('location:update', payload);
-              console.log('[TripTracking] emitting location');
-            }
+            };
+            socket.emit('location:update', payload);
+            console.log('[TripTracking] emitting location');
           }
-        );
+        });
 
         if (mounted) {
           watcherRef.current = sub;
@@ -218,22 +206,18 @@ export default function TripScreen({ navigation }) {
     setWorking(true);
 
     try {
-      // One-shot location read — not a watcher, no streaming.
-      const { status } = await Location.getForegroundPermissionsAsync();
-
-      if (status !== 'granted') {
+      const hasPerm = await LocationService.ensurePermission();
+      if (!hasPerm) {
         setError('Location permission is required to start a trip.\nGrant it from the Home screen.');
         return;
       }
 
       let originLat, originLng;
-      try {
-        const loc = await Location.getCurrentPositionAsync({
-          accuracy: Location.Accuracy.Balanced,
-        });
-        originLat = loc.coords.latitude;
-        originLng = loc.coords.longitude;
-      } catch {
+      const loc = await LocationService.getCurrentLocation();
+      if (loc) {
+        originLat = loc.latitude;
+        originLng = loc.longitude;
+      } else {
         setError('Unable to get your current location.\nPlease try again in a moment.');
         return;
       }

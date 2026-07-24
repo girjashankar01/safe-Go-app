@@ -8,7 +8,7 @@ import {
   View,
 } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
-import * as Location from 'expo-location';
+import LocationService from '../services/LocationService';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -42,9 +42,9 @@ export default function MapScreen({ navigation }) {
     let mounted = true;
 
     const start = async () => {
-      const { status } = await Location.getForegroundPermissionsAsync();
+      const hasPerm = await LocationService.ensurePermission();
 
-      if (status !== 'granted') {
+      if (!hasPerm) {
         if (mounted) {
           setPermDenied(true);
           setInitialising(false);
@@ -53,15 +53,18 @@ export default function MapScreen({ navigation }) {
       }
 
       try {
-        const loc = await Location.getCurrentPositionAsync({
-          accuracy: Location.Accuracy.High,
-        });
+        const loc = await LocationService.getCurrentLocation();
         
         if (!mounted) return;
+        
+        if (!loc) {
+          if (mounted) setInitialising(false);
+          return;
+        }
 
         const initial = {
-          latitude:  loc.coords.latitude,
-          longitude: loc.coords.longitude,
+          latitude:  loc.latitude,
+          longitude: loc.longitude,
         };
 
         setCoords(initial);
