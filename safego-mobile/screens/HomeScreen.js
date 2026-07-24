@@ -112,6 +112,7 @@ export default function HomeScreen({ navigation }) {
   const [dirState, setDirState] = useState('Loading');
   const [alarmState, setAlarmState] = useState({ status: 'Idle' });
   const [tripActive, setTripActive] = useState(false);
+  const [historyItems, setHistoryItems] = useState(EmergencyHistoryService.getCachedHistory());
 
   useEffect(() => {
     const unsub = FakeCallService.subscribe((s) => setFakeCallState(s));
@@ -141,8 +142,12 @@ export default function HomeScreen({ navigation }) {
     const unsubDir = EmergencyDirectoryService.subscribe((s) => setDirState(s));
     EmergencyDirectoryService.initialize();
 
-    // Silently fetch fresh history for background sync (UI removed in Phase 2)
+    // Silently fetch fresh history for background sync
     EmergencyHistoryService.fetchHistory().catch(e => console.log('Silently ignoring fetch history error on home screen', e));
+
+    const unsubHistory = EmergencyHistoryService.subscribe(() => {
+      setHistoryItems(EmergencyHistoryService.getCachedHistory());
+    });
 
     const unsubAlarm = EmergencyAlarmService.subscribe((s) => setAlarmState(s));
 
@@ -153,6 +158,7 @@ export default function HomeScreen({ navigation }) {
       socket.io.off('reconnect_attempt', onReconnecting);
       socket.io.off('reconnect',         onConnect);
       unsubDir();
+      unsubHistory();
       unsubAlarm();
     };
   }, []);
@@ -315,9 +321,23 @@ export default function HomeScreen({ navigation }) {
 
         <ActionCard
           label="Live Map"
-          iconName="map"
+          iconName="navigation"
           style={styles.gridItem}
           onPress={() => navigation.navigate('LiveTracking')}
+        />
+
+        <ActionCard
+          label="Map"
+          iconName="map"
+          style={styles.gridItem}
+          onPress={() => navigation.navigate('Map')}
+        />
+
+        <ActionCard
+          label="Trip History"
+          iconName="clock"
+          style={styles.gridItem}
+          onPress={() => navigation.navigate('History')}
         />
       </View>
 
@@ -344,6 +364,29 @@ export default function HomeScreen({ navigation }) {
               </View>
             </View>
             <Feather name="chevron-right" color={colors.secondaryText} size={24} />
+          </View>
+        </Card>
+      </TouchableOpacity>
+
+      {/* Emergency History */}
+      <TouchableOpacity onPress={() => navigation.navigate('EmergencyHistory')} activeOpacity={0.8}>
+        <Card style={styles.historyCard}>
+          <View style={styles.historyHeader}>
+            <Text style={[styles.historyTitle, { color: colors.text }]}>Emergency History</Text>
+            <Feather name="clock" color={colors.secondaryText} size={20} />
+          </View>
+          
+          <View style={styles.historyBody}>
+            {historyItems.length > 0 ? (
+              <View style={styles.historyRow}>
+                <Text style={[styles.historyLabel, { color: colors.text }]}>{historyItems[0].display_type}</Text>
+                <Text style={[styles.historyValue, { color: colors.secondaryText }]}>
+                  {new Date(historyItems[0].fired_at).toLocaleDateString()}
+                </Text>
+              </View>
+            ) : (
+              <Text style={[styles.historyEmpty, { color: colors.secondaryText }]}>No past emergencies.</Text>
+            )}
           </View>
         </Card>
       </TouchableOpacity>
@@ -571,6 +614,38 @@ const styles = StyleSheet.create({
   initialText: {
     fontSize: typography.sizes.small,
     fontWeight: typography.weights.bold,
+  },
+  historyCard: {
+    marginBottom: spacing.lg,
+  },
+  historyHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: spacing.md,
+  },
+  historyTitle: {
+    fontSize: typography.sizes.body,
+    fontWeight: typography.weights.medium,
+  },
+  historyBody: {
+    marginBottom: spacing.xs,
+  },
+  historyRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  historyLabel: {
+    fontSize: typography.sizes.body,
+    fontWeight: typography.weights.regular,
+  },
+  historyValue: {
+    fontSize: typography.sizes.body,
+    fontWeight: typography.weights.semibold,
+  },
+  historyEmpty: {
+    fontSize: typography.sizes.body,
+    fontWeight: typography.weights.regular,
   },
   resourcesCard: {
     marginBottom: spacing.xxxl,
