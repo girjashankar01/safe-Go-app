@@ -2,7 +2,6 @@ import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { getFocusedRouteNameFromRoute } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
-import { BlurView } from 'expo-blur';
 import { useTheme } from '../theme';
 
 import HomeStack from './HomeStack';
@@ -37,31 +36,30 @@ export default function MainTabs() {
     <Tab.Navigator
       screenOptions={({ route }) => ({
         headerShown: false,
-        tabBarActiveTintColor: colors.primary,
+        tabBarActiveTintColor: '#4F46E5', // Indigo interactive accent
         tabBarInactiveTintColor: colors.secondaryText,
         tabBarShowLabel: true,
-        unmountOnBlur: false, // Explicitly preserve state
-        tabBarBackground: () => (
-          <BlurView 
-            tint={colors.background === '#000000' || colors.card === '#1c1c1e' ? "dark" : "light"} 
-            intensity={80} 
-            style={{ flex: 1 }} 
-          />
-        ),
+        tabBarLabelStyle: {
+          fontSize: 11,
+          fontWeight: '500',
+        },
+        unmountOnBlur: false,
         tabBarStyle: [
           {
-            position: 'absolute', // Required so content scrolls underneath the blur
-            borderTopWidth: 1,
-            borderTopColor: 'rgba(0,0,0,0.08)',
+            position: 'absolute', // Required so content scrolls underneath
+            borderTopWidth: 0, // Removed hard 1px border
+            borderTopLeftRadius: 8,
+            borderTopRightRadius: 8,
             elevation: 0,
             shadowColor: '#000',
-            shadowOffset: { width: 0, height: -2 },
-            shadowOpacity: 0.04,
-            shadowRadius: 8,
-            height: 60,
-            paddingBottom: 8,
+            shadowOffset: { width: 0, height: -1 },
+            shadowOpacity: 0.06, // Soft shadow
+            shadowRadius: 3,
+            height: 65,
+            paddingBottom: 10,
             paddingTop: 8,
-            backgroundColor: colors.card === '#1c1c1e' ? 'rgba(28,28,30,0.6)' : 'rgba(255,255,255,0.6)',
+            // Fallback translucent background to avoid the native BlurView crash
+            backgroundColor: colors.card === '#1c1c1e' ? 'rgba(28,28,30,0.92)' : 'rgba(255,255,255,0.92)',
           },
           getTabBarStyle(route)
         ],

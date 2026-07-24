@@ -195,7 +195,7 @@ export default function HomeScreen({ navigation }) {
 
   // ── Main render ────────────────────────────────────────────────────────────
   return (
-    <ScreenContainer scrollable>
+    <ScreenContainer scrollable contentContainerStyle={{ paddingBottom: 85 }}>
       
       {/* Header */}
       <View style={styles.header}>
