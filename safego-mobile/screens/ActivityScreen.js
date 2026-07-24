@@ -9,8 +9,8 @@ import {
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import MapView, { Marker } from 'react-native-maps';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect } from '@react-navigation/native';
+import Svg, { Defs, LinearGradient as SvgLinearGradient, Rect, Stop } from 'react-native-svg';
 
 import LocationService from '../services/LocationService';
 import EmergencyHistoryService from '../services/EmergencyHistoryService';
@@ -23,9 +23,9 @@ import { useTheme, typography, spacing, radius } from '../theme';
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 const DELTA = 0.01;
 
-function formatTimestamp(epochMs) {
-  if (!epochMs) return '--';
-  const d = new Date(epochMs);
+function formatTimestamp(isoString) {
+  if (!isoString) return '--';
+  const d = new Date(isoString);
   return d.toLocaleTimeString('en-US', {
     hour: '2-digit',
     minute: '2-digit',
@@ -44,8 +44,10 @@ function formatDate(iso) {
 }
 
 function computeDuration(startIso, endIso) {
-  if (!startIso || !endIso) return '';
-  const diff = new Date(endIso).getTime() - new Date(startIso).getTime();
+  if (!startIso) return '';
+  const start = new Date(startIso).getTime();
+  const end = endIso ? new Date(endIso).getTime() : Date.now();
+  const diff = end - start;
   const minutes = Math.floor(diff / 60000);
   if (minutes < 60) return `${minutes} min`;
   const hrs = Math.floor(minutes / 60);
@@ -75,7 +77,6 @@ export default function ActivityScreen({ navigation }) {
 
   // Animation values
   const fadeAnim = useRef(new Animated.Value(0)).current;
-  const mapOpacity = useRef(new Animated.Value(0)).current;
 
   // States
   const [coords, setCoords] = useState(null); // Current device coordinates
@@ -149,9 +150,13 @@ export default function ActivityScreen({ navigation }) {
             setLastUpdated(Date.now());
             setAccuracy(loc.accuracy || null);
 
-            // Fetch address if missing (basic fallback, actual tracking might use reverseGeocodeAsync)
+            // Fetch address if missing (basic fallback)
             const addr = await LocationService.getReadableAddress(loc.latitude, loc.longitude);
-            if (mounted && addr) setAddress(addr);
+            if (mounted && addr) {
+              setAddress(addr);
+            } else if (mounted) {
+              setAddress('Location acquired');
+            }
 
             // Manage Map Centering (prevent jitter)
             if (!lastMapCenter.current) {
@@ -163,12 +168,6 @@ export default function ActivityScreen({ navigation }) {
                 latitudeDelta: DELTA,
                 longitudeDelta: DELTA,
               }, 400);
-              // Cross-fade map in
-              Animated.timing(mapOpacity, {
-                toValue: 1,
-                duration: 600,
-                useNativeDriver: true,
-              }).start();
             } else {
               // Only recenter if moved more than 20 meters
               const dist = getDistanceFromLatLonInMeters(
@@ -201,7 +200,7 @@ export default function ActivityScreen({ navigation }) {
       mounted = false;
       if (timeoutId) clearTimeout(timeoutId);
     };
-  }, [mapOpacity]);
+  }, []);
 
 
   // ─── Renderers ───────────────────────────────────────────────────────────
@@ -222,87 +221,100 @@ export default function ActivityScreen({ navigation }) {
           
           {/* 1. Embedded Map (220dp height) */}
           <Card style={styles.mapCard}>
+            <View style={styles.mapWrapper}>
+              {coords ? (
+                <MapView
+                  ref={mapRef}
+                  style={styles.mapView}
+                  initialRegion={{
+                    latitude: coords.latitude,
+                    longitude: coords.longitude,
+                    latitudeDelta: DELTA,
+                    longitudeDelta: DELTA,
+                  }}
+                  scrollEnabled={false}
+                  zoomEnabled={false}
+                  pitchEnabled={false}
+                  rotateEnabled={false}
+                  showsUserLocation={true}
+                  showsMyLocationButton={false}
+                  showsCompass={false}
+                >
+                  <Marker coordinate={coords} pinColor={colors.primary} />
+                </MapView>
+              ) : (
+                <View style={[styles.mapView, { justifyContent: 'center', alignItems: 'center' }]}>
+                  <Text style={{ color: colors.secondaryText }}>Loading map...</Text>
+                </View>
+              )}
+            </View>
+
+            {/* Seamless bottom fade using SVG */}
+            <View style={styles.mapGradient} pointerEvents="none">
+              <Svg height="100%" width="100%">
+                <Defs>
+                  <SvgLinearGradient id="fade" x1="0" y1="0" x2="0" y2="1">
+                    <Stop offset="0" stopColor={colors.background} stopOpacity="0" />
+                    <Stop offset="1" stopColor={colors.background} stopOpacity="1" />
+                  </SvgLinearGradient>
+                </Defs>
+                <Rect x="0" y="0" width="100%" height="100%" fill="url(#fade)" />
+              </Svg>
+            </View>
+
+            {/* Invisible overlay to capture taps */}
             <TouchableOpacity 
               activeOpacity={0.8} 
               onPress={() => navigation.navigate('Map')}
-              style={styles.mapTouchContainer}
-            >
-              <Animated.View style={[styles.mapWrapper, { opacity: mapOpacity }]}>
-                {coords && (
-                  <MapView
-                    ref={mapRef}
-                    style={styles.mapView}
-                    initialRegion={{
-                      latitude: coords.latitude,
-                      longitude: coords.longitude,
-                      latitudeDelta: DELTA,
-                      longitudeDelta: DELTA,
-                    }}
-                    scrollEnabled={false}
-                    zoomEnabled={false}
-                    pitchEnabled={false}
-                    rotateEnabled={false}
-                    showsUserLocation={true}
-                    showsMyLocationButton={false}
-                    showsCompass={false}
-                  />
-                )}
-                {/* Subtle bottom fade */}
-                <LinearGradient
-                  colors={['transparent', 'rgba(0,0,0,0.4)']}
-                  style={styles.mapGradient}
-                />
-              </Animated.View>
-              <View style={styles.mapOverlayText}>
-                <Text style={styles.mapOverlayTitle}>Live Map</Text>
-                <Feather name="maximize-2" size={16} color="#FFF" />
-              </View>
-            </TouchableOpacity>
+              style={StyleSheet.absoluteFillObject}
+            />
           </Card>
 
           {/* 2. Current Location Tracking (160dp height) */}
-          <Card style={styles.trackingCard}>
-            <View style={styles.cardHeader}>
-              <Text style={[styles.cardTitle, { color: colors.text }]}>Current Location</Text>
-              {motion === 'Moving' ? (
-                <Feather name="navigation" size={20} color={colors.primary} />
-              ) : (
-                <Feather name="map-pin" size={20} color={colors.secondaryText} />
-              )}
-            </View>
-            
-            <View style={styles.trackingBody}>
-              <Text style={[styles.addressText, { color: colors.text }]} numberOfLines={2}>
-                {address}
-              </Text>
+          <TouchableOpacity activeOpacity={0.8} onPress={() => navigation.navigate('LiveTracking')}>
+            <Card style={styles.trackingCard}>
+              <View style={styles.cardHeader}>
+                <Text style={[styles.cardTitle, { color: colors.text }]}>Current Location</Text>
+                {motion === 'Moving' ? (
+                  <Feather name="navigation" size={20} color={colors.primary} />
+                ) : (
+                  <Feather name="map-pin" size={20} color={colors.secondaryText} />
+                )}
+              </View>
               
-              <View style={styles.statsRow}>
-                <View style={styles.statBox}>
-                  <Text style={[styles.statLabel, { color: colors.secondaryText }]}>Speed</Text>
-                  <Text style={[styles.statValue, { color: colors.text }]}>{Math.round(speed)} km/h</Text>
+              <View style={styles.trackingBody}>
+                <Text style={[styles.addressText, { color: colors.text }]} numberOfLines={1}>
+                  {!coords ? 'Locating...' : address}
+                </Text>
+                
+                <View style={styles.statsRow}>
+                  <View style={styles.statBox}>
+                    <Text style={[styles.statLabel, { color: colors.secondaryText }]}>Speed</Text>
+                    <Text style={[styles.statValue, { color: colors.text }]}>{Math.round(speed)} km/h</Text>
+                  </View>
+                  <View style={styles.statBox}>
+                    <Text style={[styles.statLabel, { color: colors.secondaryText }]}>Motion</Text>
+                    <Text style={[styles.statValue, { color: colors.text }]}>{motion}</Text>
+                  </View>
+                  <View style={styles.statBox}>
+                    <Text style={[styles.statLabel, { color: colors.secondaryText }]}>Accuracy</Text>
+                    <Text style={[styles.statValue, { color: colors.text }]}>
+                      {accuracy ? `±${Math.round(accuracy)}m` : '--'}
+                    </Text>
+                  </View>
                 </View>
-                <View style={styles.statBox}>
-                  <Text style={[styles.statLabel, { color: colors.secondaryText }]}>Motion</Text>
-                  <Text style={[styles.statValue, { color: colors.text }]}>{motion}</Text>
-                </View>
-                <View style={styles.statBox}>
-                  <Text style={[styles.statLabel, { color: colors.secondaryText }]}>Accuracy</Text>
-                  <Text style={[styles.statValue, { color: colors.text }]}>
-                    {accuracy ? `±${Math.round(accuracy)}m` : '--'}
+
+                <View style={styles.trackingFooter}>
+                  <Text style={[styles.coordText, { color: colors.secondaryText }]}>
+                    {coords ? `${coords.latitude.toFixed(5)}, ${coords.longitude.toFixed(5)}` : '--'}
+                  </Text>
+                  <Text style={[styles.updatedText, { color: colors.secondaryText }]}>
+                    Updated: {lastUpdated ? formatTimestamp(new Date(lastUpdated).toISOString()) : '--'}
                   </Text>
                 </View>
               </View>
-
-              <View style={styles.trackingFooter}>
-                <Text style={[styles.coordText, { color: colors.secondaryText }]}>
-                  {coords ? `${coords.latitude.toFixed(5)}, ${coords.longitude.toFixed(5)}` : '--'}
-                </Text>
-                <Text style={[styles.updatedText, { color: colors.secondaryText }]}>
-                  Updated: {formatTimestamp(lastUpdated)}
-                </Text>
-              </View>
-            </View>
-          </Card>
+            </Card>
+          </TouchableOpacity>
 
           {/* 3. Emergency History (120dp height) */}
           <Card style={styles.historyCard}>
@@ -315,17 +327,20 @@ export default function ActivityScreen({ navigation }) {
             
             <View style={styles.historyBody}>
               {historyItems.length > 0 ? (
-                <View style={styles.historyRow}>
+                <TouchableOpacity 
+                  style={styles.historyRow}
+                  onPress={() => navigation.navigate('EmergencyDetails', { incidentId: historyItems[0].id })}
+                >
                   <View>
                     <Text style={[styles.historyItemType, { color: colors.text }]}>
                       {historyItems[0].display_type}
                     </Text>
                     <Text style={[styles.historyItemDate, { color: colors.secondaryText }]}>
-                      {formatDate(historyItems[0].fired_at)} • {formatTimestamp(new Date(historyItems[0].fired_at).getTime())}
+                      {formatDate(historyItems[0].fired_at)} • {formatTimestamp(historyItems[0].fired_at)}
                     </Text>
                   </View>
-                  <Feather name="alert-triangle" size={24} color={colors.danger} />
-                </View>
+                  <Feather name="chevron-right" size={24} color={colors.secondaryText} />
+                </TouchableOpacity>
               ) : (
                 <View style={styles.emptyContainer}>
                   <Text style={[styles.emptyText, { color: colors.secondaryText }]}>No emergency events yet.</Text>
@@ -345,17 +360,20 @@ export default function ActivityScreen({ navigation }) {
             
             <View style={styles.historyBody}>
               {latestTrip ? (
-                <View style={styles.historyRow}>
+                <TouchableOpacity 
+                  style={styles.historyRow}
+                  onPress={() => navigation.navigate('TripDetails', { tripId: latestTrip.id })}
+                >
                   <View>
                     <Text style={[styles.historyItemType, { color: colors.text }]}>
                       {latestTrip.status === 'active' ? 'Trip Active' : 'Completed Trip'}
                     </Text>
                     <Text style={[styles.historyItemDate, { color: colors.secondaryText }]}>
-                      {formatDate(latestTrip.startedAt)} • {latestTrip.endedAt ? computeDuration(latestTrip.startedAt, latestTrip.endedAt) : 'In progress'}
+                      Started {formatTimestamp(latestTrip.startedAt)} • {latestTrip.endedAt ? computeDuration(latestTrip.startedAt, latestTrip.endedAt) : 'In progress'}
                     </Text>
                   </View>
-                  <Feather name="map" size={24} color={colors.primary} />
-                </View>
+                  <Feather name="chevron-right" size={24} color={colors.secondaryText} />
+                </TouchableOpacity>
               ) : (
                 <View style={styles.emptyContainer}>
                   <Text style={[styles.emptyText, { color: colors.secondaryText }]}>No trips yet.</Text>
@@ -375,7 +393,7 @@ export default function ActivityScreen({ navigation }) {
 const styles = StyleSheet.create({
   header: {
     paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
+    paddingVertical: spacing.sm, // Reduced spacing
   },
   headerTitle: {
     fontSize: typography.sizes.title,
@@ -385,33 +403,29 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingHorizontal: spacing.lg,
+    paddingHorizontal: spacing.md, // Tighter horizontal padding
     paddingBottom: spacing.xxxl,
   },
   
   // Card base heights per spec
   mapCard: {
     height: 220,
-    marginBottom: spacing.lg,
+    marginBottom: spacing.md, // Tighter vertical padding
     overflow: 'hidden',
     padding: 0, // Maps take full width
   },
   trackingCard: {
     height: 160,
-    marginBottom: spacing.lg,
-    padding: spacing.lg,
+    marginBottom: spacing.md,
+    padding: spacing.md,
   },
   historyCard: {
     height: 120,
-    marginBottom: spacing.lg,
-    padding: spacing.lg,
+    marginBottom: spacing.md,
+    padding: spacing.md,
   },
 
   // Map
-  mapTouchContainer: {
-    flex: 1,
-    position: 'relative',
-  },
   mapWrapper: {
     flex: 1,
     backgroundColor: '#e5e7eb',
@@ -424,20 +438,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    height: 60,
-  },
-  mapOverlayText: {
-    position: 'absolute',
-    bottom: spacing.md,
-    left: spacing.md,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  mapOverlayTitle: {
-    color: '#FFF',
-    fontWeight: typography.weights.bold,
-    fontSize: typography.sizes.body,
-    marginRight: spacing.xs,
+    height: 80,
   },
 
   // Card Internals
@@ -445,7 +446,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: spacing.md,
+    marginBottom: spacing.sm, // Tighter
   },
   cardTitle: {
     fontSize: typography.sizes.body,
@@ -464,12 +465,12 @@ const styles = StyleSheet.create({
   addressText: {
     fontSize: typography.sizes.body,
     fontWeight: typography.weights.medium,
-    marginBottom: spacing.sm,
+    marginBottom: spacing.xs,
   },
   statsRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: spacing.sm,
+    marginBottom: spacing.xs,
   },
   statBox: {
     flex: 1,
