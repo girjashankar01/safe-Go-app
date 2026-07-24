@@ -6,21 +6,24 @@ import { sendSOSEmail } from './email.js';
 
 const DASHBOARD_URL = process.env.DASHBOARD_URL;
 
-export async function triggerSOS({ 
-  tripId, userId, lat, lng, triggerType, audioClipUrl, identitySnapshot, io,
-  location_name, recording_duration, recording_size, recording_mime_type, client_event_id
-}) {
+export async function triggerSOS(payload) {
+  const { 
+    tripId, userId, lat, lng, triggerType, audioClipUrl, identitySnapshot, io,
+    location_name, recording_duration, recording_size, recording_mime_type, client_event_id
+  } = payload;
+  
   const { data: trip, error: tripErr } = await db
     .from('trips')
     .select('*, users(name, email, emergency_contacts(*))')
     .eq('id', tripId)
     .single();
 
-  if (tripErr || !trip) throw new Error('Trip not found');
+  if (tripErr || !trip) throw new Error('Trip not found: ' + (tripErr?.message || 'No data'));
   if (trip.user_id !== userId) throw new Error('Forbidden');
 
   // Danger zone check — is this position inside any known high-risk radius?
   const { data: zones } = await db.from('danger_zones').select('lat,lng,radius_meters');
+  
   const inDangerZone = (zones || []).some(
     (z) => haversineDistance(lat, lng, z.lat, z.lng) <= z.radius_meters
   );
@@ -34,34 +37,37 @@ export async function triggerSOS({
 
   const { station } = await findNearestStation(lat, lng, db);
 
+  const insertPayload = {
+    trip_id: tripId,
+    user_id: userId,
+    lat,
+    lng,
+    trigger_type: triggerType,
+    priority_level: priority.level,
+    priority_score: priority.score,
+    audio_clip_url: audioClipUrl || null,
+    nearest_station_id: station?.id || null,
+    // The following fields were added in JS but are missing from the Supabase schema:
+    // identity_snapshot: identitySnapshot ? identitySnapshot.snapshot : null,
+    // profile_version: identitySnapshot ? identitySnapshot.version : null,
+    // profile_updated_at: identitySnapshot ? identitySnapshot.updatedAt : null,
+    // recording_mime_type: recording_mime_type || null,
+    // client_event_id: client_event_id || null,
+    location_name: location_name || null,
+    recording_duration: recording_duration || null,
+    recording_size: recording_size || null,
+  };
+  
   const { data: sosEvent, error: sosErr1 } = await db
     .from('sos_events')
-    .insert({
-      trip_id: tripId,
-      user_id: userId,
-      lat,
-      lng,
-      trigger_type: triggerType,
-      priority_level: priority.level,
-      priority_score: priority.score,
-      audio_clip_url: audioClipUrl || null,
-      nearest_station_id: station?.id || null,
-      identity_snapshot: identitySnapshot ? identitySnapshot.snapshot : null,
-      profile_version: identitySnapshot ? identitySnapshot.version : null,
-      profile_updated_at: identitySnapshot ? identitySnapshot.updatedAt : null,
-      location_name: location_name || null,
-      recording_duration: recording_duration || null,
-      recording_size: recording_size || null,
-      recording_mime_type: recording_mime_type || null,
-      client_event_id: client_event_id || null,
-    })
+    .insert(insertPayload)
     .select()
     .single();
 
   if (sosErr1) {
     throw new Error(sosErr1.message);
   }
-
+  
   if (process.env.NODE_ENV !== 'production') {
     console.log(`SOS Metadata\nLocation: ${location_name || 'Unknown'}\nDuration: ${recording_duration || 'Unknown'}\nSize: ${recording_size || 'Unknown'}\nSaved: Yes`);
   }

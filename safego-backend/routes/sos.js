@@ -43,7 +43,7 @@ r.post('/trigger', requireAuth, async (req, res) => {
   } catch (e) {
     if (e.message === 'Forbidden') return res.status(403).json({ error: 'Not your trip' });
     console.error('SOS trigger error:', e.message);
-    res.status(500).json({ error: 'Failed to trigger SOS' });
+    res.status(500).json({ error: 'Failed to trigger SOS: ' + e.message });
   }
 });
 

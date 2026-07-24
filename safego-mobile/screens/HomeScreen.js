@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import {
   SafeAreaView,
   ScrollView,
@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   StyleSheet,
   Alert,
+  Animated,
 } from 'react-native';
 import { getMe } from '../lib/api';
 import { connectSocket, getSocket } from '../lib/socket';
@@ -17,6 +18,7 @@ import { useSafetyIdentity } from '../components/SafetyIdentityContext';
 import { Feather } from '@expo/vector-icons';
 import EmergencyDirectoryService from '../services/EmergencyDirectoryService';
 import EmergencyHistoryService from '../services/EmergencyHistoryService';
+import SOSService from '../services/SOSService';
 
 // ─── Coming Soon alert ───────────────────────────────────────────────────────
 const comingSoon = (feature) =>
@@ -55,6 +57,55 @@ function ActionButton({ label, onPress, variant = 'default', disabled = false })
   );
 }
 
+// ─── Hold-to-Activate SOS Button ────────────────────────────────────────────────
+function HoldToActivateButton({ onActivate }) {
+  const holdProgress = useRef(new Animated.Value(0)).current;
+  const holdTimer = useRef(null);
+
+  const startHold = () => {
+    Animated.timing(holdProgress, {
+      toValue: 1,
+      duration: 3000, // 3 seconds
+      useNativeDriver: false, // width/height cannot use native driver
+    }).start(({ finished }) => {
+      if (finished) {
+        onActivate();
+        holdProgress.setValue(0);
+      }
+    });
+  };
+
+  const cancelHold = () => {
+    Animated.timing(holdProgress).stop();
+    Animated.timing(holdProgress, {
+      toValue: 0,
+      duration: 200,
+      useNativeDriver: false,
+    }).start();
+  };
+
+  const progressSize = holdProgress.interpolate({
+    inputRange: [0, 1],
+    outputRange: [140, 240] // Grows from inner circle size to outer limit
+  });
+
+  return (
+    <View style={styles.holdContainer}>
+      <TouchableOpacity 
+        style={styles.holdTouchable}
+        onPressIn={startHold}
+        onPressOut={cancelHold}
+        activeOpacity={1}
+      >
+        <Animated.View style={[styles.holdProgress, { width: progressSize, height: progressSize, borderRadius: Animated.divide(progressSize, 2) }]} />
+        <View style={styles.holdInnerCircle}>
+          <Text style={styles.holdText}>SOS</Text>
+        </View>
+      </TouchableOpacity>
+      <Text style={styles.holdSubtext}>Hold SOS button for 3 seconds to activate SOS</Text>
+    </View>
+  );
+}
 
 export default function HomeScreen({ navigation }) {
   const { profile, missingFields, status: profileStatus } = useSafetyIdentity();
@@ -306,12 +357,8 @@ export default function HomeScreen({ navigation }) {
           />
         )}
 
-        {/* SOS — first and most prominent */}
-        <ActionButton
-          label="SOS"
-          variant="destructive"
-          onPress={() => navigation.navigate('SOS')}
-        />
+        {/* SOS — Big Circular Hold Button */}
+        <HoldToActivateButton onActivate={() => SOSService.triggerManualSOS()} />
 
         <ActionButton
           label="Manage Trip"
@@ -702,6 +749,48 @@ const styles = StyleSheet.create({
   },
   identityMissingText: {
     fontSize: 12,
-    color: '#d97706',
+    color: '#cbd5e1',
+  },
+  // Hold To Activate Styles
+  holdContainer: {
+    alignItems: 'center',
+    marginVertical: 32,
+  },
+  holdTouchable: {
+    width: 240,
+    height: 240,
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'relative',
+  },
+  holdProgress: {
+    position: 'absolute',
+    backgroundColor: 'rgba(239, 68, 68, 0.2)', // light red fading
+  },
+  holdInnerCircle: {
+    width: 140,
+    height: 140,
+    borderRadius: 70,
+    backgroundColor: '#ef4444',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#ef4444',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.8,
+    shadowRadius: 15,
+    elevation: 10,
+    position: 'absolute',
+  },
+  holdText: {
+    color: '#fff',
+    fontSize: 32,
+    fontWeight: '900',
+    letterSpacing: 2,
+  },
+  holdSubtext: {
+    color: '#94a3b8',
+    fontSize: 14,
+    marginTop: 16,
+    textAlign: 'center',
   },
 });

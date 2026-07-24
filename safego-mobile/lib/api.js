@@ -122,11 +122,7 @@ export const triggerSOS = (body) =>
  * @returns {{ success: true, path: string, publicUrl: string }}
  */
 export const uploadSOSAudio = (formData) =>
-  api.post('/sos/audio', formData, {
-    headers: {
-      'Content-Type': 'multipart/form-data',
-    },
-  }).then((res) => res.data);
+  api.post('/sos/audio', formData).then((res) => res.data);
 
 /**
  * Fetch trip history for the authenticated user.

@@ -84,7 +84,7 @@ class AudioRecordingService {
       return undefined;
     } finally {
       try {
-        if (this.recording && this.recording.isRecording) {
+        if (this.recording && this.state === 'Recording') {
           await this.recording.stop();
         }
       } catch (cleanupError: any) {

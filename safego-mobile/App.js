@@ -9,7 +9,6 @@ import HomeScreen from './screens/HomeScreen';
 import EmergencyContactsScreen from './screens/EmergencyContactsScreen';
 import CurrentLocationScreen from './screens/CurrentLocationScreen';
 import LiveTrackingScreen from './screens/LiveTrackingScreen';
-import SOSScreen from './screens/SOSScreen';
 import MapScreen from './screens/MapScreen';
 import TripScreen from './screens/TripScreen';
 import HistoryScreen from './screens/HistoryScreen';
@@ -30,6 +29,7 @@ import CheckInModal from './components/CheckInModal';
 import PinModal from './components/PinModal';
 import FakeCallModal from './components/FakeCallModal';
 import EmergencyAlarmModal from './components/EmergencyAlarmModal';
+import EmergencyOverlay from './components/EmergencyOverlay';
 
 const Stack = createNativeStackNavigator();
 
@@ -68,8 +68,9 @@ export default function App() {
   }
 
   return (
-    <SafetyIdentityProvider>
-      <NavigationContainer ref={navigationRef}>
+    <View style={{ flex: 1 }}>
+      <SafetyIdentityProvider>
+        <NavigationContainer ref={navigationRef}>
         <Stack.Navigator
           initialRouteName={initialRoute}
           screenOptions={{ headerShown: false }}
@@ -80,7 +81,6 @@ export default function App() {
         <Stack.Screen name="EmergencyContacts" component={EmergencyContactsScreen} />
         <Stack.Screen name="CurrentLocation" component={CurrentLocationScreen} />
         <Stack.Screen name="LiveTracking" component={LiveTrackingScreen} />
-        <Stack.Screen name="SOS" component={SOSScreen} />
         <Stack.Screen name="Map" component={MapScreen} />
         <Stack.Screen name="Trip" component={TripScreen} />
         <Stack.Screen name="History" component={HistoryScreen} />
@@ -94,10 +94,12 @@ export default function App() {
         <Stack.Screen name="EmergencyDetails" component={EmergencyDetailsScreen} />
       </Stack.Navigator>
       <CheckInModal />
-      <PinModal />
       <FakeCallModal />
       <EmergencyAlarmModal />
-    </NavigationContainer>
+      <EmergencyOverlay />
+      <PinModal />
+      </NavigationContainer>
     </SafetyIdentityProvider>
+  </View>
   );
 }
