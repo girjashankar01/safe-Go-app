@@ -44,10 +44,14 @@ export default function SystemStatusCard({ socketStatus }) {
     const initBattery = async () => {
       try {
         const level = await Battery.getBatteryLevelAsync();
-        if (mounted && level !== -1) setBatteryLevel(Math.round(level * 100));
+        if (mounted) {
+          setBatteryLevel(level !== -1 ? Math.round(level * 100) : 100);
+        }
 
         batterySub = Battery.addBatteryLevelListener(({ batteryLevel: newLevel }) => {
-          if (mounted && newLevel !== -1) setBatteryLevel(Math.round(newLevel * 100));
+          if (mounted) {
+            setBatteryLevel(newLevel !== -1 ? Math.round(newLevel * 100) : 100);
+          }
         });
       } catch (e) {
         console.warn('Failed to get battery level');
