@@ -19,6 +19,7 @@ import { Feather } from '@expo/vector-icons';
 import EmergencyDirectoryService from '../services/EmergencyDirectoryService';
 import EmergencyHistoryService from '../services/EmergencyHistoryService';
 import SOSService from '../services/SOSService';
+import EmergencyAlarmService from '../services/EmergencyAlarmService';
 
 // ─── Coming Soon alert ───────────────────────────────────────────────────────
 const comingSoon = (feature) =>
@@ -117,6 +118,7 @@ export default function HomeScreen({ navigation }) {
   const [fakeCallState, setFakeCallState] = useState({ status: 'Idle', remainingDelay: 0 });
   const [dirState, setDirState] = useState('Loading');
   const [historyItems, setHistoryItems] = useState([]);
+  const [alarmState, setAlarmState] = useState({ status: 'Idle' });
 
   useEffect(() => {
     const unsub = FakeCallService.subscribe((s) => setFakeCallState(s));
@@ -161,6 +163,8 @@ export default function HomeScreen({ navigation }) {
     // Silently fetch fresh history for the home screen
     EmergencyHistoryService.fetchHistory().catch(e => console.log('Silently ignoring fetch history error on home screen', e));
 
+    const unsubAlarm = EmergencyAlarmService.subscribe((s) => setAlarmState(s));
+
     return () => {
       socket.off('connect',       onConnect);
       socket.off('disconnect',    onDisconnect);
@@ -169,6 +173,7 @@ export default function HomeScreen({ navigation }) {
       socket.io.off('reconnect',         onConnect);
       unsubDir();
       unsubHistory();
+      unsubAlarm();
     };
   }, []);
 
@@ -355,6 +360,27 @@ export default function HomeScreen({ navigation }) {
               });
             }}
           />
+        )}
+
+        {/* Siren Toggle Button */}
+        {alarmState.status === 'Playing' || alarmState.status === 'Preparing' ? (
+          <TouchableOpacity 
+            style={[styles.actionButton, styles.sirenActiveButton]} 
+            onPress={() => EmergencyAlarmService.stop()}
+            activeOpacity={0.8}
+          >
+            <Feather name="volume-x" size={24} color="#fff" style={{ marginRight: 12 }} />
+            <Text style={styles.sirenText}>Stop Siren</Text>
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity 
+            style={[styles.actionButton, styles.sirenButton]} 
+            onPress={() => EmergencyAlarmService.start(true, true)}
+            activeOpacity={0.8}
+          >
+            <Feather name="volume-2" size={24} color="#fff" style={{ marginRight: 12 }} />
+            <Text style={styles.sirenText}>Loud Siren</Text>
+          </TouchableOpacity>
         )}
 
         {/* SOS — Big Circular Hold Button */}
@@ -687,6 +713,41 @@ const styles = StyleSheet.create({
     color: '#dc2626',
     fontWeight: '600',
     fontSize: 13,
+  },
+
+  // Siren Button Styles
+  sirenButton: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#ef4444', // Orange/Red
+    borderColor: '#ef4444',
+    height: 60,
+    borderRadius: 16,
+    borderWidth: 0,
+    shadowColor: '#ef4444',
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
+  },
+  sirenActiveButton: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#991b1b', // Dark Red
+    borderColor: '#991b1b',
+    height: 60,
+    borderRadius: 16,
+    borderWidth: 0,
+    shadowColor: '#991b1b',
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
+  },
+  sirenText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: '700',
   },
 
   // Identity Card

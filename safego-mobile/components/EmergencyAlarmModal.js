@@ -56,7 +56,7 @@ export default function EmergencyAlarmModal() {
     }
   }, [alarmState.status, flashEnabled]);
 
-  const visible = alarmState.status !== 'Idle';
+  const visible = alarmState.status !== 'Idle' && !alarmState.suppressModal;
   if (!visible) return null;
 
   const backgroundColor = flashAnim.interpolate({

@@ -6,6 +6,7 @@ export type EmergencyAlarmState = 'Idle' | 'Preparing' | 'Playing' | 'Stopping';
 
 interface EmergencyAlarmStateObj {
   status: EmergencyAlarmState;
+  suppressModal: boolean;
 }
 
 type Listener = (state: EmergencyAlarmStateObj) => void;
@@ -16,6 +17,7 @@ class EmergencyAlarmService {
   
   private durationTimeout: NodeJS.Timeout | null = null;
   private isEnabledForCurrentSOS: boolean = false;
+  private suppressModal: boolean = false;
 
   public subscribe(listener: Listener): () => void {
     this.listeners.add(listener);
@@ -29,28 +31,29 @@ class EmergencyAlarmService {
   }
 
   public getState(): EmergencyAlarmStateObj {
-    return { status: this.status };
+    return { status: this.status, suppressModal: this.suppressModal };
   }
 
   /**
    * Called by SOSService when an emergency starts.
    * Based on the trigger configuration, this will activate the effects.
    */
-  public async start() {
+  public async start(force: boolean = false, suppressModal: boolean = false) {
     if (this.status !== 'Idle') {
       return; // Ignore duplicate starts, strictly Singleton.
     }
 
     const settings = await getSettings();
-    if (!settings.emergencyAlarmEnabled) return;
+    if (!settings.emergencyAlarmEnabled && !force) return;
 
     this.isEnabledForCurrentSOS = true;
-    this.transitionTo('Preparing');
+    this.suppressModal = suppressModal;
+    this.transitionTo('Preparing', force);
 
     // Simulate preparation time for audio loading, etc.
     setTimeout(() => {
       if (this.status === 'Preparing') {
-        this.transitionTo('Playing');
+        this.transitionTo('Playing', force);
       }
     }, 100);
   }
@@ -67,14 +70,14 @@ class EmergencyAlarmService {
     }
   }
 
-  private async transitionTo(newState: EmergencyAlarmState) {
+  private async transitionTo(newState: EmergencyAlarmState, force: boolean = false) {
     this.status = newState;
     
     if (newState === 'Playing') {
       const settings = await getSettings();
       
       // 1. Audio Effect
-      if (settings.emergencyAlarmSound) {
+      if (settings.emergencyAlarmSound || force) {
         AudioPlaybackService.play('alarm', PlaybackPriority.HIGH, { 
           isLooping: true, 
           playsInSilentMode: true 
