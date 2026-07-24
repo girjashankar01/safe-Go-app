@@ -48,9 +48,9 @@ class AudioPlaybackService {
     return this.player?.duration || 0;
   }
 
-  public seekTo(timeMillis: number) {
+  public seekTo(timeSeconds: number) {
     if (this.player) {
-      this.player.seekTo(timeMillis);
+      this.player.seekTo(timeSeconds);
     }
   }
 
