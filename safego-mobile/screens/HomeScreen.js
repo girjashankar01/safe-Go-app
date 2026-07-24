@@ -211,6 +211,14 @@ export default function HomeScreen({ navigation }) {
         </View>
 
         <View style={styles.headerRight}>
+          {/* Temporary Activity Access */}
+          <TouchableOpacity 
+            style={[styles.settingsBtn, { backgroundColor: isDark ? colors.card : '#f3f4f6' }]} 
+            onPress={() => navigation.navigate('Activity')}
+          >
+            <Feather name="activity" size={20} color={colors.text} />
+          </TouchableOpacity>
+          
           <TouchableOpacity 
             style={[styles.settingsBtn, { backgroundColor: isDark ? colors.card : '#f3f4f6' }]} 
             onPress={() => navigation.navigate('Settings')}
