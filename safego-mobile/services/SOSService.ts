@@ -2,6 +2,9 @@ import { getSettings } from './SettingsService';
 import { triggerSOS as apiTriggerSOS, uploadSOSAudio } from '../lib/api';
 import { getTrip, hasActiveTrip } from '../lib/tripState';
 import AudioRecordingService from './AudioRecordingService';
+import FileService from './FileService';
+import SOSPayloadBuilder from './SOSPayloadBuilder';
+import FakeCallService from './FakeCallService';
 import LocationService from './LocationService';
 import EmergencyAlarmService from './EmergencyAlarmService';
 import ProfileService from './ProfileService';
@@ -141,16 +144,18 @@ class SOSService {
     await this.triggerAlarmIfNeeded('immediately');
 
     try {
-      const { latitude, longitude } = await this.getLatestLocation();
+      const locDetails = await LocationService.getCurrentLocationDetails();
+      const latitude = locDetails ? locDetails.latitude : 0;
+      const longitude = locDetails ? locDetails.longitude : 0;
+      const locationName = locDetails ? locDetails.locationName : null;
+
       const identity = ProfileService.getIdentitySnapshot();
 
-      const payload: any = {
-        tripId: trip.tripId,
-        lat: latitude,
-        lng: longitude,
-        triggerType: this.currentTriggerType,
-        identitySnapshot: identity,
-      };
+      const payloadBuilder = new SOSPayloadBuilder()
+        .setTripInfo(trip.tripId)
+        .setLocation(latitude, longitude, locationName)
+        .setTriggerType(this.currentTriggerType)
+        .setIdentity(identity);
 
       if (settings.recordAudio) {
         this.status = 'recording';
@@ -163,7 +168,7 @@ class SOSService {
           this.notify();
         }, 1000);
         
-        const localUri = await AudioRecordingService.recordAudio({ 
+        const recordResult = await AudioRecordingService.recordAudio({ 
           durationSeconds,
           onRecordingComplete: () => {
             if (this.recordingTimer) clearInterval(this.recordingTimer);
@@ -172,19 +177,23 @@ class SOSService {
           } 
         });
 
-        if (localUri) {
+        if (recordResult && recordResult.uri) {
           try {
+            const fileMeta = await FileService.getFileMetadata(recordResult.uri);
+            const mimeType = 'audio/m4a'; // M4A from high quality preset
+            
             const formData = new FormData();
             formData.append('audio', {
-              uri: localUri,
+              uri: recordResult.uri,
               name: 'sos.m4a',
-              type: 'audio/m4a',
+              type: mimeType,
             } as any);
             formData.append('tripId', trip.tripId);
             
             const uploadRes = await uploadSOSAudio(formData);
             if (uploadRes && uploadRes.success && uploadRes.publicUrl) {
-              payload.audioClipUrl = uploadRes.publicUrl;
+              payloadBuilder.setAudioUrl(uploadRes.publicUrl);
+              payloadBuilder.setAudioMetadata(recordResult.duration, fileMeta.size, mimeType);
               await this.triggerAlarmIfNeeded('after_upload');
             }
           } catch (uploadError) {
@@ -199,7 +208,8 @@ class SOSService {
       this.status = 'sending';
       this.notify();
       
-      await apiTriggerSOS(payload);
+      const finalPayload = payloadBuilder.build();
+      await apiTriggerSOS(finalPayload);
       
       await this.triggerAlarmIfNeeded('after_sent');
       

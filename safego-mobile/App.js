@@ -19,6 +19,8 @@ import SettingsScreen from './screens/SettingsScreen';
 import FakeCallScreen from './screens/FakeCallScreen';
 import EmergencyAlarmSettingsScreen from './screens/EmergencyAlarmSettingsScreen';
 import EmergencyServicesScreen from './screens/EmergencyServicesScreen';
+import EmergencyHistoryScreen from './screens/EmergencyHistoryScreen';
+import EmergencyDetailsScreen from './screens/EmergencyDetailsScreen';
 
 import { setUnauthenticatedHandler } from './lib/api';
 import BootstrapService from './services/BootstrapService';
@@ -88,6 +90,8 @@ export default function App() {
         <Stack.Screen name="FakeCall" component={FakeCallScreen} />
         <Stack.Screen name="EmergencyAlarmSettings" component={EmergencyAlarmSettingsScreen} />
         <Stack.Screen name="EmergencyServices" component={EmergencyServicesScreen} />
+        <Stack.Screen name="EmergencyHistory" component={EmergencyHistoryScreen} />
+        <Stack.Screen name="EmergencyDetails" component={EmergencyDetailsScreen} />
       </Stack.Navigator>
       <CheckInModal />
       <PinModal />

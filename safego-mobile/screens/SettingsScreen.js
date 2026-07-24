@@ -398,6 +398,11 @@ export default function SettingsScreen({ navigation }) {
             <Text style={styles.subText}>→</Text>
           </TouchableOpacity>
           <View style={styles.divider} />
+          <TouchableOpacity style={styles.row} onPress={() => navigation.navigate('EmergencyHistory')}>
+            <Text style={styles.label}>Emergency History</Text>
+            <Text style={styles.subText}>→</Text>
+          </TouchableOpacity>
+          <View style={styles.divider} />
           <TouchableOpacity style={styles.row} onPress={handleLogout}>
             <Text style={styles.logoutText}>Logout</Text>
           </TouchableOpacity>

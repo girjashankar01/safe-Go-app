@@ -16,6 +16,7 @@ import FakeCallService from '../services/FakeCallService';
 import { useSafetyIdentity } from '../components/SafetyIdentityContext';
 import { Feather } from '@expo/vector-icons';
 import EmergencyDirectoryService from '../services/EmergencyDirectoryService';
+import EmergencyHistoryService from '../services/EmergencyHistoryService';
 
 // ─── Coming Soon alert ───────────────────────────────────────────────────────
 const comingSoon = (feature) =>
@@ -64,6 +65,7 @@ export default function HomeScreen({ navigation }) {
   );
   const [fakeCallState, setFakeCallState] = useState({ status: 'Idle', remainingDelay: 0 });
   const [dirState, setDirState] = useState('Loading');
+  const [historyItems, setHistoryItems] = useState([]);
 
   useEffect(() => {
     const unsub = FakeCallService.subscribe((s) => setFakeCallState(s));
@@ -96,9 +98,17 @@ export default function HomeScreen({ navigation }) {
     // Sync immediately in case the socket state changed before listeners were attached.
     setSocketStatus(socket.connected ? 'connected' : 'connecting');
 
-    // Setup EmergencyDirectoryService
+    // Setup EmergencyDirectoryService & History
     const unsubDir = EmergencyDirectoryService.subscribe((s) => setDirState(s));
     EmergencyDirectoryService.initialize();
+
+    const unsubHistory = EmergencyHistoryService.subscribe(() => {
+      setHistoryItems(EmergencyHistoryService.getCachedHistory());
+    });
+    setHistoryItems(EmergencyHistoryService.getCachedHistory());
+    
+    // Silently fetch fresh history for the home screen
+    EmergencyHistoryService.fetchHistory().catch(e => console.log('Silently ignoring fetch history error on home screen', e));
 
     return () => {
       socket.off('connect',       onConnect);
@@ -107,6 +117,7 @@ export default function HomeScreen({ navigation }) {
       socket.io.off('reconnect_attempt', onReconnecting);
       socket.io.off('reconnect',         onConnect);
       unsubDir();
+      unsubHistory();
     };
   }, []);
 
@@ -227,6 +238,42 @@ export default function HomeScreen({ navigation }) {
           >
             <Text style={styles.emergencyBtnText}>Emergency Resources →</Text>
           </TouchableOpacity>
+        </View>
+
+        {/* Emergency History Card */}
+        <View style={styles.historyCard}>
+          <View style={styles.historyCardHeader}>
+            <Text style={styles.historyCardTitle}>Emergency History</Text>
+          </View>
+          
+          {historyItems.length > 0 ? (
+            <View style={styles.historyRow}>
+              <View>
+                <Text style={styles.historyType}>{historyItems[0].display_type}</Text>
+                <Text style={styles.historyTime}>
+                  {new Date(historyItems[0].fired_at).toLocaleDateString()}
+                </Text>
+              </View>
+              <TouchableOpacity 
+                style={styles.historyBtn} 
+                onPress={() => navigation.navigate('EmergencyHistory')}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.historyBtnText}>View All →</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <View style={styles.historyRow}>
+              <Text style={styles.historyEmptyText}>No past emergencies.</Text>
+              <TouchableOpacity 
+                style={styles.historyBtn} 
+                onPress={() => navigation.navigate('EmergencyHistory')}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.historyBtnText}>History →</Text>
+              </TouchableOpacity>
+            </View>
+          )}
         </View>
 
         {/* Quick actions */}
@@ -376,6 +423,54 @@ const styles = StyleSheet.create({
     color: '#dc2626',
     fontWeight: '600',
     fontSize: 14,
+  },
+  historyCard: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 28,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+  },
+  historyCardHeader: {
+    marginBottom: 8,
+  },
+  historyCardTitle: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#6b7280',
+    textTransform: 'uppercase',
+  },
+  historyRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  historyType: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#111827',
+  },
+  historyEmptyText: {
+    fontSize: 15,
+    color: '#9ca3af',
+    fontStyle: 'italic',
+  },
+  historyTime: {
+    fontSize: 13,
+    color: '#6b7280',
+    marginTop: 2,
+  },
+  historyBtn: {
+    backgroundColor: '#f3f4f6',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+  },
+  historyBtnText: {
+    color: '#374151',
+    fontWeight: '600',
+    fontSize: 13,
   },
   container: {
     flex: 1,

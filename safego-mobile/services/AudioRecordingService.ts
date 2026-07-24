@@ -1,5 +1,4 @@
 import { AudioModule, requestRecordingPermissionsAsync, setAudioModeAsync, RecordingPresets } from 'expo-audio';
-import * as FileSystem from 'expo-file-system/legacy';
 
 export type RecordingState = 'Idle' | 'Preparing' | 'Recording' | 'Uploading' | 'Finished';
 
@@ -19,12 +18,12 @@ class AudioRecordingService {
    * Record audio for a specific duration.
    * @param durationSeconds 
    * @param onRecordingComplete callback triggered when recording completes
-   * @returns localUri or undefined on failure
+   * @returns { uri, duration } or undefined on failure
    */
   public async recordAudio(options: { 
     durationSeconds: number; 
     onRecordingComplete?: () => void 
-  }): Promise<string | undefined> {
+  }): Promise<{ uri: string, duration: number } | undefined> {
     const { durationSeconds, onRecordingComplete } = options;
     
     if (this.state !== 'Idle' && this.state !== 'Finished') {
@@ -78,13 +77,7 @@ class AudioRecordingService {
       console.log('[AudioRecordingService] Recording complete');
       console.log('[AudioRecordingService] URI:\n' + localUri);
       
-      const fileInfo = await FileSystem.getInfoAsync(localUri);
-      if (!fileInfo.exists) {
-        console.error('[AudioRecordingService] File does not exist');
-        return undefined;
-      }
-
-      return localUri;
+      return { uri: localUri, duration: durationSeconds };
     } catch (error) {
       console.error('[AudioRecordingService] Exception in pipeline:\n', error);
       this.state = 'Idle';

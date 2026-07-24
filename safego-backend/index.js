@@ -13,6 +13,7 @@ import tripRoutes from './routes/trips.js';
 import sosRoutes from './routes/sos.js';
 import trackHandler from './routes/track.js';
 import directoryRoutes from './routes/directory.js';
+import emergencyHistoryRoutes from './routes/emergencyHistory.js';
 import db from './config/supabase.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -30,6 +31,7 @@ app.use('/auth', authRoutes);
 app.use('/trips', tripRoutes);
 app.use('/sos', sosRoutes);
 app.use('/directory', directoryRoutes);
+app.use('/emergency-history', emergencyHistoryRoutes);
 
 // Public tracking link — no auth
 app.get('/track/:token', trackHandler);

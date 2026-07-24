@@ -11,14 +11,15 @@ export enum PlaybackPriority {
 }
 
 interface PlaybackRequest {
-  asset: AudioAssetType;
+  asset?: AudioAssetType;
+  uri?: string;
   priority: PlaybackPriority;
   isLooping?: boolean;
 }
 
 export interface AudioDiagnostic {
   state: PlaybackState;
-  asset: AudioAssetType | null;
+  asset: AudioAssetType | string | null;
   priority: PlaybackPriority | null;
   isLooping: boolean;
   muted: boolean;
@@ -27,7 +28,7 @@ export interface AudioDiagnostic {
 
 class AudioPlaybackService {
   private state: PlaybackState = 'Idle';
-  private currentAsset: AudioAssetType | null = null;
+  private currentAsset: AudioAssetType | string | null = null;
   private currentPriority: PlaybackPriority | null = null;
   private player: AudioPlayer | null = null;
   private isLooping: boolean = false;
@@ -37,6 +38,20 @@ class AudioPlaybackService {
 
   public getState(): PlaybackState {
     return this.state;
+  }
+
+  public getCurrentTime(): number {
+    return this.player?.currentTime || 0;
+  }
+
+  public getDuration(): number {
+    return this.player?.duration || 0;
+  }
+
+  public seekTo(timeMillis: number) {
+    if (this.player) {
+      this.player.seekTo(timeMillis);
+    }
   }
 
   public getDiagnostic(): AudioDiagnostic {
@@ -55,13 +70,31 @@ class AudioPlaybackService {
     priority: PlaybackPriority = PlaybackPriority.LOW,
     options: { isLooping?: boolean; playsInSilentMode?: boolean } = {}
   ) {
-    console.log(`[AudioPlaybackService] Requested play for ${asset} with priority ${priority}`);
+    await this.startPlayback(asset, undefined, priority, options);
+  }
+
+  public async playUri(
+    uri: string,
+    priority: PlaybackPriority = PlaybackPriority.LOW,
+    options: { isLooping?: boolean; playsInSilentMode?: boolean } = {}
+  ) {
+    await this.startPlayback(undefined, uri, priority, options);
+  }
+
+  private async startPlayback(
+    asset?: AudioAssetType, 
+    uri?: string,
+    priority: PlaybackPriority = PlaybackPriority.LOW,
+    options: { isLooping?: boolean; playsInSilentMode?: boolean } = {}
+  ) {
+    const identifier = asset || uri || 'unknown';
+    console.log(`[AudioPlaybackService] Requested play for ${identifier} with priority ${priority}`);
 
     // If a recording is active, queue this request (if it's higher or equal to any currently queued)
     if (AudioRecordingService.isRecordingActive()) {
-      console.log(`[AudioPlaybackService] Recording active. Queueing ${asset}.`);
+      console.log(`[AudioPlaybackService] Recording active. Queueing ${identifier}.`);
       if (!this.queuedRequest || priority >= this.queuedRequest.priority) {
-        this.queuedRequest = { asset, priority, isLooping: options.isLooping };
+        this.queuedRequest = { asset, uri, priority, isLooping: options.isLooping };
         this.pollRecordingState();
       }
       return;
@@ -74,12 +107,12 @@ class AudioPlaybackService {
         return;
       }
       // If we reach here, new priority is >= current priority. We interrupt.
-      console.log(`[AudioPlaybackService] Interrupting current playback (${this.currentAsset}) for new request (${asset}).`);
+      console.log(`[AudioPlaybackService] Interrupting current playback (${this.currentAsset}) for new request (${identifier}).`);
       await this.stop();
     }
 
     this.state = 'Loading';
-    this.currentAsset = asset;
+    this.currentAsset = identifier;
     this.currentPriority = priority;
     this.isLooping = options.isLooping ?? false;
 
@@ -92,9 +125,9 @@ class AudioPlaybackService {
         interruptionMode: 'doNotMix',
       });
 
-      const source = AudioAssets[asset];
+      const source = asset ? AudioAssets[asset] : uri;
       console.log(`[AudioPlaybackService] Source resolved to:`, source);
-      this.player = createAudioPlayer(source);
+      this.player = createAudioPlayer(source as string | number);
       this.player.loop = this.isLooping;
 
       if ((this.state as PlaybackState) === 'Stopping' || (this.state as PlaybackState) === 'Released') {
@@ -105,7 +138,7 @@ class AudioPlaybackService {
 
       this.player.play();
       this.state = 'Playing';
-      console.log(`[AudioPlaybackService] Playing ${asset}, player object keys:`, Object.keys(this.player));
+      console.log(`[AudioPlaybackService] Playing ${identifier}, player object keys:`, Object.keys(this.player));
       
       // Temporary: log status every 1s
       let i = 0;
@@ -116,7 +149,7 @@ class AudioPlaybackService {
       }, 1000);
       
     } catch (e) {
-      console.error(`[AudioPlaybackService] Failed to play ${asset}:`, e);
+      console.error(`[AudioPlaybackService] Failed to play ${identifier}:`, e);
       this.releaseResources();
     }
   }
@@ -175,9 +208,13 @@ class AudioPlaybackService {
         
         const req = this.queuedRequest;
         if (req) {
-          console.log(`[AudioPlaybackService] Recording finished. Starting queued ${req.asset}`);
+          console.log(`[AudioPlaybackService] Recording finished. Starting queued ${req.asset || req.uri}`);
           this.queuedRequest = null;
-          this.play(req.asset, req.priority, { isLooping: req.isLooping });
+          if (req.asset) {
+            this.play(req.asset, req.priority, { isLooping: req.isLooping });
+          } else if (req.uri) {
+            this.playUri(req.uri, req.priority, { isLooping: req.isLooping });
+          }
         }
       }
     }, 1000);

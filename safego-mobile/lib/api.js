@@ -48,6 +48,27 @@ export const login = (email, password) =>
 export const getMe = () =>
   api.get('/auth/me').then((res) => res.data);
 
+// ─── Emergency Services Directory ─────────────────────────────────────────────
+
+export const fetchEmergencyServices = (country, state, city) => {
+  const params = {};
+  if (country) params.country = country;
+  if (state) params.state = state;
+  if (city) params.city = city;
+  return api.get('/directory/emergency-services', { params }).then((res) => res.data);
+};
+
+// ─── Emergency History ────────────────────────────────────────────────────────
+
+export const getEmergencyHistory = (page = 1, limit = 20) =>
+  api.get(`/emergency-history?page=${page}&limit=${limit}`).then((res) => res.data);
+
+export const getEmergencyIncident = (id) =>
+  api.get(`/emergency-history/${id}`).then((res) => res.data);
+
+export const getEmergencyAudioUrl = (id) =>
+  api.get(`/emergency-history/${id}/audio`).then((res) => res.data);
+
 // ─── Emergency Contacts ───────────────────────────────────────────────────────
 
 export const getContacts = () =>
@@ -122,14 +143,6 @@ export const getTrips = () =>
 export const getTrip = (id) =>
   api.get(`/trips/${id}`).then((res) => res.data);
 
-// ─── Emergency Directory ───────────────────────────────────────────────────────
 
-export const fetchEmergencyServices = (country, state, city) => {
-  const params = {};
-  if (country) params.country = country;
-  if (state) params.state = state;
-  if (city) params.city = city;
-  return api.get('/directory/emergency-services', { params }).then((res) => res.data);
-};
 
 export default api;

@@ -14,6 +14,12 @@ export interface GeocodedLocation extends LocationData {
   city: string | null;
 }
 
+export interface LocationDetails {
+  latitude: number;
+  longitude: number;
+  locationName: string | null;
+}
+
 class LocationService {
   /**
    * Ensure permissions are granted.
@@ -101,6 +107,25 @@ class LocationService {
         city: null,
       };
     }
+  }
+
+  /**
+   * Retrieves coordinates and a combined human-readable location name in one call.
+   */
+  async getCurrentLocationDetails(): Promise<LocationDetails | null> {
+    const loc = await this.getReverseGeocodedLocation();
+    if (!loc) return null;
+
+    let locationName = null;
+    if (loc.city || loc.state || loc.country) {
+      locationName = [loc.city, loc.state, loc.country].filter(Boolean).join(', ');
+    }
+
+    return {
+      latitude: loc.latitude,
+      longitude: loc.longitude,
+      locationName
+    };
   }
 
   /**
