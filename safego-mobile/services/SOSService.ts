@@ -4,6 +4,7 @@ import { getTrip, hasActiveTrip } from '../lib/tripState';
 import AudioRecordingService from './AudioRecordingService';
 import * as Location from 'expo-location';
 import EmergencyAlarmService from './EmergencyAlarmService';
+import ProfileService from './ProfileService';
 
 export type SOSState = 'idle' | 'countdown' | 'recording' | 'uploading' | 'sending' | 'success' | 'cooldown' | 'error';
 
@@ -150,7 +151,7 @@ class SOSService {
 
     try {
       const { latitude, longitude } = await this.getLatestLocation();
-      const identity = (await import('./ProfileService')).default.getIdentitySnapshot();
+      const identity = ProfileService.getIdentitySnapshot();
 
       const payload: any = {
         tripId: trip.tripId,

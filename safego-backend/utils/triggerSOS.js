@@ -31,7 +31,8 @@ export async function triggerSOS({ tripId, userId, lat, lng, triggerType, audioC
 
   const { station } = await findNearestStation(lat, lng, db);
 
-  const { data: sosEvent, error: sosErr } = await db
+  let sosEvent;
+  const { data: event1, error: sosErr1 } = await db
     .from('sos_events')
     .insert({
       trip_id: tripId,
@@ -50,7 +51,33 @@ export async function triggerSOS({ tripId, userId, lat, lng, triggerType, audioC
     .select()
     .single();
 
-  if (sosErr) throw new Error(sosErr.message);
+  if (sosErr1) {
+    if (sosErr1.message.includes('identity_snapshot')) {
+      console.warn('[SOS] Schema missing snapshot columns. Falling back to old schema.');
+      const { data: event2, error: sosErr2 } = await db
+        .from('sos_events')
+        .insert({
+          trip_id: tripId,
+          user_id: userId,
+          lat,
+          lng,
+          trigger_type: triggerType,
+          priority_level: priority.level,
+          priority_score: priority.score,
+          audio_clip_url: audioClipUrl || null,
+          nearest_station_id: station?.id || null,
+        })
+        .select()
+        .single();
+        
+      if (sosErr2) throw new Error(sosErr2.message);
+      sosEvent = event2;
+    } else {
+      throw new Error(sosErr1.message);
+    }
+  } else {
+    sosEvent = event1;
+  }
 
   await db.from('trips').update({ status: 'sos' }).eq('id', tripId);
 
