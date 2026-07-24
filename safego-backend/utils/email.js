@@ -28,10 +28,10 @@ export async function sendSOSEmail({
       ${identitySnapshot ? `
       <h3 style="color:#111827;margin-top:20px;">Medical Information</h3>
       <table style="width:100%;border-collapse:collapse;">
-        ${identitySnapshot.bloodGroup ? `<tr><td style="padding:8px;border:1px solid #ddd;width:30%;"><strong>Blood Group</strong></td><td style="padding:8px;border:1px solid #ddd;">${identitySnapshot.bloodGroup}</td></tr>` : ''}
-        ${identitySnapshot.medicalConditions ? `<tr><td style="padding:8px;border:1px solid #ddd;"><strong>Conditions</strong></td><td style="padding:8px;border:1px solid #ddd;">${identitySnapshot.medicalConditions}</td></tr>` : ''}
-        ${identitySnapshot.allergies ? `<tr><td style="padding:8px;border:1px solid #ddd;"><strong>Allergies</strong></td><td style="padding:8px;border:1px solid #ddd;">${identitySnapshot.allergies}</td></tr>` : ''}
-        ${identitySnapshot.medications ? `<tr><td style="padding:8px;border:1px solid #ddd;"><strong>Medications</strong></td><td style="padding:8px;border:1px solid #ddd;">${identitySnapshot.medications}</td></tr>` : ''}
+        ${identitySnapshot?.personal?.bloodGroup ? `<tr><td style="padding:8px;border:1px solid #ddd;width:30%;"><strong>Blood Group</strong></td><td style="padding:8px;border:1px solid #ddd;">${identitySnapshot.personal.bloodGroup}</td></tr>` : ''}
+        ${identitySnapshot?.medical?.medicalConditions ? `<tr><td style="padding:8px;border:1px solid #ddd;"><strong>Conditions</strong></td><td style="padding:8px;border:1px solid #ddd;">${identitySnapshot.medical.medicalConditions}</td></tr>` : ''}
+        ${identitySnapshot?.medical?.allergies ? `<tr><td style="padding:8px;border:1px solid #ddd;"><strong>Allergies</strong></td><td style="padding:8px;border:1px solid #ddd;">${identitySnapshot.medical.allergies}</td></tr>` : ''}
+        ${identitySnapshot?.medical?.medications ? `<tr><td style="padding:8px;border:1px solid #ddd;"><strong>Medications</strong></td><td style="padding:8px;border:1px solid #ddd;">${identitySnapshot.medical.medications}</td></tr>` : ''}
       </table>
       ` : ''}
       <p><a href="${trackingLink}" style="background:${priorityColor};color:white;padding:10px 20px;text-decoration:none;border-radius:4px;display:inline-block;margin-top:12px;">Live Tracking Link</a></p>
