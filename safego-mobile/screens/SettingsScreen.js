@@ -393,6 +393,11 @@ export default function SettingsScreen({ navigation }) {
             <Text style={styles.subText}>{userEmail}</Text>
           </View>
           <View style={styles.divider} />
+          <TouchableOpacity style={styles.row} onPress={() => navigation.navigate('Profile')}>
+            <Text style={styles.label}>Safety Profile</Text>
+            <Text style={styles.subText}>→</Text>
+          </TouchableOpacity>
+          <View style={styles.divider} />
           <TouchableOpacity style={styles.row} onPress={handleLogout}>
             <Text style={styles.logoutText}>Logout</Text>
           </TouchableOpacity>

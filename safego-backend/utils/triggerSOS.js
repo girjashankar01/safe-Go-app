@@ -6,7 +6,7 @@ import { sendSOSEmail } from './email.js';
 
 const DASHBOARD_URL = process.env.DASHBOARD_URL;
 
-export async function triggerSOS({ tripId, userId, lat, lng, triggerType, audioClipUrl, io }) {
+export async function triggerSOS({ tripId, userId, lat, lng, triggerType, audioClipUrl, identitySnapshot, io }) {
   const { data: trip, error: tripErr } = await db
     .from('trips')
     .select('*, users(name, email, emergency_contacts(*))')
@@ -43,6 +43,9 @@ export async function triggerSOS({ tripId, userId, lat, lng, triggerType, audioC
       priority_score: priority.score,
       audio_clip_url: audioClipUrl || null,
       nearest_station_id: station?.id || null,
+      identity_snapshot: identitySnapshot ? identitySnapshot.snapshot : null,
+      profile_version: identitySnapshot ? identitySnapshot.version : null,
+      profile_updated_at: identitySnapshot ? identitySnapshot.updatedAt : null,
     })
     .select()
     .single();
@@ -66,6 +69,7 @@ export async function triggerSOS({ tripId, userId, lat, lng, triggerType, audioC
       trackingLink,
       audioClipUrl,
       nearestStation: station,
+      identitySnapshot: identitySnapshot ? identitySnapshot.snapshot : null,
     });
   } else {
     console.warn(`SOS fired for trip ${tripId} but user has no emergency contacts configured`);

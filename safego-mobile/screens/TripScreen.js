@@ -12,7 +12,6 @@ import {
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import * as Location from 'expo-location';
-
 import { startTrip, endTrip, getActiveTrip, getMe } from '../lib/api';
 import { getSocket } from '../lib/socket';
 import {
@@ -23,10 +22,13 @@ import {
   restoreTrip,
 } from '../lib/tripState';
 import CheckInService from '../services/CheckInService';
+import { useSafetyIdentity } from '../components/SafetyIdentityContext';
 
 // ─── Screen ───────────────────────────────────────────────────────────────────
 
 export default function TripScreen({ navigation }) {
+  const { missingFields } = useSafetyIdentity();
+  
   // Local mirror of tripState — drives all UI.
   const [trip,    setTripLocal] = useState(null);   // null = no active trip
   const [loading, setLoading]   = useState(true);   // initial sync
@@ -195,6 +197,22 @@ export default function TripScreen({ navigation }) {
   // ── Start Trip ───────────────────────────────────────────────────────────────
   const handleStartTrip = async () => {
     if (workingRef.current) return;   // prevent double-tap
+    
+    if (missingFields.bloodGroup) {
+      Alert.alert(
+        'Incomplete Safety Identity',
+        'Your blood group is missing. Completing your Safety Identity helps responders in an emergency.',
+        [
+          { text: 'Complete Later', style: 'cancel', onPress: () => executeStartTrip() },
+          { text: 'Update Now', style: 'default', onPress: () => navigation.navigate('Profile') },
+        ]
+      );
+    } else {
+      executeStartTrip();
+    }
+  };
+
+  const executeStartTrip = async () => {
     workingRef.current = true;
     setError('');
     setWorking(true);

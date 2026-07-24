@@ -150,11 +150,14 @@ class SOSService {
 
     try {
       const { latitude, longitude } = await this.getLatestLocation();
+      const identity = (await import('./ProfileService')).default.getIdentitySnapshot();
+
       const payload: any = {
         tripId: trip.tripId,
         lat: latitude,
         lng: longitude,
         triggerType: this.currentTriggerType,
+        identitySnapshot: identity,
       };
 
       if (settings.recordAudio) {

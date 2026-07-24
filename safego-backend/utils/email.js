@@ -4,7 +4,7 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 const FROM = process.env.RESEND_FROM;
 
 export async function sendSOSEmail({
-  contacts, userName, lat, lng, triggerType, priorityLevel, trackingLink, audioClipUrl, nearestStation,
+  contacts, userName, lat, lng, triggerType, priorityLevel, trackingLink, audioClipUrl, nearestStation, identitySnapshot,
 }) {
   const mapsLink = `https://maps.google.com/?q=${lat},${lng}`;
   const priorityColor = { CRITICAL: '#dc2626', HIGH: '#ea580c', MEDIUM: '#ca8a04' }[priorityLevel] || '#dc2626';
@@ -25,6 +25,15 @@ export async function sendSOSEmail({
         ${nearestStation ? `<tr><td style="padding:8px;border:1px solid #ddd;"><strong>Nearest Police Station</strong></td>
             <td style="padding:8px;border:1px solid #ddd;">${nearestStation.name} — ${nearestStation.phone || 'N/A'}</td></tr>` : ''}
       </table>
+      ${identitySnapshot ? `
+      <h3 style="color:#111827;margin-top:20px;">Medical Information</h3>
+      <table style="width:100%;border-collapse:collapse;">
+        ${identitySnapshot.bloodGroup ? `<tr><td style="padding:8px;border:1px solid #ddd;width:30%;"><strong>Blood Group</strong></td><td style="padding:8px;border:1px solid #ddd;">${identitySnapshot.bloodGroup}</td></tr>` : ''}
+        ${identitySnapshot.medicalConditions ? `<tr><td style="padding:8px;border:1px solid #ddd;"><strong>Conditions</strong></td><td style="padding:8px;border:1px solid #ddd;">${identitySnapshot.medicalConditions}</td></tr>` : ''}
+        ${identitySnapshot.allergies ? `<tr><td style="padding:8px;border:1px solid #ddd;"><strong>Allergies</strong></td><td style="padding:8px;border:1px solid #ddd;">${identitySnapshot.allergies}</td></tr>` : ''}
+        ${identitySnapshot.medications ? `<tr><td style="padding:8px;border:1px solid #ddd;"><strong>Medications</strong></td><td style="padding:8px;border:1px solid #ddd;">${identitySnapshot.medications}</td></tr>` : ''}
+      </table>
+      ` : ''}
       <p><a href="${trackingLink}" style="background:${priorityColor};color:white;padding:10px 20px;text-decoration:none;border-radius:4px;display:inline-block;margin-top:12px;">Live Tracking Link</a></p>
       ${audioClipUrl ? `
       <p>🎤 Audio Recording</p>

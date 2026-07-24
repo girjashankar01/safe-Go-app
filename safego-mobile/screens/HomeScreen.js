@@ -13,6 +13,8 @@ import { getMe } from '../lib/api';
 import { connectSocket, getSocket } from '../lib/socket';
 import { getSettings } from '../services/SettingsService';
 import FakeCallService from '../services/FakeCallService';
+import { useSafetyIdentity } from '../components/SafetyIdentityContext';
+import { Feather } from '@expo/vector-icons';
 
 // ─── Coming Soon alert ───────────────────────────────────────────────────────
 const comingSoon = (feature) =>
@@ -53,37 +55,17 @@ function ActionButton({ label, onPress, variant = 'default', disabled = false })
 
 
 export default function HomeScreen({ navigation }) {
-
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-
+  const { profile, missingFields, status: profileStatus } = useSafetyIdentity();
+  
   // Socket connection status — 'connecting' | 'connected' | 'disconnected' | 'error'
   const [socketStatus, setSocketStatus] = useState(
     getSocket().connected ? 'connected' : 'connecting'
   );
   const [fakeCallState, setFakeCallState] = useState({ status: 'Idle', remainingDelay: 0 });
 
-  // ─── 1. Subscribe to FakeCallService
   useEffect(() => {
     const unsub = FakeCallService.subscribe((s) => setFakeCallState(s));
     return unsub;
-  }, []);
-
-  useEffect(() => {
-    getMe()
-      .then((data) => setUser(data))
-      .catch((e) => {
-        // 401 is handled globally by the Axios interceptor → auto-logout.
-        // Any other error: surface a message so the user knows.
-        if (!e.response) {
-          setError('Could not reach the server. Check your connection.');
-        } else if (e.response.status !== 401) {
-          setError('Failed to load your profile. Please try again.');
-        }
-        // 401: interceptor navigates to Login — stay silent here.
-      })
-      .finally(() => setLoading(false));
   }, []);
 
   // Connect socket here to cover the auto-login path (App.js calls getMe() then
@@ -122,7 +104,7 @@ export default function HomeScreen({ navigation }) {
   }, []);
 
   // ── Loading ────────────────────────────────────────────────────────────────
-  if (loading) {
+  if (profileStatus === 'Loading') {
     return (
       <SafeAreaView style={styles.centered}>
         <ActivityIndicator size="large" color="#16a34a" />
@@ -143,10 +125,8 @@ export default function HomeScreen({ navigation }) {
           <Text style={styles.appName}>SafeGo</Text>
           <View style={styles.avatarCircle}>
             <Text style={styles.avatarInitial}>
-              {user?.full_name
-                ? user.full_name.charAt(0).toUpperCase()
-                : user?.email
-                ? user.email.charAt(0).toUpperCase()
+              {profile?.personal?.fullName
+                ? profile.personal.fullName.charAt(0).toUpperCase()
                 : '?'}
             </Text>
           </View>
@@ -155,15 +135,51 @@ export default function HomeScreen({ navigation }) {
         {/* Welcome */}
         <View style={styles.welcomeSection}>
           <Text style={styles.welcomeGreeting}>Welcome back</Text>
-          {user?.full_name ? (
-            <Text style={styles.welcomeName}>{user.full_name}</Text>
+          {profile?.personal?.fullName ? (
+            <Text style={styles.welcomeName}>{profile.personal.fullName}</Text>
           ) : null}
-          {error ? (
-            <Text style={styles.errorText}>{error}</Text>
-          ) : (
-            <Text style={styles.welcomeEmail}>{user?.email ?? '—'}</Text>
-          )}
         </View>
+
+        {/* Safety Identity Card */}
+        <TouchableOpacity 
+          style={[styles.identityCard, missingFields.totalMissing > 0 ? styles.identityCardWarning : styles.identityCardSuccess]}
+          onPress={() => navigation.navigate('Profile')}
+        >
+          <View style={styles.identityHeader}>
+            <Feather name="shield" size={20} color={missingFields.totalMissing > 0 ? "#b45309" : "#166534"} />
+            <Text style={[styles.identityTitle, { color: missingFields.totalMissing > 0 ? "#b45309" : "#166534" }]}>
+              {missingFields.totalMissing > 0 ? "Incomplete Emergency Information" : "Emergency Information Ready"}
+            </Text>
+          </View>
+          
+          <View style={styles.identityDetails}>
+            <View style={styles.identityRow}>
+              <Text style={styles.identityLabel}>Blood Group</Text>
+              <Text style={styles.identityValue}>{profile.personal.bloodGroup || '—'}</Text>
+            </View>
+            <View style={styles.identityRow}>
+              <Text style={styles.identityLabel}>Medical Notes</Text>
+              <Text style={styles.identityValue}>{missingFields.medicalInfo ? '—' : 'Available'}</Text>
+            </View>
+            <View style={styles.identityRow}>
+              <Text style={styles.identityLabel}>Last Updated</Text>
+              <Text style={styles.identityValue}>{new Date(profile.updatedAt).toLocaleDateString()}</Text>
+            </View>
+          </View>
+
+          {missingFields.totalMissing > 0 && (
+            <View style={styles.identityMissing}>
+              <Text style={styles.identityMissingLabel}>Missing:</Text>
+              <Text style={styles.identityMissingText}>
+                {[
+                  missingFields.name && "Name",
+                  missingFields.bloodGroup && "Blood Group",
+                  missingFields.medicalInfo && "Medical Info"
+                ].filter(Boolean).join(', ')}
+              </Text>
+            </View>
+          )}
+        </TouchableOpacity>
 
         {/* Status card — live system status */}
         <SystemStatusCard socketStatus={socketStatus} />
@@ -418,5 +434,68 @@ const styles = StyleSheet.create({
     color: '#dc2626',
     fontWeight: '600',
     fontSize: 13,
+  },
+
+  // Identity Card
+  identityCard: {
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 24,
+    borderWidth: 1,
+  },
+  identityCardWarning: {
+    backgroundColor: '#fffbeb',
+    borderColor: '#fde68a',
+  },
+  identityCardSuccess: {
+    backgroundColor: '#f0fdf4',
+    borderColor: '#bbf7d0',
+  },
+  identityHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  identityTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    marginLeft: 8,
+  },
+  identityDetails: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+  },
+  identityRow: {
+    flex: 1,
+  },
+  identityLabel: {
+    fontSize: 11,
+    color: '#6b7280',
+    textTransform: 'uppercase',
+    fontWeight: '600',
+    marginBottom: 2,
+  },
+  identityValue: {
+    fontSize: 13,
+    color: '#111827',
+    fontWeight: '500',
+  },
+  identityMissing: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(0,0,0,0.05)',
+  },
+  identityMissingLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#b45309',
+    marginRight: 4,
+  },
+  identityMissingText: {
+    fontSize: 12,
+    color: '#d97706',
   },
 });

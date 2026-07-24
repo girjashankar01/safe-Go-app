@@ -14,13 +14,14 @@ import MapScreen from './screens/MapScreen';
 import TripScreen from './screens/TripScreen';
 import HistoryScreen from './screens/HistoryScreen';
 import TripDetailsScreen from './screens/TripDetailsScreen';
+import ProfileScreen from './screens/ProfileScreen';
 import SettingsScreen from './screens/SettingsScreen';
 import FakeCallScreen from './screens/FakeCallScreen';
 import EmergencyAlarmSettingsScreen from './screens/EmergencyAlarmSettingsScreen';
 
-import { getToken, removeToken } from './services/storage';
-import { getMe, setUnauthenticatedHandler } from './lib/api';
-import { restoreTrip } from './lib/tripState';
+import { setUnauthenticatedHandler } from './lib/api';
+import BootstrapService from './services/BootstrapService';
+import { SafetyIdentityProvider } from './components/SafetyIdentityContext';
 
 import CheckInModal from './components/CheckInModal';
 import PinModal from './components/PinModal';
@@ -50,27 +51,13 @@ export default function App() {
     });
   }, []);
 
-  // Auto-login: read stored token → validate with /auth/me → route accordingly.
+  // Bootstrap app state.
   useEffect(() => {
-    const bootstrap = async () => {
-      const token = await getToken();
-      await restoreTrip();
-
-      if (!token) {
-        setInitialRoute('Login');
-        return;
-      }
-
-      try {
-        await getMe(); // throws if token is invalid or expired
-        setInitialRoute('Home');
-      } catch {
-        await removeToken();
-        setInitialRoute('Login');
-      }
+    const runBootstrap = async () => {
+      const { route } = await BootstrapService.initialize();
+      setInitialRoute(route);
     };
-
-    bootstrap();
+    runBootstrap();
   }, []);
 
   if (!initialRoute) {
@@ -78,14 +65,15 @@ export default function App() {
   }
 
   return (
-    <NavigationContainer ref={navigationRef}>
-      <Stack.Navigator
-        initialRouteName={initialRoute}
-        screenOptions={{ headerShown: false }}
-      >
-        <Stack.Screen name="Login" component={LoginScreen} />
-        <Stack.Screen name="Register" component={RegisterScreen} />
-        <Stack.Screen name="Home" component={HomeScreen} />
+    <SafetyIdentityProvider>
+      <NavigationContainer ref={navigationRef}>
+        <Stack.Navigator
+          initialRouteName={initialRoute}
+          screenOptions={{ headerShown: false }}
+        >
+          <Stack.Screen name="Login" component={LoginScreen} />
+          <Stack.Screen name="Register" component={RegisterScreen} />
+          <Stack.Screen name="Home" component={HomeScreen} />
         <Stack.Screen name="EmergencyContacts" component={EmergencyContactsScreen} />
         <Stack.Screen name="CurrentLocation" component={CurrentLocationScreen} />
         <Stack.Screen name="LiveTracking" component={LiveTrackingScreen} />
@@ -94,6 +82,7 @@ export default function App() {
         <Stack.Screen name="Trip" component={TripScreen} />
         <Stack.Screen name="History" component={HistoryScreen} />
         <Stack.Screen name="TripDetails" component={TripDetailsScreen} />
+        <Stack.Screen name="Profile" component={ProfileScreen} />
         <Stack.Screen name="Settings" component={SettingsScreen} />
         <Stack.Screen name="FakeCall" component={FakeCallScreen} />
         <Stack.Screen name="EmergencyAlarmSettings" component={EmergencyAlarmSettingsScreen} />
@@ -103,5 +92,6 @@ export default function App() {
       <FakeCallModal />
       <EmergencyAlarmModal />
     </NavigationContainer>
+    </SafetyIdentityProvider>
   );
 }

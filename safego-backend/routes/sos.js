@@ -15,7 +15,7 @@ const r = Router();
 // POST /sos/trigger
 // Body: {tripId, lat, lng, triggerType, audioClipUrl?}
 r.post('/trigger', requireAuth, async (req, res) => {
-  const { tripId, lat, lng, triggerType, audioClipUrl } = req.body;
+  const { tripId, lat, lng, triggerType, audioClipUrl, identitySnapshot } = req.body;
   if (!tripId || lat == null || lng == null || !triggerType)
     return res.status(400).json({ error: 'Missing tripId, lat, lng, or triggerType' });
 
@@ -27,6 +27,7 @@ r.post('/trigger', requireAuth, async (req, res) => {
       lng,
       triggerType,
       audioClipUrl,
+      identitySnapshot,
       io: req.app.get('io'),
     });
     res.json({ success: true, sosId, priority });
