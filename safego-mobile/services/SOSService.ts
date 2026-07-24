@@ -185,8 +185,8 @@ class SOSService {
   }
 
   public cancelSOS() {
-    // Allows cancelling from Countdown or FAILED states
-    if (this.status === 'COUNTDOWN' || this.status === 'FAILED') {
+    // Allows cancelling from Countdown, FAILED, or ACTIVE states
+    if (this.status === 'COUNTDOWN' || this.status === 'FAILED' || this.status === 'ACTIVE') {
       this.clearAllTimers();
       this.status = 'CANCELLED';
       this.notify();

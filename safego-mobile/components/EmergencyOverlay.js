@@ -157,6 +157,19 @@ export default function EmergencyOverlay() {
             <Text style={styles.checklistText}>Contacts Notified</Text>
           </View>
         </View>
+
+        <TouchableOpacity 
+          style={[styles.cancelBtn, { marginTop: 32 }]} 
+          onPress={async () => {
+            const validated = await PinService.requestPinValidation(4000);
+            if (validated) {
+              SOSService.cancelSOS();
+            }
+          }}
+          activeOpacity={0.8}
+        >
+          <Text style={styles.cancelBtnText}>Resolve Emergency</Text>
+        </TouchableOpacity>
       </View>
     );
   };
