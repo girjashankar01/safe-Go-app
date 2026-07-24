@@ -168,27 +168,12 @@ export default function ActivityScreen({ navigation }) {
                 });
             }
 
-            // Manage Map Centering (prevent jitter) using animateCamera
+            // Center map only once on first fix. Native map engine handles smooth tracking thereafter.
             if (!lastMapCenter.current) {
-              // Initial center
               lastMapCenter.current = { latitude: loc.latitude, longitude: loc.longitude };
               mapRef.current?.animateCamera({
                 center: { latitude: loc.latitude, longitude: loc.longitude }
               }, { duration: 1000 });
-            } else {
-              // Only recenter if moved more than 20 meters
-              const dist = getDistanceFromLatLonInMeters(
-                lastMapCenter.current.latitude,
-                lastMapCenter.current.longitude,
-                loc.latitude,
-                loc.longitude
-              );
-              if (dist > 20) {
-                lastMapCenter.current = { latitude: loc.latitude, longitude: loc.longitude };
-                mapRef.current?.animateCamera({
-                  center: { latitude: loc.latitude, longitude: loc.longitude }
-                }, { duration: 1000 });
-              }
             }
           }
         }
@@ -244,11 +229,11 @@ export default function ActivityScreen({ navigation }) {
                   pitchEnabled={false}
                   rotateEnabled={false}
                   showsUserLocation={true}
+                  followsUserLocation={true}
                   showsMyLocationButton={false}
                   showsCompass={false}
                   toolbarEnabled={false}
                 >
-                  {coords && <Marker coordinate={coords} pinColor={colors.primary} />}
                 </MapView>
                 
                 {!coords && (
