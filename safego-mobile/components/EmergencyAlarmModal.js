@@ -77,9 +77,6 @@ export default function EmergencyAlarmModal() {
     }
   }, [alarmState.status, flashEnabled, reduceMotion]);
 
-  const visible = alarmState.status !== 'Idle' && !alarmState.suppressModal;
-  if (!visible) return null;
-
   const backgroundStyle = useAnimatedStyle(() => ({
     backgroundColor: interpolateColor(
       flashAnim.value,
@@ -91,6 +88,9 @@ export default function EmergencyAlarmModal() {
   const cardStyle = useAnimatedStyle(() => ({
     transform: [{ scale: pulseScale.value }]
   }));
+
+  const visible = alarmState.status !== 'Idle' && !alarmState.suppressModal;
+  if (!visible) return null;
 
   return (
     <Modal transparent animationType="fade" visible={visible}>
