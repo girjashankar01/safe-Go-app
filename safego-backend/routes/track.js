@@ -13,7 +13,7 @@ export default async function trackHandler(req, res) {
 
   const { data: trip, error } = await db
     .from('trips')
-    .select('status, destination_lat, destination_lng, destination_name')
+    .select('*, users(name, phone, avatar_url, blood_group, medical_conditions, allergies, medications)')
     .eq('id', tripId)
     .single();
 
@@ -26,14 +26,35 @@ export default async function trackHandler(req, res) {
     .order('recorded_at', { ascending: false })
     .limit(1)
     .maybeSingle();
+    
+  const { data: sosEvent } = await db
+    .from('sos_events')
+    .select('*')
+    .eq('trip_id', tripId)
+    .order('fired_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
 
   res.json({
-    status: trip.status,
-    destination: {
-      lat: trip.destination_lat,
-      lng: trip.destination_lng,
-      name: trip.destination_name,
+    trip,
+    users: {
+      name: trip.users.name,
+      phone: trip.users.phone,
+      avatar_url: trip.users.avatar_url
     },
-    lastLocation: lastPoint || null,
+    identity: {
+      personal: { bloodGroup: trip.users.blood_group },
+      medical: { 
+        medicalConditions: trip.users.medical_conditions,
+        allergies: trip.users.allergies,
+        medications: trip.users.medications
+      }
+    },
+    location: lastPoint || { lat: trip.destination_lat, lng: trip.destination_lng },
+    sosEvent: sosEvent ? {
+      triggerType: sosEvent.trigger_type,
+      priorityLevel: sosEvent.priority_level,
+      audioClipUrl: sosEvent.audio_clip_url
+    } : null
   });
 }

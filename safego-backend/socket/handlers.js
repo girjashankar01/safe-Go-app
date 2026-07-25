@@ -92,6 +92,9 @@ export default function setupSocket(io) {
     // SOS fired client-side via socket (in addition to the REST /sos/trigger path)
     socket.on('sos:broadcast', (sosData) => {
       io.to('police-room').emit('sos:alert', sosData);
+      if (sosData.tripId) {
+        io.to(`trip-${sosData.tripId}`).emit('sos:alert', sosData);
+      }
     });
 
     socket.on('disconnect', () => {

@@ -144,8 +144,8 @@ export default function TripScreen({ navigation }) {
           const socket = getSocket();
           if (socket && socket.connected) {
             const payload = {
-              tripId: trip.tripId,
-              userId: trip.userId,
+              tripId: trip.id || trip.tripId,
+              userId: trip.user_id || trip.userId,
               lat,
               lng,
               accuracy,
