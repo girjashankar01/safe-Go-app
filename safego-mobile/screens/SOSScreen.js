@@ -13,7 +13,7 @@ import {
 import { Feather } from '@expo/vector-icons';
 import SOSService from '../services/SOSService';
 import PinService from '../services/PinService';
-import { useTheme } from '../theme';
+import { useTheme, typography } from '../theme';
 
 // ─── Screen ───────────────────────────────────────────────────────────────────
 
@@ -234,15 +234,14 @@ const styles = StyleSheet.create({
     paddingRight: 12,
   },
   backBtnText: {
-    fontSize: 15,
+    ...typography.subhead,
     color: '#4F46E5',
     fontWeight: '600',
   },
   headerTitle: {
     flex: 1,
     textAlign: 'center',
-    fontSize: 17,
-    fontWeight: '700',
+    ...typography.headline,
     color: '#111827',
   },
   headerSpacer: {
@@ -278,17 +277,16 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   warningTitle: {
-    fontSize: 20,
+    ...typography.title3,
     fontWeight: '800',
     color: '#DC2626', // M3 Error
     marginBottom: 10,
     textAlign: 'center',
   },
   warningBody: {
-    fontSize: 15,
+    ...typography.subhead,
     color: '#DC2626', // M3 Error
     textAlign: 'center',
-    lineHeight: 22,
   },
 
   // Success banner
@@ -303,7 +301,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   successText: {
-    fontSize: 15,
+    ...typography.subhead,
     fontWeight: '700',
     color: '#4D9375', // M3 Success
     textAlign: 'center',
@@ -321,11 +319,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   errorText: {
-    fontSize: 14,
+    ...typography.subhead,
     fontWeight: '600',
     color: '#DC2626', // M3 Error
     textAlign: 'center',
-    lineHeight: 20,
   },
 
   // SOS button
@@ -354,10 +351,9 @@ const styles = StyleSheet.create({
 
   // Disclaimer
   disclaimer: {
-    fontSize: 12,
+    ...typography.caption1,
     color: '#9ca3af',
     textAlign: 'center',
-    lineHeight: 17,
   },
 
   // Countdown Overlay
@@ -381,14 +377,14 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   overlayTitle: {
-    fontSize: 28,
+    ...typography.title1,
     fontWeight: '800',
     color: '#111827',
     marginBottom: 8,
     textAlign: 'center',
   },
   overlaySubtitle: {
-    fontSize: 16,
+    ...typography.subhead,
     color: '#6b7280',
     marginBottom: 20,
     textAlign: 'center',
@@ -401,10 +397,9 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   overlayDisclaimer: {
-    fontSize: 14,
+    ...typography.footnote,
     color: '#4b5563',
     textAlign: 'center',
-    lineHeight: 20,
     marginBottom: 32,
   },
   cancelBtn: {
@@ -424,7 +419,7 @@ const styles = StyleSheet.create({
   },
   cancelBtnText: {
     color: '#111827',
-    fontSize: 18,
+    ...typography.callout,
     fontWeight: '700',
   },
 });

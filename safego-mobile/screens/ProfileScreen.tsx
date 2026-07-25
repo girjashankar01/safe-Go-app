@@ -13,6 +13,7 @@ import {
   Modal
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
+import { useTheme, typography } from '../theme';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Picker } from '@react-native-picker/picker';
 import { ActionSheetIOS } from 'react-native';
@@ -359,10 +360,10 @@ const styles = StyleSheet.create({
     borderBottomColor: '#e5e7eb',
   },
   backBtn: { paddingVertical: 4, paddingRight: 12 },
-  backBtnText: { fontSize: 15, color: '#111827', fontWeight: '600' },
-  headerTitle: { fontSize: 17, fontWeight: '700', color: '#111827' },
+  backBtnText: { ...typography.callout, color: '#111827' },
+  headerTitle: { ...typography.headline, color: '#111827' },
   saveBtn: { paddingVertical: 4, paddingLeft: 12 },
-  saveBtnText: { fontSize: 15, color: '#16a34a', fontWeight: '600' },
+  saveBtnText: { ...typography.callout, color: '#16a34a' },
   disabledText: { color: '#9ca3af' },
   
   scroll: { padding: 16, paddingBottom: 40 },
@@ -376,8 +377,8 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   checklistTitle: {
-    fontSize: 14,
-    fontWeight: '700',
+    ...typography.subhead,
+    fontWeight: '600',
     color: '#111827',
     marginBottom: 12,
   },
@@ -390,7 +391,7 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   checklistText: {
-    fontSize: 14,
+    ...typography.subhead,
     color: '#374151',
   },
   checklistMissing: {
@@ -399,8 +400,7 @@ const styles = StyleSheet.create({
   },
 
   sectionTitle: {
-    fontSize: 13,
-    fontWeight: '700',
+    ...typography.footnote,
     color: '#6b7280',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
@@ -409,7 +409,7 @@ const styles = StyleSheet.create({
     marginLeft: 4,
   },
   sectionDesc: {
-    fontSize: 13,
+    ...typography.footnote,
     color: '#6b7280',
     marginBottom: 8,
     marginLeft: 4,
@@ -448,9 +448,8 @@ const styles = StyleSheet.create({
   divider: { height: 1, backgroundColor: '#f3f4f6', marginLeft: 16 },
   
   label: { 
-    fontSize: 15, 
+    ...typography.subhead,
     color: '#111827', 
-    fontWeight: '500',
     width: 130,
   },
   required: {
@@ -458,7 +457,7 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
-    fontSize: 15,
+    ...typography.body,
     color: '#111827',
     paddingVertical: 4,
     textAlign: 'right',
@@ -469,15 +468,15 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
   },
   inputText: {
-    fontSize: 15,
+    ...typography.body,
     color: '#111827',
   },
   placeholderText: {
-    fontSize: 15,
+    ...typography.body,
     color: '#9ca3af',
   },
   textArea: {
-    fontSize: 16,
+    ...typography.body,
     color: '#1f2937',
     minHeight: 35,
     marginTop: 8,
@@ -497,14 +496,12 @@ const styles = StyleSheet.create({
     borderBottomColor: '#e5e7eb',
   },
   previewHeaderTitle: {
-    fontSize: 18,
-    fontWeight: '600',
+    ...typography.headline,
     color: '#111827',
   },
   previewCloseBtn: {
-    fontSize: 16,
+    ...typography.callout,
     color: '#16a34a',
-    fontWeight: '500',
   },
   previewScroll: {
     flex: 1,
@@ -520,7 +517,7 @@ const styles = StyleSheet.create({
   previewNoticeText: {
     flex: 1,
     marginLeft: 12,
-    fontSize: 14,
+    ...typography.subhead,
     color: '#0369a1',
     lineHeight: 20,
   },
@@ -533,7 +530,7 @@ const styles = StyleSheet.create({
     borderColor: '#e5e7eb',
   },
   previewLabel: {
-    fontSize: 12,
+    ...typography.caption1,
     color: '#6b7280',
     textTransform: 'uppercase',
     fontWeight: '600',
@@ -541,7 +538,7 @@ const styles = StyleSheet.create({
     marginTop: 16,
   },
   previewValue: {
-    fontSize: 16,
+    ...typography.body,
     color: '#111827',
   },
   previewBtn: {
@@ -560,9 +557,8 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   previewBtnText: {
-    fontSize: 16,
+    ...typography.callout,
     color: '#16a34a',
-    fontWeight: '600',
   },
   navRow: {
     flexDirection: 'row',
@@ -572,12 +568,11 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
   },
   navLabel: {
-    fontSize: 15,
+    ...typography.subhead,
     color: '#111827',
-    fontWeight: '500',
   },
   navDesc: {
-    fontSize: 13,
+    ...typography.footnote,
     color: '#6b7280',
     marginTop: 2,
   }

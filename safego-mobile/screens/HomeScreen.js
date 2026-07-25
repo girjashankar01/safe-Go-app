@@ -92,10 +92,10 @@ function HoldToActivateButton({ onActivate }) {
             elevation: 4
           }
         ]}>
-          <Text style={[styles.holdText, { fontSize: typography.sizes.display }]}>SOS</Text>
+          <Text style={[styles.holdText]}>SOS</Text>
         </View>
       </TouchableOpacity>
-      <Text style={[styles.holdSubtext, { color: colors.secondaryText, fontSize: typography.sizes.small }]}>
+      <Text style={[styles.holdSubtext, { color: colors.secondaryText }]}>
         Press & Hold{'\n'}2 seconds
       </Text>
     </View>
@@ -189,7 +189,7 @@ export default function HomeScreen({ navigation }) {
     return (
       <View style={[styles.centered, { backgroundColor: colors.background }]}>
         <ActivityIndicator size="large" color={colors.primary} />
-        <Text style={[styles.loadingText, { color: colors.secondaryText }]}>Loading your profile…</Text>
+        <Text style={[styles.loadingText, { color: colors.secondaryText }, typography.subhead]}>Loading your profile…</Text>
       </View>
     );
   }
@@ -274,7 +274,7 @@ export default function HomeScreen({ navigation }) {
                 label="Cancel" 
                 variant="danger" 
                 style={styles.cancelCallBtn} 
-                textStyle={{ fontSize: typography.sizes.small }} 
+                textStyle={{ ...typography.subhead, color: 'white' }} 
                 onPress={() => FakeCallService.cancel()} 
               />
             </View>
@@ -399,7 +399,6 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     marginTop: spacing.md,
-    fontSize: typography.sizes.small,
   },
   header: {
     flexDirection: 'row',
@@ -420,13 +419,11 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   appName: {
-    fontSize: typography.sizes.title,
-    fontWeight: typography.weights.bold, // kept bold
+    ...typography.title1,
     letterSpacing: -0.5,
   },
   welcomeGreeting: {
-    fontSize: typography.sizes.small,
-    fontWeight: typography.weights.regular, // reduced
+    ...typography.subhead,
     marginTop: 2,
   },
   settingsBtn: {
@@ -445,8 +442,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   avatarInitial: {
-    fontSize: typography.sizes.body,
-    fontWeight: typography.weights.bold,
+    ...typography.headline,
   },
   identityCard: {
     marginBottom: spacing.lg, // reduced
@@ -458,8 +454,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   identityTitle: {
-    fontSize: typography.sizes.body,
-    fontWeight: typography.weights.medium, // reduced
+    ...typography.headline,
     marginLeft: spacing.sm,
   },
   identityDetails: {
@@ -471,13 +466,11 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
   },
   identityLabel: {
-    fontSize: typography.sizes.small,
-    fontWeight: typography.weights.regular, // reduced
+    ...typography.footnote,
     marginBottom: spacing.xs,
   },
   identityValue: {
-    fontSize: typography.sizes.body,
-    fontWeight: typography.weights.semibold, // medium -> semibold
+    ...typography.subhead,
   },
   holdContainer: {
     alignItems: 'center',
@@ -498,18 +491,18 @@ const styles = StyleSheet.create({
   },
   holdText: {
     color: '#fff',
-    fontWeight: '900',
+    fontSize: 48,
+    fontWeight: 'bold',
     letterSpacing: 2,
   },
   holdSubtext: {
+    ...typography.subhead,
     marginTop: spacing.md,
     textAlign: 'center',
-    fontWeight: typography.weights.regular, // reduced
     lineHeight: 20,
   },
   sectionTitle: {
-    fontSize: typography.sizes.small,
-    fontWeight: typography.weights.medium, // reduced
+    ...typography.footnote,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
     marginBottom: spacing.md,
@@ -530,13 +523,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   scheduledCallTitle: {
-    fontSize: typography.sizes.body,
-    fontWeight: typography.weights.bold,
+    ...typography.headline,
     textAlign: 'center',
   },
   scheduledCallSubtitle: {
-    fontSize: typography.sizes.small,
-    fontWeight: typography.weights.semibold,
+    ...typography.subhead,
     marginTop: spacing.xs,
     marginBottom: spacing.md,
     textAlign: 'center',
@@ -557,8 +548,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   contactsTitle: {
-    fontSize: typography.sizes.body,
-    fontWeight: typography.weights.medium, // reduced
+    ...typography.headline,
     marginBottom: spacing.sm,
   },
   initialsContainer: {
@@ -574,8 +564,8 @@ const styles = StyleSheet.create({
     borderWidth: 2,
   },
   initialText: {
-    fontSize: typography.sizes.small,
-    fontWeight: typography.weights.bold,
+    ...typography.subhead,
+    fontWeight: '600',
   },
   historyCard: {
     marginBottom: spacing.lg,
@@ -587,8 +577,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   historyTitle: {
-    fontSize: typography.sizes.body,
-    fontWeight: typography.weights.medium,
+    ...typography.headline,
   },
   historyBody: {
     marginBottom: spacing.xs,
@@ -598,16 +587,13 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   historyLabel: {
-    fontSize: typography.sizes.body,
-    fontWeight: typography.weights.regular,
+    ...typography.body,
   },
   historyValue: {
-    fontSize: typography.sizes.body,
-    fontWeight: typography.weights.semibold,
+    ...typography.body,
   },
   historyEmpty: {
-    fontSize: typography.sizes.body,
-    fontWeight: typography.weights.regular,
+    ...typography.body,
   },
   resourcesCard: {
     marginBottom: spacing.lg,
@@ -619,12 +605,10 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   resourcesTitle: {
-    fontSize: typography.sizes.body,
-    fontWeight: typography.weights.medium, // reduced
+    ...typography.headline,
   },
   resourcesLocation: {
-    fontSize: typography.sizes.small,
-    fontWeight: typography.weights.regular, // reduced
+    ...typography.footnote,
   },
   resourcesBody: {
     marginBottom: spacing.md,
@@ -635,20 +619,17 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xs,
   },
   resourcesLabel: {
-    fontSize: typography.sizes.body,
-    fontWeight: typography.weights.regular, // reduced
+    ...typography.body,
   },
   resourcesValue: {
-    fontSize: typography.sizes.body,
-    fontWeight: typography.weights.semibold, // semi-bold
+    ...typography.body,
   },
   resourcesAction: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   resourcesActionText: {
-    fontSize: typography.sizes.body,
-    fontWeight: typography.weights.medium,
+    ...typography.subhead,
     marginRight: spacing.xs,
   },
   tripHistoryCard: {
@@ -661,7 +642,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   tripHistoryTitle: {
-    fontSize: typography.sizes.body,
-    fontWeight: typography.weights.medium,
+    ...typography.headline,
   }
 });

@@ -20,7 +20,7 @@ import { clearTrip } from '../lib/tripState';
 import PinService from '../services/PinService';
 import AudioPlaybackService from '../services/AudioPlaybackService';
 import { Modal, TextInput, ActivityIndicator } from 'react-native';
-import { useTheme } from '../theme';
+import { useTheme, typography } from '../theme';
 
 // A simple reusable selector component since we don't have a native picker installed
 function SegmentedControl({ options, selectedValue, onValueChange, disabled = false }) {
@@ -503,13 +503,12 @@ const styles = StyleSheet.create({
     borderBottomColor: '#e5e7eb',
   },
   backBtn: { paddingVertical: 4, paddingRight: 12 },
-  backBtnText: { fontSize: 15, color: '#4F46E5', fontWeight: '600' },
-  headerTitle: { flex: 1, textAlign: 'center', fontSize: 17, fontWeight: '700', color: '#111827' },
+  backBtnText: { ...typography.callout, color: '#4F46E5' },
+  headerTitle: { flex: 1, textAlign: 'center', ...typography.headline, color: '#111827' },
   headerSpacer: { width: 60 },
   scroll: { padding: 16, paddingBottom: 40 },
   sectionTitle: {
-    fontSize: 13,
-    fontWeight: '700',
+    ...typography.footnote,
     color: '#6b7280',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
@@ -536,17 +535,17 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
   },
   divider: { height: 1, backgroundColor: '#f3f4f6', marginLeft: 16 },
-  label: { fontSize: 15, color: '#111827', fontWeight: '500' },
-  statusText: { fontSize: 13, color: '#6b7280', marginTop: 2 },
-  subText: { fontSize: 14, color: '#6b7280' },
-  logoutText: { fontSize: 15, color: '#dc2626', fontWeight: '600' },
+  label: { ...typography.body, color: '#111827' },
+  statusText: { ...typography.footnote, color: '#6b7280', marginTop: 2 },
+  subText: { ...typography.subhead, color: '#6b7280' },
+  logoutText: { ...typography.callout, color: '#dc2626' },
   actionBtn: {
     backgroundColor: '#f3f4f6',
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 6,
   },
-  actionBtnText: { fontSize: 13, fontWeight: '600', color: '#111827' },
+  actionBtnText: { ...typography.footnote, color: '#111827' },
   
   // Segmented Control
   segmentContainer: {
@@ -571,8 +570,7 @@ const styles = StyleSheet.create({
     elevation: 1,
   },
   segmentText: {
-    fontSize: 13,
-    fontWeight: '500',
+    ...typography.subhead,
     color: '#6b7280',
   },
   segmentTextActive: {
@@ -600,13 +598,12 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   modalTitle: {
-    fontSize: 20,
-    fontWeight: '700',
+    ...typography.title3,
     color: '#111827',
     marginBottom: 8,
   },
   modalBody: {
-    fontSize: 15,
+    ...typography.subhead,
     color: '#6b7280',
     textAlign: 'center',
     marginBottom: 24,
@@ -624,9 +621,9 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   modalError: {
+    ...typography.footnote,
     color: '#dc2626',
     marginBottom: 16,
-    fontWeight: '500',
   },
   modalActions: {
     flexDirection: 'row',
@@ -643,9 +640,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#f3f4f6',
   },
   modalCancelBtnText: {
+    ...typography.callout,
     color: '#4b5563',
-    fontWeight: '600',
-    fontSize: 16,
   },
   modalSubmitBtn: {
     backgroundColor: '#16a34a',
@@ -654,8 +650,7 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   modalSubmitBtnText: {
+    ...typography.callout,
     color: '#fff',
-    fontWeight: '700',
-    fontSize: 16,
   },
 });

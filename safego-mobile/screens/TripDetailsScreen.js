@@ -9,6 +9,7 @@ import {
   View,
 } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
+import { useTheme, typography } from '../theme';
 import { getTrip } from '../lib/api';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -256,15 +257,13 @@ const styles = StyleSheet.create({
     paddingRight: 12,
   },
   backBtnText: {
-    fontSize: 15,
+    ...typography.callout,
     color: '#4F46E5',
-    fontWeight: '600',
   },
   headerTitle: {
     flex: 1,
     textAlign: 'center',
-    fontSize: 17,
-    fontWeight: '700',
+    ...typography.headline,
     color: '#111827',
   },
   headerSpacer: {
@@ -278,13 +277,11 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     marginTop: 12,
-    fontSize: 15,
+    ...typography.subhead,
     color: '#6b7280',
-    fontWeight: '500',
   },
   errorTitle: {
-    fontSize: 16,
-    fontWeight: '600',
+    ...typography.subhead,
     color: '#111827',
     marginBottom: 16,
   },
@@ -296,8 +293,7 @@ const styles = StyleSheet.create({
   },
   retryBtnText: {
     color: '#fff',
-    fontSize: 14,
-    fontWeight: '700',
+    ...typography.subhead,
   },
   content: {
     padding: 20,
@@ -326,19 +322,17 @@ const styles = StyleSheet.create({
     backgroundColor: '#f3f4f6',
   },
   label: {
-    fontSize: 14,
-    fontWeight: '500',
+    ...typography.footnote,
     color: '#6b7280',
     flex: 1,
   },
   value: {
-    fontSize: 15,
-    fontWeight: '600',
+    ...typography.subhead,
     color: '#111827',
     textAlign: 'right',
   },
   subValue: {
-    fontSize: 13,
+    ...typography.caption1,
     color: '#6b7280',
     textAlign: 'right',
     marginTop: 2,
@@ -347,10 +341,9 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
   },
   valueMono: {
-    fontSize: 14,
+    ...typography.subhead,
     fontFamily: 'Courier',
     color: '#374151',
-    fontWeight: '600',
   },
   copyRow: {
     flexDirection: 'row',
@@ -364,7 +357,7 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
   copyBtnText: {
-    fontSize: 12,
+    ...typography.caption1,
     fontWeight: '600',
     color: '#16a34a',
   },
@@ -383,8 +376,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fee2e2',
   },
   badgeText: {
-    fontSize: 12,
-    fontWeight: '700',
+    ...typography.caption1,
     textTransform: 'uppercase',
   },
   badgeTextCompleted: {

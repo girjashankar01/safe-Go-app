@@ -9,6 +9,7 @@ import {
   View,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
+import { useTheme, typography } from '../theme';
 import { getTrips } from '../lib/api';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -211,15 +212,13 @@ const styles = StyleSheet.create({
     paddingRight: 12,
   },
   backBtnText: {
-    fontSize: 15,
+    ...typography.callout,
     color: '#4F46E5',
-    fontWeight: '600',
   },
   headerTitle: {
     flex: 1,
     textAlign: 'center',
-    fontSize: 17,
-    fontWeight: '700',
+    ...typography.headline,
     color: '#111827',
   },
   headerSpacer: {
@@ -242,9 +241,8 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     marginTop: 12,
-    fontSize: 15,
+    ...typography.subhead,
     color: '#6b7280',
-    fontWeight: '500',
   },
   centerContainer: {
     flex: 1,
@@ -258,17 +256,15 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   emptyTitle: {
-    fontSize: 18,
-    fontWeight: '700',
+    ...typography.headline,
     color: '#111827',
     marginBottom: 8,
     textAlign: 'center',
   },
   emptySubtitle: {
-    fontSize: 14,
+    ...typography.subhead,
     color: '#6b7280',
     textAlign: 'center',
-    lineHeight: 20,
   },
   retryBtn: {
     marginTop: 16,
@@ -279,8 +275,7 @@ const styles = StyleSheet.create({
   },
   retryBtnText: {
     color: '#fff',
-    fontSize: 14,
-    fontWeight: '700',
+    ...typography.subhead,
   },
 
   // Card
@@ -309,8 +304,8 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 16,
   },
   dateText: {
-    fontSize: 15,
-    fontWeight: '700',
+    ...typography.callout,
+    fontWeight: '600',
     color: '#1f2937',
   },
   
@@ -330,8 +325,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fee2e2',
   },
   badgeText: {
-    fontSize: 12,
-    fontWeight: '700',
+    ...typography.caption1,
     textTransform: 'uppercase',
   },
   badgeTextCompleted: {
@@ -356,14 +350,12 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   timeLabel: {
-    fontSize: 13,
+    ...typography.footnote,
     color: '#6b7280',
-    fontWeight: '500',
   },
   timeValue: {
-    fontSize: 14,
+    ...typography.subhead,
     color: '#111827',
-    fontWeight: '600',
   },
   divider: {
     height: 1,
