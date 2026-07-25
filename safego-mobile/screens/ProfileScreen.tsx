@@ -348,7 +348,7 @@ export default function ProfileScreen({ navigation }: any) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f9fafb' },
+  container: { flex: 1, backgroundColor: '#fff' },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -366,7 +366,7 @@ const styles = StyleSheet.create({
   saveBtnText: { ...typography.callout, color: '#16a34a' },
   disabledText: { color: '#9ca3af' },
   
-  scroll: { padding: 16, paddingBottom: 40 },
+  scroll: { padding: 16, paddingBottom: 40, backgroundColor: '#f9fafb', flexGrow: 1 },
   
   checklistCard: {
     backgroundColor: '#fff',

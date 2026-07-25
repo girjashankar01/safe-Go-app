@@ -1,5 +1,6 @@
 import React from 'react';
-import { SafeAreaView, StyleSheet, ViewStyle, ScrollView } from 'react-native';
+import { StyleSheet, ViewStyle, ScrollView } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme, spacing } from '../../theme';
 
 interface ScreenContainerProps {
@@ -23,7 +24,7 @@ export const ScreenContainer: React.FC<ScreenContainerProps> = ({
 
   if (scrollable) {
     return (
-      <SafeAreaView style={styles.safeArea}>
+      <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
         <ScrollView 
           style={containerStyle}
           contentContainerStyle={styles.scrollContent}
@@ -37,9 +38,9 @@ export const ScreenContainer: React.FC<ScreenContainerProps> = ({
 
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
-      <SafeAreaView style={containerStyle}>
+      <View style={containerStyle}>
         {children}
-      </SafeAreaView>
+      </View>
     </SafeAreaView>
   );
 };

@@ -216,7 +216,7 @@ export default function SOSScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f9fafb',
+    backgroundColor: '#fff', // Match header to make notch seamless
   },
 
   // Header
@@ -254,6 +254,8 @@ const styles = StyleSheet.create({
     paddingTop: 32,
     paddingBottom: 48,
     alignItems: 'center',
+    backgroundColor: '#f9fafb',
+    flexGrow: 1,
   },
 
   // Warning card

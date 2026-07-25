@@ -194,7 +194,7 @@ export default function HistoryScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f9fafb',
+    backgroundColor: '#fff', // Match header
   },
 
   // Header
@@ -231,6 +231,7 @@ const styles = StyleSheet.create({
     paddingTop: 20,
     paddingBottom: 40,
     flexGrow: 1,
+    backgroundColor: '#f9fafb',
   },
 
   // Center States (Empty / Error / Loading)

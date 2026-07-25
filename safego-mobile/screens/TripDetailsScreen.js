@@ -241,7 +241,7 @@ export default function TripDetailsScreen({ route, navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f9fafb',
+    backgroundColor: '#fff', // Match header
   },
   header: {
     flexDirection: 'row',
@@ -297,6 +297,8 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: 20,
+    backgroundColor: '#f9fafb',
+    flexGrow: 1,
   },
   card: {
     backgroundColor: '#fff',

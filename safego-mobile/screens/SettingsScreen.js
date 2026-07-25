@@ -492,7 +492,7 @@ export default function SettingsScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f9fafb' },
+  container: { flex: 1, backgroundColor: '#fff' },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -506,7 +506,7 @@ const styles = StyleSheet.create({
   backBtnText: { ...typography.callout, color: '#0F766E' },
   headerTitle: { flex: 1, textAlign: 'center', ...typography.headline, color: '#111827' },
   headerSpacer: { width: 60 },
-  scroll: { padding: 16, paddingBottom: 40 },
+  scroll: { padding: 16, paddingBottom: 40, backgroundColor: '#f9fafb', flexGrow: 1 },
   sectionTitle: {
     ...typography.footnote,
     color: '#6b7280',
