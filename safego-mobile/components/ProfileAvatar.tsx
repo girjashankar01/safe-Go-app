@@ -12,6 +12,7 @@ interface ProfileAvatarProps {
 
 export default function ProfileAvatar({ avatarUrl, fullName, onChangePhoto }: ProfileAvatarProps) {
   const [loading, setLoading] = useState(false);
+  const [localUri, setLocalUri] = useState<string | null>(null);
 
   const getInitials = (name: string) => {
     if (!name) return '?';
@@ -33,18 +34,29 @@ export default function ProfileAvatar({ avatarUrl, fullName, onChangePhoto }: Pr
         allowsEditing: true,
         aspect: [1, 1],
         quality: 0.8,
+        base64: true,
       });
 
       if (!result.canceled && result.assets && result.assets.length > 0) {
-        setLoading(true);
         const uri = result.assets[0].uri;
-        const uploadedUrl = await ProfileService.uploadAvatar(uri);
+        setLocalUri(uri); // Optimistic UI update!
+        setLoading(true);
+        
+        const base64 = result.assets[0].base64 || undefined;
+        const uploadedUrl = await ProfileService.uploadAvatar(uri, base64);
+        
         if (uploadedUrl && onChangePhoto) {
           onChangePhoto(uploadedUrl);
+          setLocalUri(null); // Clear local override now that we have remote URL
+        } else {
+          // Revert on failure
+          setLocalUri(null);
+          Alert.alert('Upload Failed', 'Could not upload your photo to the server.');
         }
       }
     } catch (error) {
       console.error('Error picking image:', error);
+      setLocalUri(null);
       Alert.alert('Error', 'Failed to update profile photo.');
     } finally {
       setLoading(false);
@@ -76,15 +88,17 @@ export default function ProfileAvatar({ avatarUrl, fullName, onChangePhoto }: Pr
   return (
     <View style={styles.container}>
       <View style={styles.avatarWrapper}>
-        {loading ? (
-          <View style={[styles.avatarCircle, styles.loadingCircle]}>
-            <ActivityIndicator color="#16a34a" size="large" />
-          </View>
-        ) : avatarUrl ? (
-          <Image source={{ uri: avatarUrl }} style={styles.avatarCircle} />
+        {localUri || avatarUrl ? (
+          <Image source={{ uri: localUri || avatarUrl }} style={styles.avatarCircle} />
         ) : (
           <View style={[styles.avatarCircle, styles.initialsCircle]}>
             <Text style={styles.initialsText}>{getInitials(fullName)}</Text>
+          </View>
+        )}
+        
+        {loading && (
+          <View style={[styles.avatarCircle, styles.loadingOverlay]}>
+            <ActivityIndicator color="#ffffff" size="large" />
           </View>
         )}
         
@@ -130,11 +144,11 @@ const styles = StyleSheet.create({
     borderRadius: 50,
     backgroundColor: '#f3f4f6',
   },
-  loadingCircle: {
+  loadingOverlay: {
+    position: 'absolute',
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
+    backgroundColor: 'rgba(0,0,0,0.3)',
   },
   initialsCircle: {
     justifyContent: 'center',

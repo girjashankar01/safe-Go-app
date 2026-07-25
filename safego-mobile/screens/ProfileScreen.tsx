@@ -241,7 +241,7 @@ export default function ProfileScreen({ navigation }: any) {
           <Text style={styles.sectionDesc}>This information helps emergency responders.</Text>
           <View style={styles.card}>
             <View style={styles.textAreaRow}>
-              <Text style={styles.label}>Medical Conditions</Text>
+              <Text style={[styles.label, { width: '100%' }]}>Medical Conditions</Text>
               <TextInput
                 style={styles.textArea}
                 value={medical?.medicalConditions || ''}
@@ -255,7 +255,7 @@ export default function ProfileScreen({ navigation }: any) {
             <View style={styles.divider} />
 
             <View style={styles.textAreaRow}>
-              <Text style={styles.label}>Allergies</Text>
+              <Text style={[styles.label, { width: '100%' }]}>Allergies</Text>
               <TextInput
                 style={styles.textArea}
                 value={medical?.allergies || ''}
@@ -269,7 +269,7 @@ export default function ProfileScreen({ navigation }: any) {
             <View style={styles.divider} />
 
             <View style={styles.textAreaRow}>
-              <Text style={styles.label}>Current Medications</Text>
+              <Text style={[styles.label, { width: '100%' }]}>Current Medications</Text>
               <TextInput
                 style={styles.textArea}
                 value={medical?.medications || ''}
@@ -479,7 +479,7 @@ const styles = StyleSheet.create({
   textArea: {
     fontSize: 16,
     color: '#1f2937',
-    minHeight: 60,
+    minHeight: 35,
     marginTop: 8,
     textAlignVertical: 'top',
   },

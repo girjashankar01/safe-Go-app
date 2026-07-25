@@ -14,6 +14,7 @@ import {
 import { register } from '../lib/api';
 import { saveToken } from '../services/storage';
 import { connectSocket } from '../lib/socket';
+import ProfileService from '../services/ProfileService';
 
 function validate({ name, email, phone, password }) {
   if (!name.trim()) return 'Full name is required.';
@@ -50,8 +51,9 @@ export default function RegisterScreen({ navigation }) {
         password,
       });
       await saveToken(token);
+      await ProfileService.load();
       connectSocket(); // establish socket connection right after registration
-      navigation.reset({ index: 0, routes: [{ name: 'Home' }] });
+      navigation.reset({ index: 0, routes: [{ name: 'MainTabs' }] });
     } catch (e) {
       const message = e.response?.data?.error ?? 'Registration failed. Check your connection and try again.';
       setError(message);

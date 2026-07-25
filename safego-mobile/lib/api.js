@@ -48,6 +48,12 @@ export const login = (email, password) =>
 export const getMe = () =>
   api.get('/auth/me').then((res) => res.data);
 
+export const uploadAvatar = (base64, fileExt) =>
+  api.post('/auth/avatar', { base64, fileExt }).then((res) => res.data);
+
+export const updateProfile = (data) =>
+  api.post('/auth/profile', data).then((res) => res.data);
+
 // ─── Emergency Services Directory ─────────────────────────────────────────────
 
 export const fetchEmergencyServices = (country, state, city) => {

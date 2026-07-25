@@ -1,6 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { supabase } from '../lib/supabase';
-import { getMe } from '../lib/api';
+import { getMe, uploadAvatar, updateProfile } from '../lib/api';
 import NetInfo from '@react-native-community/netinfo';
 
 const CACHE_KEY = 'safego_user_profile';
@@ -145,50 +144,29 @@ class ProfileService {
 
     try {
       this.setStatus('Syncing');
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
+      
+      const me = await getMe();
+      if (!me) {
         this.setStatus('Error');
         return;
       }
 
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('user_id', user.id)
-        .maybeSingle();
-
-      if (error && error.code !== 'PGRST116') {
-        console.error('[ProfileService] Supabase fetch error:', error.message);
-        this.setStatus('Error');
-        return;
-      }
-
-      let fetchedProfile: UserProfile;
-
-      if (data) {
-        fetchedProfile = this.validateProfile({
-          version: data.version || 1,
-          updatedAt: data.updated_at || new Date().toISOString(),
-          personal: {
-            fullName: data.full_name || '',
-            preferredName: data.preferred_name || undefined,
-            dateOfBirth: data.date_of_birth || undefined,
-            bloodGroup: data.blood_group || undefined,
-            avatarUrl: data.avatar_url || undefined,
-          },
-          medical: {
-            medicalConditions: data.medical_conditions || undefined,
-            allergies: data.allergies || undefined,
-            medications: data.medications || undefined,
-          }
-        });
-      } else {
-        fetchedProfile = JSON.parse(JSON.stringify(defaultProfile));
-        const me = await getMe();
-        if (me && me.name) {
-          fetchedProfile.personal.fullName = me.name;
+      let fetchedProfile: UserProfile = this.validateProfile({
+        version: 1,
+        updatedAt: new Date().toISOString(),
+        personal: {
+          fullName: me.name || '',
+          preferredName: me.preferred_name || undefined,
+          dateOfBirth: me.date_of_birth || undefined,
+          bloodGroup: me.blood_group || undefined,
+          avatarUrl: me.avatar_url || undefined,
+        },
+        medical: {
+          medicalConditions: me.medical_conditions || undefined,
+          allergies: me.allergies || undefined,
+          medications: me.medications || undefined,
         }
-      }
+      });
 
       const isDifferent = JSON.stringify(this.currentProfile) !== JSON.stringify(fetchedProfile);
       
@@ -232,73 +210,37 @@ class ProfileService {
 
     // 2. Background Sync
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
       const p = this.currentProfile.personal;
       const m = this.currentProfile.medical;
 
-      const { error } = await supabase
-        .from('profiles')
-        .upsert({
-          user_id: user.id,
-          version: this.currentProfile.version,
-          updated_at: this.currentProfile.updatedAt,
-          full_name: p.fullName,
-          preferred_name: p.preferredName || null,
-          date_of_birth: p.dateOfBirth || null,
-          blood_group: p.bloodGroup || null,
-          avatar_url: p.avatarUrl || null,
-          medical_conditions: m.medicalConditions || null,
-          allergies: m.allergies || null,
-          medications: m.medications || null,
-        }, {
-          onConflict: 'user_id'
-        });
+      await updateProfile({
+        name: p.fullName,
+        preferred_name: p.preferredName || null,
+        date_of_birth: p.dateOfBirth || null,
+        blood_group: p.bloodGroup || null,
+        medical_conditions: m.medicalConditions || null,
+        allergies: m.allergies || null,
+        medications: m.medications || null,
+      });
 
-      if (error) {
-        console.error('[ProfileService] Supabase upsert error:', error.message);
-        this.setStatus('Error');
-      } else {
-        this.setStatus('Ready');
-      }
+      this.setStatus('Ready');
     } catch (e) {
       console.error('[ProfileService] Failed to sync profile update', e);
       this.setStatus('Error');
     }
   }
 
-  public async uploadAvatar(uri: string): Promise<string | null> {
+  public async uploadAvatar(uri: string, base64?: string): Promise<string | null> {
     this.setStatus('Syncing');
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        this.setStatus('Error');
-        return null;
+      if (!base64) {
+        throw new Error('Base64 image data is required for upload');
       }
 
       const fileExt = uri.split('.').pop() || 'jpg';
-      const fileName = `avatar.${fileExt}`;
-      const filePath = `${user.id}/${fileName}`;
-
-      const response = await fetch(uri);
-      const blob = await response.blob();
-
-      const { data, error } = await supabase.storage
-        .from('avatars')
-        .upload(filePath, blob, {
-          upsert: true,
-          contentType: `image/${fileExt === 'jpg' ? 'jpeg' : fileExt}`
-        });
-
-      if (error) throw error;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('avatars')
-        .getPublicUrl(filePath);
-
-      const timestampedUrl = `${publicUrl}?t=${new Date().getTime()}`;
-
+      const response = await uploadAvatar(base64, fileExt);
+      
+      const timestampedUrl = response.avatarUrl;
       await this.save({ avatarUrl: timestampedUrl });
       return timestampedUrl;
 
@@ -312,26 +254,12 @@ class ProfileService {
   public async removeAvatar(): Promise<void> {
     this.setStatus('Syncing');
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        this.setStatus('Error');
-        return;
-      }
-
-      const p = this.currentProfile.personal;
-      if (!p.avatarUrl) {
-        this.setStatus('Ready');
-        return;
-      }
-
-      const urlParts = p.avatarUrl.split('?')[0].split('/');
-      const fileName = urlParts[urlParts.length - 1];
-      const filePath = `${user.id}/${fileName}`;
-
-      await supabase.storage.from('avatars').remove([filePath]);
-      await this.save({ avatarUrl: undefined });
-    } catch (e) {
-      console.error('[ProfileService] Failed to remove avatar', e);
+      await updateProfile({ avatar_url: null });
+      this.currentProfile.personal.avatarUrl = undefined;
+      await AsyncStorage.setItem(CACHE_KEY, JSON.stringify(this.currentProfile));
+      this.setStatus('Ready');
+    } catch (e: any) {
+      console.error('[ProfileService] Failed to remove avatar', e.message);
       this.setStatus('Error');
     }
   }

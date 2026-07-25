@@ -6,7 +6,8 @@ import {
   ActivityIndicator,
   StyleSheet,
   Animated,
-  Dimensions
+  Dimensions,
+  Image
 } from 'react-native';
 import { getMe } from '../lib/api';
 import { connectSocket, getSocket } from '../lib/socket';
@@ -211,11 +212,15 @@ export default function HomeScreen({ navigation }) {
         <View style={styles.spacer} />
 
         <TouchableOpacity style={styles.headerRight} onPress={() => navigation.navigate('Profile')} activeOpacity={0.8}>
-          <View style={[styles.avatarCircle, { backgroundColor: colors.primaryContainer }]}>
-            <Text style={[styles.avatarInitial, { color: colors.primary }]}>
-              {profile?.personal?.fullName ? profile.personal.fullName.charAt(0).toUpperCase() : '?'}
-            </Text>
-          </View>
+          {profile?.personal?.avatarUrl ? (
+            <Image source={{ uri: profile.personal.avatarUrl }} style={[styles.avatarCircle, { backgroundColor: colors.primaryContainer }]} />
+          ) : (
+            <View style={[styles.avatarCircle, { backgroundColor: colors.primaryContainer }]}>
+              <Text style={[styles.avatarInitial, { color: colors.primary }]}>
+                {profile?.personal?.fullName ? profile.personal.fullName.charAt(0).toUpperCase() : '?'}
+              </Text>
+            </View>
+          )}
         </TouchableOpacity>
       </View>
 
