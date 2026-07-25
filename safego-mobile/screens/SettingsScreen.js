@@ -4,7 +4,7 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  TouchableOpacity,
+  TouchableOpacity, Pressable, Platform,
   View,
   Switch,
   Linking,
@@ -352,39 +352,39 @@ export default function SettingsScreen({ navigation }) {
           <View style={styles.divider} />
           {settings.emergencyPinHash ? (
             <>
-              <TouchableOpacity style={styles.row} onPress={() => setPinMode('change_old')}>
+              <Pressable style={({ pressed }) => [styles.row, pressed && Platform.OS === 'ios' && { opacity: 0.7 }]} android_ripple={{ color: colors.primary + "20", borderless: false }} onPress={() => setPinMode('change_old')}>
                 <Text style={styles.label}>Change PIN</Text>
                 <Text style={styles.subText}>→</Text>
-              </TouchableOpacity>
+              </Pressable>
               <View style={styles.divider} />
-              <TouchableOpacity style={styles.row} onPress={() => setPinMode('remove')}>
+              <Pressable style={({ pressed }) => [styles.row, pressed && Platform.OS === 'ios' && { opacity: 0.7 }]} android_ripple={{ color: colors.primary + "20", borderless: false }} onPress={() => setPinMode('remove')}>
                 <Text style={styles.logoutText}>Remove PIN</Text>
-              </TouchableOpacity>
+              </Pressable>
             </>
           ) : (
-            <TouchableOpacity style={styles.row} onPress={() => setPinMode('set')}>
+            <Pressable style={({ pressed }) => [styles.row, pressed && Platform.OS === 'ios' && { opacity: 0.7 }]} android_ripple={{ color: colors.primary + "20", borderless: false }} onPress={() => setPinMode('set')}>
               <Text style={styles.label}>Set PIN</Text>
               <Text style={styles.subText}>→</Text>
-            </TouchableOpacity>
+            </Pressable>
           )}
         </View>
 
         {/* ── Emergency Alarm ────────────────────────────────────── */}
         <Text style={styles.sectionTitle}>Emergency Alarm</Text>
         <View style={styles.card}>
-          <TouchableOpacity style={styles.row} onPress={() => navigation.navigate('EmergencyAlarmSettings')}>
+          <Pressable style={({ pressed }) => [styles.row, pressed && Platform.OS === 'ios' && { opacity: 0.7 }]} android_ripple={{ color: colors.primary + "20", borderless: false }} onPress={() => navigation.navigate('EmergencyAlarmSettings')}>
             <Text style={styles.label}>Alarm Configuration</Text>
             <Text style={styles.subText}>→</Text>
-          </TouchableOpacity>
+          </Pressable>
         </View>
 
         {/* ── Fake Call ──────────────────────────────────────────── */}
         <Text style={styles.sectionTitle}>Preventive Safety</Text>
         <View style={styles.card}>
-          <TouchableOpacity style={styles.row} onPress={() => navigation.navigate('FakeCall')}>
+          <Pressable style={({ pressed }) => [styles.row, pressed && Platform.OS === 'ios' && { opacity: 0.7 }]} android_ripple={{ color: colors.primary + "20", borderless: false }} onPress={() => navigation.navigate('FakeCall')}>
             <Text style={styles.label}>Fake Call Settings</Text>
             <Text style={styles.subText}>→</Text>
-          </TouchableOpacity>
+          </Pressable>
         </View>
 
         {/* ── Account ────────────────────────────────────────────── */}
@@ -395,19 +395,19 @@ export default function SettingsScreen({ navigation }) {
             <Text style={styles.subText}>{userEmail}</Text>
           </View>
           <View style={styles.divider} />
-          <TouchableOpacity style={styles.row} onPress={() => navigation.navigate('Profile')}>
+          <Pressable style={({ pressed }) => [styles.row, pressed && Platform.OS === 'ios' && { opacity: 0.7 }]} android_ripple={{ color: colors.primary + "20", borderless: false }} onPress={() => navigation.navigate('Profile')}>
             <Text style={styles.label}>Safety Profile</Text>
             <Text style={styles.subText}>→</Text>
-          </TouchableOpacity>
+          </Pressable>
           <View style={styles.divider} />
-          <TouchableOpacity style={styles.row} onPress={() => navigation.navigate('EmergencyHistory')}>
+          <Pressable style={({ pressed }) => [styles.row, pressed && Platform.OS === 'ios' && { opacity: 0.7 }]} android_ripple={{ color: colors.primary + "20", borderless: false }} onPress={() => navigation.navigate('EmergencyHistory')}>
             <Text style={styles.label}>Emergency History</Text>
             <Text style={styles.subText}>→</Text>
-          </TouchableOpacity>
+          </Pressable>
           <View style={styles.divider} />
-          <TouchableOpacity style={styles.row} onPress={handleLogout}>
+          <Pressable style={({ pressed }) => [styles.row, pressed && Platform.OS === 'ios' && { opacity: 0.7 }]} android_ripple={{ color: colors.primary + "20", borderless: false }} onPress={handleLogout}>
             <Text style={styles.logoutText}>Logout</Text>
-          </TouchableOpacity>
+          </Pressable>
         </View>
 
         {/* ── About ──────────────────────────────────────────────── */}

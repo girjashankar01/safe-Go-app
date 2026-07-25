@@ -45,9 +45,9 @@ class SOSService {
   
   private listeners: Set<Listener> = new Set();
   
-  private activationTimer: NodeJS.Timeout | null = null;
-  private countdownTimer: NodeJS.Timeout | null = null;
-  private recordingTimer: NodeJS.Timeout | null = null;
+  private activationTimer: ReturnType<typeof setTimeout> | null = null;
+  private countdownTimer: ReturnType<typeof setTimeout> | null = null;
+  private recordingTimer: ReturnType<typeof setTimeout> | null = null;
   
   // Recovery payload state
   private pendingPayload: any = null;
@@ -158,6 +158,21 @@ class SOSService {
     if (settings.emergencyAlarmEnabled && settings.emergencyAlarmTrigger === stage) {
       EmergencyAlarmService.start();
     }
+  }
+
+  public async triggerSystemSOS(triggerReason: string) {
+    if (this.status !== "IDLE" && this.status !== "ACTIVATION_CANCELLED" && this.status !== "CANCELLED" && this.status !== "FAILED") {
+      return;
+    }
+    if (!hasActiveTrip()) {
+      this.errorMsg = "Start a trip before sending an SOS.";
+      this.status = "FAILED";
+      this.notify();
+      return;
+    }
+    this.resetToIdle();
+    this.currentTrigger = triggerReason;
+    this.startCountdown();
   }
 
   public async triggerManualSOS() {

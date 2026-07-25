@@ -15,7 +15,7 @@ class EmergencyAlarmService {
   private status: EmergencyAlarmState = 'Idle';
   private listeners: Set<Listener> = new Set();
   
-  private durationTimeout: NodeJS.Timeout | null = null;
+  private durationTimeout: ReturnType<typeof setTimeout> | null = null;
   private isEnabledForCurrentSOS: boolean = false;
   private suppressModal: boolean = false;
 

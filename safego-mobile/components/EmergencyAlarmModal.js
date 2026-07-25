@@ -1,23 +1,35 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Modal,
   View,
   Text,
   TouchableOpacity,
   StyleSheet,
-  Animated,
   Linking,
 } from 'react-native';
+import Animated, { 
+  useSharedValue, 
+  useAnimatedStyle, 
+  withRepeat, 
+  withSequence, 
+  withTiming, 
+  interpolateColor,
+  cancelAnimation
+} from 'react-native-reanimated';
 import { Feather } from '@expo/vector-icons';
 import EmergencyAlarmService from '../services/EmergencyAlarmService';
 import EmergencyNumberService from '../services/EmergencyNumberService';
 import { getSettings } from '../services/SettingsService';
+import { motion, useReduceMotion } from '../theme';
 
 export default function EmergencyAlarmModal() {
   const [alarmState, setAlarmState] = useState({ status: 'Idle' });
   const [flashEnabled, setFlashEnabled] = useState(false);
   const [emergencyNumber, setEmergencyNumber] = useState('911');
-  const flashAnim = useRef(new Animated.Value(0)).current;
+  
+  const reduceMotion = useReduceMotion();
+  const flashAnim = useSharedValue(0);
+  const pulseScale = useSharedValue(1);
 
   // Subscribe to service
   useEffect(() => {
@@ -33,41 +45,57 @@ export default function EmergencyAlarmModal() {
     }
   }, [alarmState.status]);
 
-  // Handle Screen Flashing Effect
+  // Handle Animations
   useEffect(() => {
-    if (alarmState.status === 'Playing' && flashEnabled) {
-      Animated.loop(
-        Animated.sequence([
-          Animated.timing(flashAnim, {
-            toValue: 1,
-            duration: 300,
-            useNativeDriver: false, // color interpolation requires false
-          }),
-          Animated.timing(flashAnim, {
-            toValue: 0,
-            duration: 300,
-            useNativeDriver: false,
-          }),
-        ])
-      ).start();
+    if (alarmState.status === 'Playing') {
+      if (flashEnabled && !reduceMotion) {
+        flashAnim.value = withRepeat(
+          withSequence(
+            withTiming(1, { duration: 300 }),
+            withTiming(0, { duration: 300 })
+          ),
+          -1,
+          true
+        );
+      }
+      
+      if (!reduceMotion) {
+        pulseScale.value = withRepeat(
+          withSequence(
+            withTiming(1.03, { duration: motion.duration.sirenPulse / 2, easing: motion.easing.pulse }),
+            withTiming(1, { duration: motion.duration.sirenPulse / 2, easing: motion.easing.pulse })
+          ),
+          -1,
+          true
+        );
+      }
     } else {
-      flashAnim.stopAnimation();
-      flashAnim.setValue(0);
+      cancelAnimation(flashAnim);
+      flashAnim.value = 0;
+      cancelAnimation(pulseScale);
+      pulseScale.value = 1;
     }
-  }, [alarmState.status, flashEnabled]);
+  }, [alarmState.status, flashEnabled, reduceMotion]);
 
   const visible = alarmState.status !== 'Idle' && !alarmState.suppressModal;
   if (!visible) return null;
 
-  const backgroundColor = flashAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['rgba(0,0,0,0.85)', 'rgba(220, 38, 38, 0.95)'], // Theme -> Red
-  });
+  const backgroundStyle = useAnimatedStyle(() => ({
+    backgroundColor: interpolateColor(
+      flashAnim.value,
+      [0, 1],
+      ['rgba(0,0,0,0.85)', 'rgba(220, 38, 38, 0.95)']
+    )
+  }));
+
+  const cardStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: pulseScale.value }]
+  }));
 
   return (
     <Modal transparent animationType="fade" visible={visible}>
-      <Animated.View style={[styles.overlay, { backgroundColor }]}>
-        <View style={styles.card}>
+      <Animated.View style={[styles.overlay, backgroundStyle]}>
+        <Animated.View style={[styles.card, cardStyle]}>
           <Feather name="alert-triangle" size={48} color="#dc2626" style={{ marginBottom: 16 }} />
           
           <Text style={styles.title}>Emergency SOS Active</Text>
@@ -126,7 +154,7 @@ export default function EmergencyAlarmModal() {
             <Text style={styles.closeBtnText}>Close</Text>
           </TouchableOpacity>
 
-        </View>
+        </Animated.View>
       </Animated.View>
     </Modal>
   );

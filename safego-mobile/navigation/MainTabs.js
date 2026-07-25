@@ -2,13 +2,55 @@ import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { getFocusedRouteNameFromRoute } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
-import { useTheme } from '../theme';
+import { useTheme, motion, useReduceMotion } from '../theme';
+import Animated, { useAnimatedProps, useAnimatedStyle, useDerivedValue, withTiming, interpolateColor } from 'react-native-reanimated';
 
 import HomeStack from './HomeStack';
 import ActivityStack from './ActivityStack';
 import SettingsStack from './SettingsStack';
 
 const Tab = createBottomTabNavigator();
+const AnimatedIcon = Animated.createAnimatedComponent(Ionicons);
+
+// Custom Animated Tab Icon
+function TabIcon({ focused, name, activeName, size }) {
+  const { colors } = useTheme();
+  const reduceMotion = useReduceMotion();
+  
+  const progress = useDerivedValue(() => {
+    if (reduceMotion) return focused ? 1 : 0;
+    return withTiming(focused ? 1 : 0, { 
+      duration: motion.duration.fast, 
+      easing: motion.easing.pressOut 
+    });
+  }, [focused, reduceMotion]);
+
+  const animatedProps = useAnimatedProps(() => ({
+    color: interpolateColor(progress.value, [0, 1], [colors.onSurfaceVariant, colors.primary])
+  }));
+
+  return <AnimatedIcon name={focused ? activeName : name} size={size} animatedProps={animatedProps} />;
+}
+
+// Custom Animated Tab Label
+function TabLabel({ focused, label }) {
+  const { colors } = useTheme();
+  const reduceMotion = useReduceMotion();
+  
+  const progress = useDerivedValue(() => {
+    if (reduceMotion) return focused ? 1 : 0;
+    return withTiming(focused ? 1 : 0, { 
+      duration: motion.duration.fast, 
+      easing: motion.easing.pressOut 
+    });
+  }, [focused, reduceMotion]);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    color: interpolateColor(progress.value, [0, 1], [colors.onSurfaceVariant, colors.primary])
+  }));
+
+  return <Animated.Text style={[{ fontSize: 11, fontWeight: '500' }, animatedStyle]}>{label}</Animated.Text>;
+}
 
 // Utility to hide the bottom tab bar on specific nested screens
 function getTabBarStyle(route) {
@@ -36,13 +78,6 @@ export default function MainTabs() {
     <Tab.Navigator
       screenOptions={({ route }) => ({
         headerShown: false,
-        tabBarActiveTintColor: colors.primary,
-        tabBarInactiveTintColor: colors.onSurfaceVariant,
-        tabBarShowLabel: true,
-        tabBarLabelStyle: {
-          fontSize: 11,
-          fontWeight: '500',
-        },
         unmountOnBlur: false,
         tabBarStyle: [
           {
@@ -69,9 +104,9 @@ export default function MainTabs() {
         name="HomeTab" 
         component={HomeStack} 
         options={{
-          tabBarLabel: 'Home',
-          tabBarIcon: ({ color, size, focused }) => (
-            <Ionicons name={focused ? "home" : "home-outline"} color={color} size={size} />
+          tabBarLabel: ({ focused }) => <TabLabel focused={focused} label="Home" />,
+          tabBarIcon: ({ size, focused }) => (
+            <TabIcon focused={focused} name="home-outline" activeName="home" size={size} />
           )
         }}
       />
@@ -79,9 +114,9 @@ export default function MainTabs() {
         name="ActivityTab" 
         component={ActivityStack} 
         options={{
-          tabBarLabel: 'Activity',
-          tabBarIcon: ({ color, size, focused }) => (
-            <Ionicons name={focused ? "compass" : "compass-outline"} color={color} size={size} />
+          tabBarLabel: ({ focused }) => <TabLabel focused={focused} label="Activity" />,
+          tabBarIcon: ({ size, focused }) => (
+            <TabIcon focused={focused} name="compass-outline" activeName="compass" size={size} />
           )
         }}
       />
@@ -89,9 +124,9 @@ export default function MainTabs() {
         name="SettingsTab" 
         component={SettingsStack} 
         options={{
-          tabBarLabel: 'Settings',
-          tabBarIcon: ({ color, size, focused }) => (
-            <Ionicons name={focused ? "settings" : "settings-outline"} color={color} size={size} />
+          tabBarLabel: ({ focused }) => <TabLabel focused={focused} label="Settings" />,
+          tabBarIcon: ({ size, focused }) => (
+            <TabIcon focused={focused} name="settings-outline" activeName="settings" size={size} />
           )
         }}
       />

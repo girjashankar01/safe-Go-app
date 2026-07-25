@@ -89,7 +89,7 @@ class PinService {
     }
 
     return new Promise((resolve) => {
-      let timer: NodeJS.Timeout | null = null;
+      let timer: ReturnType<typeof setTimeout> | null = null;
       let isResolved = false;
 
       const handleResult = (result: boolean) => {

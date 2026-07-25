@@ -6,8 +6,8 @@ export const EVENT_CHECKIN_PROMPT = 'CheckInService:ShowPrompt';
 export const EVENT_CHECKIN_HIDE = 'CheckInService:HidePrompt';
 
 class CheckInService {
-  private intervalTimer: NodeJS.Timeout | null = null;
-  private responseTimer: NodeJS.Timeout | null = null;
+  private intervalTimer: ReturnType<typeof setTimeout> | null = null;
+  private responseTimer: ReturnType<typeof setTimeout> | null = null;
   private tripId: string | null = null;
   private isSosActive: boolean = false;
 
@@ -101,7 +101,7 @@ class CheckInService {
     if (action === 'sos') {
       this.stop(true);
       try {
-        SOSService.startSOS('missed_checkin');
+        SOSService.triggerSystemSOS('missed_checkin');
       } catch (e) {
         console.error('[CheckInService] Failed to trigger SOS', e);
       }

@@ -41,7 +41,7 @@ export default function AudioPlayer({ incidentId, hasRecording, recordingDuratio
   };
 
   useEffect(() => {
-    let interval: NodeJS.Timeout;
+    let interval: ReturnType<typeof setTimeout>;
     if (playbackState === 'Playing') {
       interval = setInterval(() => {
         setCurrentTime(AudioPlaybackService.getCurrentTime());

@@ -25,15 +25,15 @@ class FakeCallService {
   
   // Scheduling Timers
   private targetTimestamp: number | null = null;
-  private scheduleInterval: NodeJS.Timeout | null = null;
+  private scheduleInterval: ReturnType<typeof setTimeout> | null = null;
   
   // Active Call Timers
   private activeCallStartTs: number | null = null;
-  private activeInterval: NodeJS.Timeout | null = null;
-  private autoEndTimeout: NodeJS.Timeout | null = null;
+  private activeInterval: ReturnType<typeof setTimeout> | null = null;
+  private autoEndTimeout: ReturnType<typeof setTimeout> | null = null;
   
   // Incoming Call Timers (for ringtone/vibration looping)
-  private ringVibrateInterval: NodeJS.Timeout | null = null;
+  private ringVibrateInterval: ReturnType<typeof setTimeout> | null = null;
 
   // Observers
   private listeners: Set<Listener> = new Set();

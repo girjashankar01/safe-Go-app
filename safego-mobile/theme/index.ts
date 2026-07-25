@@ -4,3 +4,5 @@ export * from './typography';
 export * from './radius';
 export * from './elevation';
 export * from './ThemeProvider';
+export * from './motion';
+export * from './useReduceMotion';

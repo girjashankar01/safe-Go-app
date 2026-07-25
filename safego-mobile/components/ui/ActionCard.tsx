@@ -1,6 +1,7 @@
 import React from 'react';
-import { TouchableOpacity, Text, StyleSheet, TouchableOpacityProps, View } from 'react-native';
-import { useTheme, radius, typography, spacing, getElevation } from '../../theme';
+import { Text, StyleSheet, TouchableOpacityProps, View, Pressable } from 'react-native';
+import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
+import { useTheme, radius, typography, spacing, motion, useReduceMotion } from '../../theme';
 import { Feather } from '@expo/vector-icons';
 
 interface ActionCardProps extends TouchableOpacityProps {
@@ -8,11 +9,39 @@ interface ActionCardProps extends TouchableOpacityProps {
   iconName: keyof typeof Feather.glyphMap;
 }
 
-export const ActionCard: React.FC<ActionCardProps> = ({ label, iconName, style, ...rest }) => {
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+
+export const ActionCard: React.FC<ActionCardProps> = ({ label, iconName, style, onPressIn, onPressOut, ...rest }) => {
   const { colors, isDark } = useTheme();
+  const reduceMotion = useReduceMotion();
+  const scale = useSharedValue(1);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
+  const handlePressIn = (e: any) => {
+    if (!reduceMotion) {
+      scale.value = withTiming(0.97, { 
+        duration: motion.duration.fast, 
+        easing: motion.easing.pressOut 
+      });
+    }
+    onPressIn?.(e);
+  };
+
+  const handlePressOut = (e: any) => {
+    if (!reduceMotion) {
+      scale.value = withTiming(1, { 
+        duration: motion.duration.fast, 
+        easing: motion.easing.pressOut 
+      });
+    }
+    onPressOut?.(e);
+  };
 
   return (
-    <TouchableOpacity
+    <AnimatedPressable
       style={[
         styles.card,
         {
@@ -22,9 +51,11 @@ export const ActionCard: React.FC<ActionCardProps> = ({ label, iconName, style, 
           elevation: 0,
           shadowOpacity: 0,
         },
+        animatedStyle,
         style,
       ]}
-      activeOpacity={0.7}
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
       {...rest}
     >
       <View style={[styles.iconContainer, { backgroundColor: colors.primaryContainer }]}>
@@ -41,7 +72,7 @@ export const ActionCard: React.FC<ActionCardProps> = ({ label, iconName, style, 
       >
         {label}
       </Text>
-    </TouchableOpacity>
+    </AnimatedPressable>
   );
 };
 

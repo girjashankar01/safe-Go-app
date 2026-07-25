@@ -5,7 +5,6 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   StyleSheet,
-  Animated,
   Dimensions,
   Image
 } from 'react-native';
@@ -27,59 +26,119 @@ import { Button } from '../components/ui/Button';
 import { ActionCard } from '../components/ui/ActionCard';
 import { ScreenContainer } from '../components/ui/ScreenContainer';
 
+import Svg, { Circle } from 'react-native-svg';
+import Animated, { 
+  useSharedValue, 
+  useAnimatedStyle, 
+  withTiming, 
+  useAnimatedProps, 
+  withRepeat,
+  withSequence,
+  cancelAnimation,
+  runOnJS
+} from 'react-native-reanimated';
+import { motion, useReduceMotion } from '../theme';
+
+const AnimatedCircle = Animated.createAnimatedComponent(Circle);
+
 // ─── Hold-to-Activate SOS Button ────────────────────────────────────────────────
 function HoldToActivateButton({ onActivate }) {
   const { colors } = useTheme();
-  const holdProgress = useRef(new Animated.Value(0)).current;
+  const reduceMotion = useReduceMotion();
   const buttonSize = Math.min(220, Dimensions.get('window').width * 0.55);
+  const strokeWidth = 10;
+  const radius = buttonSize / 2 + strokeWidth; 
+  const circumference = 2 * Math.PI * radius;
+
+  const progress = useSharedValue(0);
+  const pulseScale = useSharedValue(1);
+  const timeoutRef = useRef(null);
 
   const startHold = () => {
-    Animated.timing(holdProgress, {
-      toValue: 1,
-      duration: 2000, // 2 seconds
-      useNativeDriver: false,
-    }).start(({ finished }) => {
-      if (finished) {
-        onActivate();
-        holdProgress.setValue(0);
-      }
-    });
+    if (!reduceMotion) {
+      pulseScale.value = withRepeat(
+        withSequence(
+          withTiming(1.03, { duration: motion.duration.sirenPulse / 2, easing: motion.easing.pulse }),
+          withTiming(1, { duration: motion.duration.sirenPulse / 2, easing: motion.easing.pulse })
+        ),
+        -1, // infinite
+        true
+      );
+      progress.value = withTiming(1, { duration: motion.duration.holdSOS }, (finished) => {
+        if (finished) {
+          cancelAnimation(pulseScale);
+          pulseScale.value = 1;
+          progress.value = 0;
+          runOnJS(onActivate)();
+        }
+      });
+    } else {
+      progress.value = 0.5; // visual feedback it started
+      timeoutRef.current = setTimeout(() => {
+         progress.value = 1;
+         onActivate();
+         setTimeout(() => { progress.value = 0; }, 200);
+      }, motion.duration.holdSOS);
+    }
   };
 
   const cancelHold = () => {
-    Animated.timing(holdProgress).stop();
-    Animated.timing(holdProgress, {
-      toValue: 0,
-      duration: 200,
-      useNativeDriver: false,
-    }).start();
+    if (!reduceMotion) {
+      cancelAnimation(progress);
+      cancelAnimation(pulseScale);
+      pulseScale.value = withTiming(1, { duration: motion.duration.fast });
+      progress.value = withTiming(0, { duration: motion.duration.normal });
+    } else {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      progress.value = 0;
+    }
   };
 
-  const progressSize = holdProgress.interpolate({
-    inputRange: [0, 1],
-    outputRange: [buttonSize, buttonSize + 60]
-  });
+  const animatedProps = useAnimatedProps(() => ({
+    strokeDashoffset: circumference - progress.value * circumference
+  }));
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: pulseScale.value }]
+  }));
 
   return (
     <View style={styles.holdContainer}>
       <TouchableOpacity 
-        style={[styles.holdTouchable, { width: buttonSize + 60, height: buttonSize + 60 }]}
+        style={[styles.holdTouchable, { width: buttonSize + 40, height: buttonSize + 40 }]}
         onPressIn={startHold}
         onPressOut={cancelHold}
         activeOpacity={1}
       >
-        <Animated.View 
-          style={[
-            styles.holdProgress, 
-            { 
-              width: progressSize, 
-              height: progressSize, 
-              borderRadius: Animated.divide(progressSize, 2),
-              backgroundColor: colors.danger + '30' // slightly less opacity
-            }
-          ]} 
-        />
-        <View style={[
+        <Animated.View style={[StyleSheet.absoluteFill, { justifyContent: 'center', alignItems: 'center' }]}>
+          <Svg width={buttonSize + 40} height={buttonSize + 40}>
+            {/* Background track */}
+            <Circle
+              cx={(buttonSize + 40) / 2}
+              cy={(buttonSize + 40) / 2}
+              r={radius}
+              stroke={colors.danger + '30'}
+              strokeWidth={strokeWidth}
+              fill="none"
+            />
+            {/* Animated progress ring */}
+            <AnimatedCircle
+              cx={(buttonSize + 40) / 2}
+              cy={(buttonSize + 40) / 2}
+              r={radius}
+              stroke={colors.danger}
+              strokeWidth={strokeWidth}
+              fill="none"
+              strokeDasharray={circumference}
+              animatedProps={animatedProps}
+              strokeLinecap="round"
+              rotation="-90"
+              originX={(buttonSize + 40) / 2}
+              originY={(buttonSize + 40) / 2}
+            />
+          </Svg>
+        </Animated.View>
+        <Animated.View style={[
           styles.holdInnerCircle, 
           { 
             width: buttonSize, 
@@ -90,13 +149,14 @@ function HoldToActivateButton({ onActivate }) {
             shadowOpacity: 0.2, // reduced
             shadowRadius: 8, // reduced
             elevation: 4
-          }
+          },
+          animatedStyle
         ]}>
           <Text style={[styles.holdText]}>SOS</Text>
-        </View>
+        </Animated.View>
       </TouchableOpacity>
       <Text style={[styles.holdSubtext, { color: colors.secondaryText }]}>
-        Press & Hold{'\n'}2 seconds
+        {`Press & Hold\n${motion.duration.holdSOS / 1000} seconds`}
       </Text>
     </View>
   );
