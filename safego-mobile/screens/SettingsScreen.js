@@ -503,7 +503,7 @@ const styles = StyleSheet.create({
     borderBottomColor: '#e5e7eb',
   },
   backBtn: { paddingVertical: 4, paddingRight: 12 },
-  backBtnText: { ...typography.callout, color: '#4F46E5' },
+  backBtnText: { ...typography.callout, color: '#0F766E' },
   headerTitle: { flex: 1, textAlign: 'center', ...typography.headline, color: '#111827' },
   headerSpacer: { width: 60 },
   scroll: { padding: 16, paddingBottom: 40 },

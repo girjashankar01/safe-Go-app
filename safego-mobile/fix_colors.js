@@ -7,7 +7,7 @@ function replaceBackBtnColor(filePath) {
   let content = fs.readFileSync(filePath, 'utf8');
   
   // Replace single-line: backBtnText: { ..., color: '#16a34a', ... }
-  content = content.replace(/backBtnText:\s*\{([^}]*)color:\s*'#16a34a'([^}]*)\}/g, "backBtnText: {$1color: '#4F46E5'$2}");
+  content = content.replace(/backBtnText:\s*\{([^}]*)color:\s*'#4F46E5'([^}]*)\}/g, "backBtnText: {$1color: '#0F766E'$2}");
   
   // Replace multi-line
   // backBtnText: {
@@ -21,8 +21,8 @@ function replaceBackBtnColor(filePath) {
     if (lines[i].includes('backBtnText: {')) {
       inBackBtn = true;
     }
-    if (inBackBtn && lines[i].includes('color: \'#16a34a\'')) {
-      lines[i] = lines[i].replace('\'#16a34a\'', '\'#4F46E5\'');
+    if (inBackBtn && lines[i].includes('color: \'#4F46E5\'')) {
+      lines[i] = lines[i].replace('\'#4F46E5\'', '\'#0F766E\'');
       inBackBtn = false; // assumes we found it
     }
     if (inBackBtn && lines[i].includes('}')) {

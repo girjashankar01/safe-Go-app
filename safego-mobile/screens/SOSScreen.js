@@ -235,7 +235,7 @@ const styles = StyleSheet.create({
   },
   backBtnText: {
     ...typography.subhead,
-    color: '#4F46E5',
+    color: '#0F766E',
     fontWeight: '600',
   },
   headerTitle: {

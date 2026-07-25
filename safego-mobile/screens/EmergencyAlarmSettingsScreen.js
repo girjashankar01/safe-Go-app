@@ -187,7 +187,7 @@ const styles = StyleSheet.create({
   },
   backBtnText: {
     fontSize: 15,
-    color: '#4F46E5', // Indigo
+    color: '#0F766E', // Indigo
     fontWeight: '600',
   },
   headerTitle: {

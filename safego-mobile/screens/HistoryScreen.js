@@ -213,7 +213,7 @@ const styles = StyleSheet.create({
   },
   backBtnText: {
     ...typography.callout,
-    color: '#4F46E5',
+    color: '#0F766E',
   },
   headerTitle: {
     flex: 1,
