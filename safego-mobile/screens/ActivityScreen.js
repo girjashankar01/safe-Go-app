@@ -236,6 +236,19 @@ export default function ActivityScreen({ navigation }) {
                   </View>
                 )}
 
+                {/* Seamless top fade using SVG */}
+                <View style={styles.mapGradientTop}>
+                  <Svg height="100%" width="100%">
+                    <Defs>
+                      <SvgLinearGradient id="fadeTop" x1="0" y1="0" x2="0" y2="1">
+                        <Stop offset="0" stopColor={colors.background} stopOpacity="1" />
+                        <Stop offset="1" stopColor={colors.background} stopOpacity="0" />
+                      </SvgLinearGradient>
+                    </Defs>
+                    <Rect x="0" y="0" width="100%" height="100%" fill="url(#fadeTop)" />
+                  </Svg>
+                </View>
+
                 {/* Seamless bottom fade using SVG */}
                 <View style={styles.mapGradient}>
                   <Svg height="100%" width="100%">
@@ -413,6 +426,13 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: 80,
+  },
+  mapGradientTop: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 110,
   },
 
   // Card Internals
