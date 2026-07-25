@@ -224,7 +224,140 @@ export default function HomeScreen({ navigation }) {
         </TouchableOpacity>
       </View>
 
-      {/* Emergency Profile Summary */}
+      {/* SOS Button */}
+      <HoldToActivateButton onActivate={() => SOSService.triggerManualSOS()} />
+      <Text style={[styles.sosInstruction, { color: colors.secondaryText }]}>Emergency services will be alerted immediately</Text>
+
+      {/* System Status */}
+      <SystemStatusCard socketStatus={socketStatus} />
+
+      {/* Quick Actions Panel */}
+      <Text style={[styles.sectionTitle, { color: colors.secondaryText }]}>QUICK ACTIONS</Text>
+      <Card style={styles.quickActionsPanel}>
+        {/* Row A: Trip Control */}
+        <Button
+          label={tripActive ? "End Trip" : "Start Trip"}
+          variant={tripActive ? "danger" : "primary"}
+          style={[styles.tripButton, { width: '100%', marginBottom: spacing.sm }]}
+          onPress={() => navigation.navigate('Trip')}
+        />
+
+        {/* Row B: Fake Call & Siren */}
+        <View style={styles.quickActionsRow}>
+          {/* Fake Call Action (dynamic based on state) */}
+          {fakeCallState.status === 'Scheduled' ? (
+            <Card style={[styles.actionCardContainer, { borderWidth: 0, shadowOpacity: 0, elevation: 0, backgroundColor: colors.surfaceVariant }]}>
+               <View style={styles.scheduledCallContent}>
+                <Text style={[styles.scheduledCallTitle, { color: colors.text }]}>Call Scheduled</Text>
+                <Text style={[styles.scheduledCallSubtitle, { color: colors.primary }]}>{fakeCallState.remainingDelay}s remaining</Text>
+                <Button 
+                  label="Cancel" 
+                  variant="danger" 
+                  style={styles.cancelCallBtn} 
+                  textStyle={{ ...typography.footnote, color: 'white' }} 
+                  onPress={() => FakeCallService.cancel()} 
+                />
+              </View>
+            </Card>
+          ) : (
+            <ActionCard
+              label="Fake Call"
+              iconName="phone-call"
+              style={styles.actionCardContainer}
+              onPress={async () => {
+                const settings = await getSettings();
+                FakeCallService.start({
+                  callerName: settings.fakeCallerName,
+                  delay: settings.fakeCallDelay,
+                  ringtoneEnabled: settings.fakeCallRingtone,
+                  vibrationEnabled: settings.fakeCallVibration,
+                  autoEndDuration: settings.fakeCallAutoEnd,
+                });
+              }}
+            />
+          )}
+
+          {/* Siren Action */}
+          <ActionCard
+            label={alarmState.status === 'Playing' || alarmState.status === 'Preparing' ? "Stop Siren" : "Loud Siren"}
+            iconName="bell"
+            style={styles.actionCardContainer}
+            onPress={() => {
+              if (alarmState.status === 'Playing' || alarmState.status === 'Preparing') {
+                EmergencyAlarmService.stop();
+              } else {
+                EmergencyAlarmService.start(true, true);
+              }
+            }}
+          />
+        </View>
+
+        {/* Row C: Emergency Contacts */}
+        <TouchableOpacity style={styles.contactsBar} onPress={() => navigation.navigate('EmergencyContacts')} activeOpacity={0.8}>
+          <View style={styles.contactsBarLeft}>
+            <View style={[styles.iconContainer, { backgroundColor: colors.primaryContainer }]}>
+               <Feather name="users" color={colors.primary} size={18} />
+            </View>
+            <Text style={[styles.contactsBarTitle, { color: colors.text, marginLeft: spacing.sm }]}>Emergency Contacts</Text>
+          </View>
+          <View style={styles.contactsBarRight}>
+            {cachedNumbers.length === 0 ? (
+              <Text style={[styles.addContactsText, { color: colors.primary }]}>Add contacts</Text>
+            ) : (
+              <View style={styles.initialsContainer}>
+                {contactInitials.map((initial, i) => (
+                  <View key={i} style={[styles.initialBubble, { backgroundColor: colors.primary + '20', borderColor: colors.card }]}>
+                    <Text style={[styles.initialText, { color: colors.primary }]}>{initial}</Text>
+                  </View>
+                ))}
+                {cachedNumbers.length > 3 && (
+                  <View style={[styles.initialBubble, { backgroundColor: colors.card, borderColor: '#e5e7eb', borderWidth: 1 }]}>
+                    <Text style={[styles.initialText, { color: colors.secondaryText }]}>+{cachedNumbers.length - 3}</Text>
+                  </View>
+                )}
+              </View>
+            )}
+            <Feather name="chevron-right" color={colors.secondaryText} size={20} style={{ marginLeft: spacing.sm }} />
+          </View>
+        </TouchableOpacity>
+      </Card>
+
+      {/* Emergency Resources */}
+      <TouchableOpacity onPress={() => navigation.navigate('EmergencyServices')} activeOpacity={0.8}>
+        <Card style={styles.resourcesCard}>
+          <View style={styles.resourcesHeader}>
+            <View style={styles.resourcesHeaderLeft}>
+              <View style={[styles.iconContainer, { backgroundColor: colors.primaryContainer }]}>
+                <Feather name="life-buoy" color={colors.primary} size={18} />
+              </View>
+              <Text style={[styles.resourcesTitle, { color: colors.text, marginLeft: spacing.sm }]}>Emergency Resources</Text>
+            </View>
+            <Text style={[styles.resourcesLocation, { color: colors.secondaryText }]}>
+              {EmergencyDirectoryService.getCurrentLocationStr()}
+            </Text>
+          </View>
+          <View style={styles.resourcesBody}>
+            {primaryEmergency && (
+              <View style={styles.resourcesRow}>
+                <Text style={[styles.resourcesLabel, { color: colors.text }]}>Emergency</Text>
+                <Text style={[styles.resourcesValue, { color: colors.text }]}>{primaryEmergency.phone_number}</Text>
+              </View>
+            )}
+            {womensHelpline && (
+              <View style={styles.resourcesRow}>
+                <Text style={[styles.resourcesLabel, { color: colors.text }]}>Women's Helpline</Text>
+                <Text style={[styles.resourcesValue, { color: colors.text }]}>{womensHelpline.phone_number}</Text>
+              </View>
+            )}
+          </View>
+          <View style={styles.resourcesAction}>
+            <Text style={[styles.resourcesActionText, { color: colors.text }]}>Find Nearby</Text>
+            <Feather name="chevron-right" color={colors.secondaryText} size={20} />
+          </View>
+        </Card>
+      </TouchableOpacity>
+
+      {/* Emergency Profile Summary (Moved to bottom) */}
       <TouchableOpacity onPress={() => navigation.navigate('Profile')} activeOpacity={0.8}>
         <Card style={[styles.identityCard, missingFields.totalMissing > 0 && { borderColor: colors.warning, borderWidth: 1 }]}>
           <View style={styles.identityHeader}>
@@ -251,136 +384,6 @@ export default function HomeScreen({ navigation }) {
               <Text style={[styles.identityLabel, { color: colors.secondaryText }]}>Last Updated</Text>
               <Text style={[styles.identityValue, { color: colors.text }]}>{new Date(profile.updatedAt).toLocaleDateString()}</Text>
             </View>
-          </View>
-        </Card>
-      </TouchableOpacity>
-
-      {/* System Status */}
-      <SystemStatusCard socketStatus={socketStatus} />
-
-      {/* SOS Button */}
-      <HoldToActivateButton onActivate={() => SOSService.triggerManualSOS()} />
-
-      {/* Quick Actions (2x2 Grid) */}
-      <Text style={[styles.sectionTitle, { color: colors.secondaryText }]}>Quick Actions</Text>
-      <View style={styles.gridContainer}>
-        {/* Fake Call Action (dynamic based on state) */}
-        {fakeCallState.status === 'Scheduled' ? (
-          <Card style={styles.gridItem}>
-             <View style={styles.scheduledCallContent}>
-              <Text style={[styles.scheduledCallTitle, { color: colors.text }]}>Call Scheduled</Text>
-              <Text style={[styles.scheduledCallSubtitle, { color: colors.primary }]}>{fakeCallState.remainingDelay}s remaining</Text>
-              <Button 
-                label="Cancel" 
-                variant="danger" 
-                style={styles.cancelCallBtn} 
-                textStyle={{ ...typography.subhead, color: 'white' }} 
-                onPress={() => FakeCallService.cancel()} 
-              />
-            </View>
-          </Card>
-        ) : (
-          <ActionCard
-            label="Fake Call"
-            iconName="phone-call"
-            style={styles.gridItem}
-            onPress={async () => {
-              const settings = await getSettings();
-              FakeCallService.start({
-                callerName: settings.fakeCallerName,
-                delay: settings.fakeCallDelay,
-                ringtoneEnabled: settings.fakeCallRingtone,
-                vibrationEnabled: settings.fakeCallVibration,
-                autoEndDuration: settings.fakeCallAutoEnd,
-              });
-            }}
-          />
-        )}
-
-        {/* Siren Action */}
-        <ActionCard
-          label={alarmState.status === 'Playing' || alarmState.status === 'Preparing' ? "Stop Siren" : "Loud Siren"}
-          iconName="bell"
-          style={styles.gridItem}
-          onPress={() => {
-            if (alarmState.status === 'Playing' || alarmState.status === 'Preparing') {
-              EmergencyAlarmService.stop();
-            } else {
-              EmergencyAlarmService.start(true, true);
-            }
-          }}
-        />
-
-        <ActionCard
-          label="Live Tracking"
-          iconName="navigation"
-          style={styles.gridItem}
-          onPress={() => navigation.navigate('LiveTracking')}
-        />
-
-        <ActionCard
-          label="Live Map"
-          iconName="map"
-          style={styles.gridItem}
-          onPress={() => navigation.navigate('Map')}
-        />
-      </View>
-
-      {/* Trip Control */}
-      <Button
-        label={tripActive ? "End Trip" : "Start Trip"}
-        variant={tripActive ? "danger" : "primary"}
-        style={styles.tripButton}
-        onPress={() => navigation.navigate('Trip')}
-      />
-
-      {/* Emergency Contacts */}
-      <TouchableOpacity onPress={() => navigation.navigate('EmergencyContacts')} activeOpacity={0.8}>
-        <Card style={styles.contactsCard}>
-          <View style={styles.contactsContent}>
-            <View>
-              <Text style={[styles.contactsTitle, { color: colors.text }]}>Emergency Contacts</Text>
-              <View style={styles.initialsContainer}>
-                {contactInitials.map((initial, i) => (
-                  <View key={i} style={[styles.initialBubble, { backgroundColor: colors.primary + '20', borderColor: colors.card }]}>
-                    <Text style={[styles.initialText, { color: colors.primary }]}>{initial}</Text>
-                  </View>
-                ))}
-              </View>
-            </View>
-            <Feather name="chevron-right" color={colors.secondaryText} size={24} />
-          </View>
-        </Card>
-      </TouchableOpacity>
-
-
-
-      {/* Emergency Resources */}
-      <TouchableOpacity onPress={() => navigation.navigate('EmergencyServices')} activeOpacity={0.8}>
-        <Card style={styles.resourcesCard}>
-          <View style={styles.resourcesHeader}>
-            <Text style={[styles.resourcesTitle, { color: colors.text }]}>Emergency Resources</Text>
-            <Text style={[styles.resourcesLocation, { color: colors.secondaryText }]}>
-              {EmergencyDirectoryService.getCurrentLocationStr()}
-            </Text>
-          </View>
-          <View style={styles.resourcesBody}>
-            {primaryEmergency && (
-              <View style={styles.resourcesRow}>
-                <Text style={[styles.resourcesLabel, { color: colors.text }]}>Emergency</Text>
-                <Text style={[styles.resourcesValue, { color: colors.text }]}>{primaryEmergency.phone_number}</Text>
-              </View>
-            )}
-            {womensHelpline && (
-              <View style={styles.resourcesRow}>
-                <Text style={[styles.resourcesLabel, { color: colors.text }]}>Women's Helpline</Text>
-                <Text style={[styles.resourcesValue, { color: colors.text }]}>{womensHelpline.phone_number}</Text>
-              </View>
-            )}
-          </View>
-          <View style={styles.resourcesAction}>
-            <Text style={[styles.resourcesActionText, { color: colors.text }]}>Find Nearby</Text>
-            <Feather name="chevron-right" color={colors.text} size={18} />
           </View>
         </Card>
       </TouchableOpacity>
@@ -501,43 +504,79 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 20,
   },
+  sosInstruction: {
+    ...typography.footnote,
+    marginTop: spacing.sm,
+    textAlign: 'center',
+  },
   sectionTitle: {
     ...typography.footnote,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
-    marginBottom: spacing.md,
+    marginBottom: 6,
+    marginLeft: 4,
   },
-  gridContainer: {
+  quickActionsPanel: {
+    padding: spacing.lg,
+    marginBottom: spacing.lg,
+    borderRadius: radius.sm,
+  },
+  quickActionsRow: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
     justifyContent: 'space-between',
-    marginBottom: spacing.lg, // reduced
+    gap: spacing.sm,
+    marginBottom: spacing.sm,
   },
-  gridItem: {
-    width: '48%',
-    marginBottom: spacing.md,
+  actionCardContainer: {
+    flex: 1,
+    borderRadius: radius.sm,
   },
   scheduledCallContent: {
+    padding: spacing.sm,
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
   scheduledCallTitle: {
-    ...typography.headline,
+    ...typography.subhead,
     textAlign: 'center',
   },
   scheduledCallSubtitle: {
-    ...typography.subhead,
-    marginTop: spacing.xs,
-    marginBottom: spacing.md,
+    ...typography.footnote,
+    marginTop: 2,
+    marginBottom: spacing.sm,
     textAlign: 'center',
   },
   cancelCallBtn: {
     height: 32,
-    paddingHorizontal: spacing.md,
+    paddingHorizontal: spacing.sm,
+    width: '100%',
   },
   tripButton: {
-    marginBottom: spacing.lg, // reduced
+    borderRadius: radius.sm,
+  },
+  contactsBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.sm,
+    backgroundColor: 'transparent',
+    borderRadius: radius.sm,
+  },
+  contactsBarLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  contactsBarTitle: {
+    ...typography.subhead,
+  },
+  contactsBarRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  addContactsText: {
+    ...typography.footnote,
   },
   contactsCard: {
     marginBottom: spacing.lg, // reduced
@@ -604,6 +643,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: spacing.md,
   },
+  resourcesHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   resourcesTitle: {
     ...typography.headline,
   },
@@ -630,7 +673,15 @@ const styles = StyleSheet.create({
   },
   resourcesActionText: {
     ...typography.subhead,
+    fontWeight: '600',
     marginRight: spacing.xs,
+  },
+  iconContainer: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   tripHistoryCard: {
     marginBottom: spacing.xxxl,

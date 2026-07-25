@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import LocationService from '../services/LocationService';
 import * as Battery from 'expo-battery';
@@ -10,6 +10,7 @@ export default function SystemStatusCard({ socketStatus }) {
   const { colors } = useTheme();
   const [locationStatus, setLocationStatus] = useState('Checking...');
   const [batteryLevel, setBatteryLevel] = useState(null);
+  const [isExpanded, setIsExpanded] = useState(false);
 
   // Initial fetch and listener for Location
   useEffect(() => {
@@ -105,57 +106,73 @@ export default function SystemStatusCard({ socketStatus }) {
 
   return (
     <Card style={styles.cardSpacing}>
-      <View style={styles.header}>
-        <View style={[styles.statusDot, { backgroundColor: overallColor }]} />
-        <Text style={[styles.headerTitle, { color: overallColor }]}>{overallStatus}</Text>
-      </View>
-
-      <View style={[styles.divider, { backgroundColor: colors.divider }]} />
-
-      {/* Socket */}
-      <View style={styles.row}>
-        <View style={styles.left}>
-          <Feather name="wifi" size={20} color={colors.secondaryText} style={styles.icon} />
-          <Text style={[styles.label, { color: colors.text }]}>Socket Connection</Text>
+      <TouchableOpacity 
+        style={styles.header} 
+        onPress={() => setIsExpanded(!isExpanded)} 
+        activeOpacity={0.8}
+      >
+        <View style={styles.headerLeft}>
+          <View style={[styles.statusDot, { backgroundColor: overallColor }]} />
+          <Text style={[styles.headerTitle, { color: overallColor }]}>{overallStatus}</Text>
         </View>
-        <Text style={[styles.value, { color: isSocketConnected ? colors.success : colors.error }]}>
-          {isSocketConnected ? 'Connected' : 'Disconnected'}
-        </Text>
-      </View>
+        <Feather name={isExpanded ? "chevron-up" : "chevron-down"} size={20} color={colors.secondaryText} />
+      </TouchableOpacity>
 
-      {/* Location */}
-      <View style={styles.row}>
-        <View style={styles.left}>
-          <Feather name="map-pin" size={20} color={colors.secondaryText} style={styles.icon} />
-          <Text style={[styles.label, { color: colors.text }]}>Location Services</Text>
-        </View>
-        <Text style={[styles.value, { color: isLocationOn ? colors.success : (locationStatus === 'Checking...' ? '#6b7280' : '#f59e0b') }]}>
-          {locationStatus}
-        </Text>
-      </View>
+      {isExpanded && (
+        <View>
+          <View style={[styles.divider, { backgroundColor: colors.divider }]} />
 
-      {/* Battery */}
-      <View style={styles.row}>
-        <View style={styles.left}>
-          <Feather name="battery" size={20} color={colors.secondaryText} style={styles.icon} />
-          <Text style={[styles.label, { color: colors.text }]}>Battery</Text>
+          {/* Socket */}
+          <View style={styles.row}>
+            <View style={styles.left}>
+              <Feather name="wifi" size={20} color={colors.secondaryText} style={styles.icon} />
+              <Text style={[styles.label, { color: colors.text }]}>Socket Connection</Text>
+            </View>
+            <Text style={[styles.value, { color: isSocketConnected ? colors.success : colors.error }]}>
+              {isSocketConnected ? 'Connected' : 'Disconnected'}
+            </Text>
+          </View>
+
+          {/* Location */}
+          <View style={styles.row}>
+            <View style={styles.left}>
+              <Feather name="map-pin" size={20} color={colors.secondaryText} style={styles.icon} />
+              <Text style={[styles.label, { color: colors.text }]}>Location Services</Text>
+            </View>
+            <Text style={[styles.value, { color: isLocationOn ? colors.success : (locationStatus === 'Checking...' ? '#6b7280' : '#f59e0b') }]}>
+              {locationStatus}
+            </Text>
+          </View>
+
+          {/* Battery */}
+          <View style={styles.row}>
+            <View style={styles.left}>
+              <Feather name="battery" size={20} color={colors.secondaryText} style={styles.icon} />
+              <Text style={[styles.label, { color: colors.text }]}>Battery</Text>
+            </View>
+            <Text style={[styles.value, { color: batteryColor }]}>
+              {batteryLevel !== null ? `${batteryLevel}% • ${batteryLabel}` : 'Unknown'}
+            </Text>
+          </View>
         </View>
-        <Text style={[styles.value, { color: batteryColor }]}>
-          {batteryLevel !== null ? `${batteryLevel}% • ${batteryLabel}` : 'Unknown'}
-        </Text>
-      </View>
+      )}
     </Card>
   );
 }
 
 const styles = StyleSheet.create({
   cardSpacing: {
-    marginBottom: spacing.xxl,
+    marginBottom: spacing.sm,
+    paddingVertical: 12,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
+    justifyContent: 'space-between',
+  },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   statusDot: {
     width: 8,
@@ -173,6 +190,7 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: '#f3f4f6',
     marginBottom: 16,
+    marginTop: 16,
   },
   row: {
     flexDirection: 'row',

@@ -1,5 +1,5 @@
 import React from 'react';
-import { TouchableOpacity, Text, StyleSheet, TouchableOpacityProps } from 'react-native';
+import { TouchableOpacity, Text, StyleSheet, TouchableOpacityProps, View } from 'react-native';
 import { useTheme, radius, typography, spacing, getElevation } from '../../theme';
 import { Feather } from '@expo/vector-icons';
 
@@ -16,16 +16,20 @@ export const ActionCard: React.FC<ActionCardProps> = ({ label, iconName, style, 
       style={[
         styles.card,
         {
-          backgroundColor: colors.card,
+          backgroundColor: colors.surfaceVariant, // Judgment call
           borderRadius: radius.card,
-          ...getElevation(isDark),
+          borderWidth: 0,
+          elevation: 0,
+          shadowOpacity: 0,
         },
         style,
       ]}
       activeOpacity={0.7}
       {...rest}
     >
-      <Feather name={iconName} color={colors.text} size={22} />
+      <View style={[styles.iconContainer, { backgroundColor: colors.primaryContainer }]}>
+        <Feather name={iconName} color={colors.primary} size={20} />
+      </View>
       <Text
         style={[
           styles.label,
@@ -46,13 +50,20 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'flex-start',
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.lg,
-    minHeight: 64,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    minHeight: 56,
   },
   label: {
     marginLeft: spacing.sm,
     flex: 1,
     textAlign: 'left',
+  },
+  iconContainer: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
