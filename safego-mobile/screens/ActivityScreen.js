@@ -423,12 +423,11 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm, // Tighter
   },
   cardTitle: {
-    fontSize: typography.sizes.body,
-    fontWeight: typography.weights.bold,
+    ...typography.headline,
   },
   viewAllBtn: {
-    fontSize: typography.sizes.small,
-    fontWeight: typography.weights.semibold,
+    ...typography.subhead,
+    fontWeight: '600',
   },
 
   // Tracking details
@@ -437,8 +436,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   addressText: {
-    fontSize: typography.sizes.body,
-    fontWeight: typography.weights.medium,
+    ...typography.subhead,
+    fontWeight: '500',
     marginBottom: spacing.xs,
   },
   statsRow: {
@@ -450,12 +449,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   statLabel: {
-    fontSize: typography.sizes.small,
-    fontWeight: typography.weights.medium,
+    ...typography.footnote,
+    fontWeight: '500',
   },
   statValue: {
-    fontSize: typography.sizes.body,
-    fontWeight: typography.weights.semibold,
+    ...typography.subhead,
+    fontWeight: '600',
     marginTop: 2,
   },
   trackingFooter: {
@@ -466,10 +465,10 @@ const styles = StyleSheet.create({
     paddingTop: spacing.xs,
   },
   coordText: {
-    fontSize: typography.sizes.small,
+    ...typography.caption1,
   },
   updatedText: {
-    fontSize: typography.sizes.small,
+    ...typography.caption1,
   },
 
   // History details
@@ -483,12 +482,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   historyItemType: {
-    fontSize: typography.sizes.body,
-    fontWeight: typography.weights.semibold,
+    ...typography.subhead,
+    fontWeight: '600',
     marginBottom: 4,
   },
   historyItemDate: {
-    fontSize: typography.sizes.small,
+    ...typography.footnote,
   },
   emptyContainer: {
     flex: 1,
@@ -496,6 +495,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   emptyText: {
-    fontSize: typography.sizes.body,
+    ...typography.body,
   }
 });

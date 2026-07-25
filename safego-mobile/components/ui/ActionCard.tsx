@@ -32,7 +32,6 @@ export const ActionCard: React.FC<ActionCardProps> = ({ label, iconName, style, 
           {
             color: colors.text,
             ...typography.subhead,
-            fontWeight: typography.weights.semibold,
           },
         ]}
       >

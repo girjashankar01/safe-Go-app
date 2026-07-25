@@ -60,8 +60,8 @@ export const Button: React.FC<ButtonProps> = ({
           styles.text,
           {
             color: getTextColor(),
-            ...typography.body,
-            fontWeight: typography.weights.bold,
+            ...typography.callout,
+            fontWeight: '600',
             marginLeft: icon ? spacing.sm : 0,
           },
           textStyle,
