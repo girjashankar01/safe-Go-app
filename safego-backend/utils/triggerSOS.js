@@ -14,7 +14,7 @@ export async function triggerSOS(payload) {
   
   const { data: trip, error: tripErr } = await db
     .from('trips')
-    .select('*, users(name, email, emergency_contacts(*))')
+    .select('*, users(name, email, phone, emergency_contacts(*))')
     .eq('id', tripId)
     .single();
 
@@ -82,6 +82,7 @@ export async function triggerSOS(payload) {
     emailResults = await sendSOSEmail({
       contacts,
       userName: trip.users.name,
+      userPhone: trip.users.phone,
       lat,
       lng,
       triggerType,
